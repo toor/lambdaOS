@@ -1,0 +1,18 @@
+[package]
+name = "os"
+version = "0.1.0"
+authors = ["William Huddie <william@huddie.net>"]
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+rlibc = "1.0"
+volatile = "0.1.0"
+spin = "0.4.5"
+multiboot2 = "0.1.0"
+bitflags = "0.7.0"
+x86_64 = "0.1.2"
+
+[dependencies.bump_allocator]
+path = "libs/bump_allocator"
