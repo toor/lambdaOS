@@ -10,9 +10,6 @@ extern crate multiboot2;
 #[macro_use]
 extern crate bitflags;
 extern crate x86_64;
-extern crate bump_allocator;
-#[macro_use]
-extern crate alloc;
 
 #[macro_use]
 mod vga_buffer;

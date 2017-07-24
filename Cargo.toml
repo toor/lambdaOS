@@ -14,5 +14,3 @@ multiboot2 = "0.1.0"
 bitflags = "0.7.0"
 x86_64 = "0.1.2"
 
-[dependencies.bump_allocator]
-path = "libs/bump_allocator"
