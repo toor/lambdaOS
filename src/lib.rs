@@ -17,7 +17,7 @@ mod memory;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
-    vga_buffer::clear_screen();
+    vga::clear_screen();
     println!("Hello World{}", "!");
 
     let boot_info = unsafe{ multiboot2::load(multiboot_information_address) };

@@ -126,7 +126,7 @@ impl fmt::Write for Writer {
 
 macro_rules! print {
     ($($arg:tt)*) => ({
-        $crate::vga_buffer::print(format_args!($($arg)*));
+        $crate::vga::print(format_args!($($arg)*));
     });
 }
 
