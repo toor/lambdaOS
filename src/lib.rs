@@ -2,6 +2,10 @@
 #![feature(const_fn)]
 #![feature(unique)]
 #![no_std]
+#![feature(alloc)]
+#![feature(custom_attributes)]
+#![feature(allocator_internals)]
+#![default_lib_allocator]
 
 extern crate rlibc;
 extern crate volatile;
@@ -10,6 +14,11 @@ extern crate multiboot2;
 #[macro_use]
 extern crate bitflags;
 extern crate x86_64;
+#[macro_use]
+extern crate once;
+#[macro_use]
+extern crate alloc;
+extern crate hole_list_allocator as allocator;
 
 #[macro_use]
 mod vga;
@@ -21,30 +30,25 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     println!("Hello World{}", "!");
 
     let boot_info = unsafe{ multiboot2::load(multiboot_information_address) };
-    let memory_map_tag = boot_info.memory_map_tag()
-        .expect("Memory map tag required");
-    let elf_sections_tag = boot_info.elf_sections_tag()
-        .expect("Elf sections tag required");
-
-    let kernel_start = elf_sections_tag.sections().map(|s| s.addr)
-        .min().unwrap();
-    let kernel_end = elf_sections_tag.sections().map(|s| s.addr + s.size)
-        .max().unwrap();
-    let multiboot_start = multiboot_information_address;
-    let multiboot_end = multiboot_start + (boot_info.total_size as usize);
-
-    println!("kernel start: 0x{:x}, kernel end: 0x{:x}",
-        kernel_start, kernel_end);
-    println!("multiboot start: 0x{:x}, multiboot end: 0x{:x}",
-        multiboot_start, multiboot_end);
-
-    let mut frame_allocator = memory::AreaFrameAllocator::new(
-        kernel_start as usize, kernel_end as usize, multiboot_start,
-        multiboot_end, memory_map_tag.memory_areas());
 
     enable_nxe_bit();
     enable_write_protect_bit();
-    memory::remap_the_kernel(&mut frame_allocator, boot_info);
+    
+    memory::init(boot_info);
+
+    use alloc::boxed::Box;
+    let mut heap_test = Box::new(42);
+    *heap_test -= 15;
+    let heap_test_2 = Box::new("hello");
+    println!("{:?} {:?}", heap_test, heap_test_2);
+
+    let mut vec_test = vec![1,2,3,4,5,6,7];
+    vec_test[3] = 42;
+
+    for i in &vec_test {
+        println!("{}", i);
+    }
+
     println!("It did not crash!");
 
     loop {}
