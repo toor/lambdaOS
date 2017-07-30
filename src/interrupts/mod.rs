@@ -1,4 +1,4 @@
-use x86_64::structures::idt::Idt;
+use x86_64::structures::idt::{Idt, ExceptionStackFrame};
 
 lazy_static! {
     static ref IDT: Idt = {
