@@ -45,6 +45,9 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     //Remap kernel and set up a guard page
     memory::init(boot_info);
 
+    //Set up the Interrupt Descriptor table
+    interrupts::init();
+
     //if you see this message it's all good
     println!("It did not crash!");
 
