@@ -43,10 +43,10 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     enable_write_protect_bit();
     
     //Remap kernel and set up a guard page
-    memory::init(boot_info);
+    let mut memory_controller = memory::init(boot_info);
 
     //Set up the Interrupt Descriptor table
-    interrupts::init();
+    interrupts::init(&mut memory_controller);
 
     //if you see this message it's all good
     println!("It did not crash!");

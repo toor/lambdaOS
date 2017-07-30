@@ -1,4 +1,5 @@
 use x86_64::structures::idt::{Idt, ExceptionStackFrame};
+use memory::MemoryController;
 
 lazy_static! {
     static ref IDT: Idt = {
@@ -9,7 +10,11 @@ lazy_static! {
     };
 }
 
-pub fn init() {
+pub fn init(memory_controller: &mut MemoryController) {
+    //Create a stack for the double fault handler
+    let double_fault_stack = memory_controller.alloc_stack(1)
+        .expect("Could not allocate double fault stack");
+    
     IDT.load();
 }
 

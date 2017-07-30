@@ -7,6 +7,7 @@ use multiboot2::BootInformation;
 use self::table::{Table, Level4};
 use self::temporary_page::TemporaryPage;
 use x86_64::instructions::tlb;
+use core::ops::Add;
 
 mod entry;
 mod table;
@@ -24,7 +25,7 @@ pub struct Page {
 }
 
 impl Page {
-    //Get the physical address of a page
+    //Which page contains this address
     pub fn containing_address(address: VirtualAddress) -> Page {
         assert!(address < 0x0000_8000_0000_0000 ||
             address >= 0xffff_8000_0000_0000,
@@ -33,7 +34,7 @@ impl Page {
     }
 
     //Where a page starts
-    fn start_address(&self) -> VirtualAddress {
+    pub fn start_address(&self) -> VirtualAddress {
         self.number * PAGE_SIZE
     }
 
@@ -58,6 +59,15 @@ impl Page {
     }
 }
 
+impl Add<usize> for Page {
+    type Output = Page;
+    
+    fn add(self, rhs: usize) -> Page {
+        Page { number: self.number + rhs }
+    }
+}
+
+#[derive(Clone)]
 pub struct PageIter {
     start: Page,
     end: Page,
