@@ -4,6 +4,7 @@ version = "0.1.0"
 dependencies = [
  "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hole_list_allocator 0.1.0",
+ "lazy_static 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "linked_list_allocator 0.4.1 (git+https://github.com/phil-opp/linked-list-allocator.git)",
  "multiboot2 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "once 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -33,6 +34,14 @@ name = "hole_list_allocator"
 version = "0.1.0"
 dependencies = [
  "linked_list_allocator 0.4.1 (git+https://github.com/phil-opp/linked-list-allocator.git)",
+ "spin 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "lazy_static"
+version = "0.2.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
  "spin 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -84,6 +93,7 @@ dependencies = [
 "checksum bit_field 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ff91a64014e1bc53bf643920f2c9ab5f0980d92a0948295f3ee550e9266849ad"
 "checksum bitflags 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8dead7461c1127cf637931a1e50934eb6eee8bff2f74433ac7909e9afcee04a3"
 "checksum bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "aad18937a628ec6abcd26d1489012cc0e18c21798210f491af69ded9b881106d"
+"checksum lazy_static 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "3b37545ab726dd833ec6420aaba8231c5b320814b9029ad585555d2a03e94fbf"
 "checksum linked_list_allocator 0.4.1 (git+https://github.com/phil-opp/linked-list-allocator.git)" = "<none>"
 "checksum multiboot2 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "b209a4456a3cc81fb69ad318ed6d47af81a90b829701f151354e3994d8b216d4"
 "checksum once 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "931fb7a4cf34610cf6cbe58d52a8ca5ef4c726d4e2e178abd0dc13a6551c6d73"

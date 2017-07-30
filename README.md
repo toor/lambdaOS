@@ -6,9 +6,7 @@ An OS written in Rust and Assembly. It currently supports x86, however most of t
 - Basic VGA Driver
 - Paging and frame allocator
 - Kernel remapping
-
-**WIP**
-- Allocator / heap
+- Heap allocation
 
 **Planned**
 - Interrupts
@@ -16,5 +14,3 @@ An OS written in Rust and Assembly. It currently supports x86, however most of t
 
 ## Building
 You need to have `nasm`, `grub-mkrescue`, `xorriso`, `qemu`, and a nightly Rust compiler installed. Then you can run it using `make run`. I am currently in the process of writing a script to install all the dependencies to make it easier for the end user.
-
-**Please note, the master branch does not work at the moment, switch to the working branch when you clone the repo in order to build this**

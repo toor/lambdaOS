@@ -7,6 +7,7 @@
 #![feature(allocator_internals)]
 #![feature(global_allocator)]
 #![default_lib_allocator]
+#![feature(abi_x86_interrupt)]
 
 extern crate rlibc;
 extern crate volatile;
@@ -21,11 +22,13 @@ extern crate once;
 extern crate alloc;
 extern crate linked_list_allocator;
 extern crate hole_list_allocator as allocator;
+#[macro_use]
+extern crate lazy_static;
 
 #[macro_use]
 mod vga;
 mod memory;
-use memory::paging::Page;
+mod interrupts;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
@@ -34,17 +37,20 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
 
     let boot_info = unsafe{ multiboot2::load(multiboot_information_address) };
 
+    //Set NXE bit so we can use the NO_EXECUTE flag.
     enable_nxe_bit();
+    //Enable write protect so we are no longer able to access the .rodata and etc. sections.
     enable_write_protect_bit();
     
     //Remap kernel and set up a guard page
     memory::init(boot_info);
+    
+    //Heap allocation testing
     use alloc::boxed::Box;
-
     let x = Box::new(42);
-
     println!("{:?}", x);
 
+    //if you see this message it's all good
     println!("It did not crash!");
 
     loop {}
