@@ -44,11 +44,6 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     
     //Remap kernel and set up a guard page
     memory::init(boot_info);
-    
-    //Heap allocation testing
-    use alloc::boxed::Box;
-    let x = Box::new(42);
-    println!("{:?}", x);
 
     //if you see this message it's all good
     println!("It did not crash!");
