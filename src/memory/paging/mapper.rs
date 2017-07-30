@@ -5,6 +5,7 @@ use memory::{PAGE_SIZE, Frame, FrameAllocator};
 use core::ptr::Unique;
 use core::mem;
 
+
 pub struct Mapper {
     p4: Unique<Table<Level4>>,
 }
@@ -12,7 +13,7 @@ pub struct Mapper {
 impl Mapper {
     pub unsafe fn new() -> Mapper {
         Mapper {
-            p4: Unique::new(table::P4),
+            p4: Unique::new_unchecked(table::P4),
         }
     }
 

@@ -4,6 +4,7 @@ version = "0.1.0"
 dependencies = [
  "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hole_list_allocator 0.1.0",
+ "linked_list_allocator 0.4.1 (git+https://github.com/phil-opp/linked-list-allocator.git)",
  "multiboot2 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "once 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "rlibc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -38,7 +39,7 @@ dependencies = [
 [[package]]
 name = "linked_list_allocator"
 version = "0.4.1"
-source = "git+https://github.com/phil-opp/linked-list-allocator.git#f742a71067f598aa1634fd097a54057e7576ecb3"
+source = "git+https://github.com/phil-opp/linked-list-allocator.git#ce7b045f3154be64053706632ce82ce944945458"
 dependencies = [
  "spin 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

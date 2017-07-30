@@ -6,16 +6,17 @@ use memory::{PAGE_SIZE, Frame, FrameAllocator};
 use multiboot2::BootInformation;
 use self::table::{Table, Level4};
 use self::temporary_page::TemporaryPage;
+use x86_64::instructions::tlb;
 
 mod entry;
 mod table;
 mod temporary_page;
-mod mapper;
+pub mod mapper;
 
 const ENTRY_COUNT: usize = 512;
 
-pub type PhysicalAddress = usize;
 pub type VirtualAddress = usize;
+pub type PhysicalAddress = usize;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Page {
@@ -23,14 +24,16 @@ pub struct Page {
 }
 
 impl Page {
+    //Get the physical address of a page
     pub fn containing_address(address: VirtualAddress) -> Page {
         assert!(address < 0x0000_8000_0000_0000 ||
             address >= 0xffff_8000_0000_0000,
-            "invalid address: 0x{:x}", address);
-        Page { number: address / PAGE_SIZE }
+            "invalid address: 0x{:x}", address);        
+        Page { number: address / PAGE_SIZE}
     }
 
-    fn start_address(&self) -> usize {
+    //Where a page starts
+    fn start_address(&self) -> VirtualAddress {
         self.number * PAGE_SIZE
     }
 

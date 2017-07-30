@@ -5,6 +5,7 @@
 #![feature(alloc)]
 #![feature(custom_attributes)]
 #![feature(allocator_internals)]
+#![feature(global_allocator)]
 #![default_lib_allocator]
 
 extern crate rlibc;
@@ -18,11 +19,13 @@ extern crate x86_64;
 extern crate once;
 #[macro_use]
 extern crate alloc;
+extern crate linked_list_allocator;
 extern crate hole_list_allocator as allocator;
 
 #[macro_use]
 mod vga;
 mod memory;
+use memory::paging::Page;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
@@ -34,7 +37,13 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     enable_nxe_bit();
     enable_write_protect_bit();
     
+    //Remap kernel and set up a guard page
     memory::init(boot_info);
+    use alloc::boxed::Box;
+
+    let x = Box::new(42);
+
+    println!("{:?}", x);
 
     println!("It did not crash!");
 
