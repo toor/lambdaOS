@@ -1,4 +1,4 @@
-use x86_64::structures::idt::{Idt, ExceptionStackFrame};
+use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::VirtualAddress;
 use x86_64::structures::gdt::SegmentSelector;
@@ -8,6 +8,7 @@ use memory::MemoryController;
 use spin::Once;
 use x86::irq;
 use core::fmt;
+use memory;
 
 mod gdt;
 mod syscall;
@@ -78,6 +79,9 @@ lazy_static! {
     static ref IDT: Idt = {
         let mut idt = Idt::new();
         idt.breakpoint.set_handler_fn(breakpoint_handler);
+        idt.divide_by_zero.set_handler_fn(divide_by_zero_handler);
+        idt.invalid_opcode.set_handler_fn(invalid_opcode_handler);
+        idt.page_fault.set_handler_fn(page_fault_handler);
         
         unsafe {
             idt.double_fault.set_handler_fn(double_fault_handler)
@@ -129,7 +133,7 @@ pub fn init(memory_controller: &mut MemoryController) {
 }
 
 extern "x86-interrupt" fn dummy_error_handler(stack_frame: &mut ExceptionStackFrame) {
-    print!("\nEXCEPTION: UNHANDLED at {:#x}\n{:#?}",
+    println!("\nEXCEPTION: UNHANDLED at {:#x}\n{:#?}",
             stack_frame.instruction_pointer, stack_frame);
     loop {}
 }
@@ -150,14 +154,14 @@ extern "x86-interrupt" fn double_fault_handler(
 
 extern "x86-interrupt" fn divide_by_zero_handler(stack_frame: &mut ExceptionStackFrame)
 {
-    print!("EXCEPTION: DIVIDE BY ZERO\n{:#?}", stack_frame);
+    println!("EXCEPTION: DIVIDE BY ZERO\n{:#?}", stack_frame);
     loop {}
 }
 
 extern "x86-interrupt" fn invalid_opcode_handler(stack_frame: &mut ExceptionStackFrame)
 {
     unsafe {
-        print!("EXCEPTION: INVALID OPCODE at {:#x}\n{:#?}",
+        println!("EXCEPTION: INVALID OPCODE at {:#x}\n{:#?}",
             stack_frame.instruction_pointer, stack_frame);
         loop {}
     }
@@ -208,6 +212,58 @@ extern "x86-interrupt" fn syscall_handler(stack_frame: &mut ExceptionStackFrame)
                 pop    %rbp
                 sti
                 iretq" : /* no outputs */ : "r"(my_sp), "r"(res) : );
-                
+
     }
+}
+
+extern "x86-interrupt" fn timer_handler(stack_frame: &mut ExceptionStackFrame) {
+    unsafe {
+        asm!("cli");
+
+        let mut my_sp: usize;
+        asm!("" : "={rbp}" (my_sp));
+
+        my_sp -= 8 * 10;
+
+        ::state().interrupt_count[TIMER_INTERRUPT as usize] += 1;
+
+        timer::timer_interrupt();
+        ::state().scheduler().update_trap_frame(my_sp);
+        PICS.lock().notify_end_of_interrupt(TIMER_INTERRUPT);
+
+        ::state.scheduler.schedule();
+    }
+}
+
+extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackFrame)
+{
+    ::state().interrupt_count[KEYBOARD_INTERRUPT as usize] += 1;
+
+    keyboard::read();
+
+    unsafe {
+        PICS.lock().notify_end_of_interrupt(KEYBOARD_INTERRUPT);
+    }
+}
+
+extern "x86-interrupt" fn serial_handler(stack_frame: &mut ExceptionStackFrame) {
+    ::state().interrupt_count[SERIAL_INTERRUPT as usize] += 1;
+
+    serial::read();
+
+    unsafe {
+        PICS.lock().notify_end_of_interrupt(SERIAL_INTERRUPT);
+    }
+}
+
+extern "x86-interrupt" fn page_fault_handler(stack_frame: &mut ExceptionStackFrame, error_code: PageFaultErrorCode) {
+    use x86_64::registers::control_regs;
+
+    println!("\n EXCEPTION: PAGE FAULT while accessing {:#x}\nerror code: \
+                                    {:?}\n{:#?}",
+              control_regs::cr2(),
+              error_code,
+              stack_frame);
+
+    loop {}
 }
