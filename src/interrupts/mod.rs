@@ -1,5 +1,9 @@
 use x86_64::structures::idt::{Idt, ExceptionStackFrame};
+use x86_64::structures::tss::TaskStateSegment;
+use x86_64::VirtualAddress;
 use memory::MemoryController;
+
+const DOUBLE_FAULT_IST_INDEX: usize = 0;
 
 lazy_static! {
     static ref IDT: Idt = {
@@ -14,6 +18,10 @@ pub fn init(memory_controller: &mut MemoryController) {
     //Create a stack for the double fault handler
     let double_fault_stack = memory_controller.alloc_stack(1)
         .expect("Could not allocate double fault stack");
+
+    let mut tss = TaskStateSegment::new();
+    tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] = VirtualAddress(
+        double_fault_stack.top());
     
     IDT.load();
 }
