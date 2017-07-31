@@ -47,6 +47,7 @@ impl ColorCode {
     }
 }
 
+//Struct describing the character type and colour of something to be printed
 #[derive(Debug, Clone, Copy)]
 #[repr(C)]
 struct ScreenChar {
