@@ -7,9 +7,10 @@ An OS written in Rust and Assembly. It currently supports x86, however most of t
 - Paging and frame allocator
 - Kernel remapping
 - Heap allocation
+- Exception/double fault handlers
 
 **Planned**
-- Interrupts
+- Interrupts (PIC)
 - Keyboard input
 
 ## Building
