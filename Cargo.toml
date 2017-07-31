@@ -21,6 +21,9 @@ x86 = "0.8.1"
 [dependencies.hole_list_allocator]
 path = "libs/hole_list_allocator"
 
+[dependencies.libtoorix]
+path = "libs/libtoorix"
+
 [dependencies.lazy_static]
 version = "0.2.4"
 features = ["spin_no_std"]

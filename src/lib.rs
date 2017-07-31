@@ -8,6 +8,7 @@
 #![feature(global_allocator)]
 #![default_lib_allocator]
 #![feature(abi_x86_interrupt)]
+#![feature(asm)]
 
 extern crate rlibc;
 extern crate volatile;
@@ -26,11 +27,13 @@ extern crate hole_list_allocator as allocator;
 extern crate lazy_static;
 extern crate bit_field;
 extern crate x86;
+extern crate libtoorix;
 
 #[macro_use]
 mod vga;
 mod memory;
 mod interrupts;
+mod constants;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
