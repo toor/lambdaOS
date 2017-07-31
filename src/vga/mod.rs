@@ -3,12 +3,18 @@ use core::ptr::Unique;
 use spin::Mutex;
 use volatile::Volatile;
 
+//the starting address of the vga buffer
+const BUFFER_START: usize = 0xb8000;
+
+//Writer static we use everywhere
 pub static WRITER: Mutex<Writer> = Mutex::new(Writer {
     column_position: 0,
     color_code: ColorCode::new(Color::LightGreen, Color::Black),
-    buffer: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
+    buffer: unsafe { Unique::new_unchecked(BUFFER_START as *mut _) },
 });
 
+
+//4-bit enum of the available colours
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 #[repr(u8)]
@@ -34,6 +40,7 @@ pub enum Color {
 #[derive(Debug, Clone, Copy)]
 struct ColorCode(u8);
 
+//Convert bg and fg into a color code we can use later on
 impl ColorCode {
     const fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
