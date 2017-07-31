@@ -25,6 +25,7 @@ extern crate hole_list_allocator as allocator;
 #[macro_use]
 extern crate lazy_static;
 extern crate bit_field;
+extern crate x86;
 
 #[macro_use]
 mod vga;
