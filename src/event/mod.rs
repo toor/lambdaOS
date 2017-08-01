@@ -10,11 +10,11 @@ pub enum EventType {
     FsEvent,
 }
 
-pub trait IsEvent {
+pub trait IsEvent<T> {
     fn event_type(&self) -> EventType;
 }
 
-pub trait IsListener {
+pub trait IsListener <T> {
     fn handles_event(&self, ev: &T) -> bool;
 
     fn notify(&self, ev: &T);
