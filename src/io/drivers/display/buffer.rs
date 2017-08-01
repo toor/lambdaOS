@@ -39,7 +39,7 @@ impl TextBuffer {
     fn sync(&self) {
         if self.active {
             unsafe {
-                VGA.lock().sync_buffer(&self);
+                VGA.lock().sync_buffer(&mut self);
                 VGA.lock().update_cursor(BUFFER_HEIGHT - 1, self.column_position);
             }
         }
@@ -106,7 +106,7 @@ impl TextBuffer {
 }
 
 impl ::core::fmt::Write for TextBuffer {
-    fn write_str(&mut self, s: str) -> ::core::fmt::Result {
+    fn write_str(&mut self, s: &str) -> ::core::fmt::Result {
         for byte in s.bytes() {
             self.write_byte(byte)
         }
