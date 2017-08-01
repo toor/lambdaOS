@@ -1,5 +1,5 @@
 use alloc::boxed::Box;
-use collections::vec::Vec;
+use alloc::vec::Vec;
 use core::fmt::Write;
 use core::str;
 use io::drivers::display::buffer::DEBUG_BUFFER;

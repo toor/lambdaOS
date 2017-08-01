@@ -1,5 +1,5 @@
 use alloc::boxed::Box;
-use collections::vec::Vec;
+use alloc::vec::Vec;
 
 use event::IsListener;
 use event::keyboard::KeyEvent;
