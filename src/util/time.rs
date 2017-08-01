@@ -5,14 +5,14 @@ pub struct Time {
     //seconds
     pub secs: u64,
     //milliseconds
-    pub millis: u64,
+    pub millis: u32,
     //nanoseconds
     pub nanos: u32,
 }
 
 impl Time {
     //New time object
-    pub fn new(secs: u64, millis: u64, nanos: u32) -> Self {
+    pub fn new(secs: u64, millis: u32, nanos: u32) -> Self {
         Time {
             secs: secs,
             millis: millis,
