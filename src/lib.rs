@@ -34,6 +34,7 @@ mod vga;
 mod memory;
 mod interrupts;
 mod constants;
+mod io;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
