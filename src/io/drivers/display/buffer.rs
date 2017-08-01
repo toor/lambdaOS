@@ -116,3 +116,51 @@ impl ::core::fmt::Write for TextBuffer {
         Ok(())
     }
 }
+
+pub static PRINT_BUFFER: Mutex<TextBuffer> = Mutex::new(TextBuffer {
+    column_position: 0,
+    color_code: ColorCode::new(Color::LightGreen, Color::Black),
+    blank_char: GREEN_BLANK,
+    chars: [[b' '; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    active: true,
+    interactive: false,
+});
+
+pub fn print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    PRINT_BUFFER.lock().write_fmt(args).unwrap();
+}
+
+pub static KEYBOARD_BUFFER: Mutex<TextBuffer> = Mutex::new(TextBuffer {
+    column_position: 0,
+    color_code: ColorCode::new(Color::LightRed, Color::Black),
+    blank_char: RED_BLANK,
+    chars: [[b' '; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    active: false,
+    interactive: true,
+});
+
+pub static DEBUG_BUFFER: Mutex<TextBuffer> = Mutex::new(TextBuffer {
+    column_position: 0,
+    color_code: ColorCode::new(Color::LightGray, Color::Black),
+    blank_char: GRAY_BLANK,
+    chars: [[b' '; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    active: false,
+    interactive: false,` 
+});
+
+pub static mut ACTIVE_BUFFER: &'static Mutex<TextBuffer> = &PRINT_BUFFER;
+pub static mut INACTIVE_BUFFERS: [&'static Mutex<TextBuffer>; 2] = [&DEBUG_BUFFER, &KEYBOARD_BUFFER];
+
+pub fn toggle() {
+    unsafe {
+        ACTIVE_BUFFER.lock().deactivate();
+
+        let new_active = INACTIVE_BUFFERS[0];
+        INACTIVE_BUFFERS[0] = INACTIVE_BUFFERS[1];
+        INACTIVE_BUFFERS[1] = ACTIVE_BUFFER;
+        ACTIVE_BUFFER = new_active;
+        ACTIVE_BUFFER.lock().activate();
+        ACTIVE_BUFFER.lock().sync();
+    }
+}
