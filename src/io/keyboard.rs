@@ -10,7 +10,7 @@ use event::{EventType, IsEvent};
 
 use event::keyboard::{KeyEvent, ControlKeyState};
 
-impl IsEvent for KeyEvent {
+impl IsEvent<KeyEvent> for KeyEvent {
     fn event_type(&self) -> EventType {
         self.event_type
     }
