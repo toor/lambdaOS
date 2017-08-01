@@ -14,7 +14,7 @@ pub trait IsEvent<T> {
     fn event_type(&self) -> EventType;
 }
 
-pub trait IsListener <T> {
+pub trait IsListener<T> {
     fn handles_event(&self, ev: &T) -> bool;
 
     fn notify(&self, ev: &T);
