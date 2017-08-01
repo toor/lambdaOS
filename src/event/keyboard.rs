@@ -52,7 +52,7 @@ pub struct ToggleWatcher {}
 
 impl IsListener<KeyEvent> for ToggleWatcher {
     fn handles_event(&self, ev: &KeyEvent) -> bool {
-        ev.scancode == constants::keyboard::S_KEY.scancode && (ev.controls.ctrl || ev.controls.cmd);
+        ev.scancode == constants::keyboard::S_KEY.scancode && (ev.controls.ctrl || ev.controls.cmd)
     }
 
     #[allow(unused_variables)]

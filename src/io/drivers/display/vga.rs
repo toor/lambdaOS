@@ -59,19 +59,19 @@ pub static VGA: Mutex<VGA> = Mutex::new(VGA {frame: unsafe { Unique::new_uncheck
 
 impl VGA {
     fn frame(&mut self) -> &mut ScreenBuffer {
-        unsafe { self.frame.get_mut() }
+        unsafe { self.frame.as_mut() }
     }
 
-    pub fn sync_buffer(&mut self, buffer: &mut ScreenBuffer) {
+    pub fn sync_buffer(&mut self, buffer: &mut TextBuffer) {
         let frame = self.frame();
         for row in 0..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
                 let character = ScreenChar {
                     ascii_character: buffer.chars()[row][col],
                     color_code: buffer.color_code(),
-                }
-            };
-            frame.chars[row][col].write(character);
+                };
+                frame.chars[row][col].write(character);          
+            }
         }
     }
 

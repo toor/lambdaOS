@@ -1,5 +1,5 @@
 use core::marker::PhantomData;
-use x86::io::{inl, outl, outw, inw, outb, inb};
+use x86::shared::io::{inl, outl, outw, inw, outb, inb};
 use event;
 
 
@@ -16,6 +16,7 @@ const MODE_8086: u8 = 0x01;
 pub mod keyboard;
 pub mod serial;
 pub mod timer;
+pub mod drivers;
 
 pub trait InOut {
     //Read value from a port
@@ -26,7 +27,7 @@ pub trait InOut {
 
 impl InOut for u8 {
     unsafe fn port_in(port: u16) -> u8 {
-        inb(port);
+        inb(port)
     }
 
     unsafe fn port_out(port: u16, value: u8) {
@@ -120,7 +121,7 @@ impl ChainedPics {
         //Let the PICS know we're gonna send a three-byte init sequence on the data port
         self.pics[0].command.write(CMD_INIT);
         wait();
-        self.pics[1].comand.write(CMD_INIT);
+        self.pics[1].command.write(CMD_INIT);
         wait();
 
         //Byte 1

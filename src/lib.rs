@@ -9,6 +9,7 @@
 #![default_lib_allocator]
 #![feature(abi_x86_interrupt)]
 #![feature(asm)]
+#![feature(box_syntax)]
 
 extern crate rlibc;
 extern crate volatile;
@@ -35,6 +36,10 @@ mod memory;
 mod interrupts;
 mod constants;
 mod io;
+mod state;
+mod debug;
+mod util;
+mod event;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {

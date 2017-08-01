@@ -117,7 +117,7 @@ impl RealTimeClock {
         let mut secs: u64 = (year as u64 - 1970) * 31536000;
 
         let mut leap_days = (year as u64 - 1972) / 4 + 1;
-        if year % 4 = 0 {
+        if year % 4 == 0 {
             if month <= 2 {
                 leap_days += 1;
             }

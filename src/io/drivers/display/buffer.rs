@@ -28,7 +28,7 @@ impl TextBuffer {
         self.active = false;
     }
 
-    pub fn chars(&self) -> &[[u8; BUFFER_WIDTH]; BUFFER_HEIGHT]; {
+    pub fn chars(&self) -> &[[u8; BUFFER_WIDTH]; BUFFER_HEIGHT] {
         &self.chars
     }
 
@@ -106,7 +106,7 @@ impl TextBuffer {
 }
 
 impl ::core::fmt::Write for TextBuffer {
-    fn write_str(&mut self, s: str) ::core::fmt::Result {
+    fn write_str(&mut self, s: str) -> ::core::fmt::Result {
         for byte in s.bytes() {
             self.write_byte(byte)
         }
@@ -146,7 +146,7 @@ pub static DEBUG_BUFFER: Mutex<TextBuffer> = Mutex::new(TextBuffer {
     blank_char: GRAY_BLANK,
     chars: [[b' '; BUFFER_WIDTH]; BUFFER_HEIGHT],
     active: false,
-    interactive: false,` 
+    interactive: false,
 });
 
 pub static mut ACTIVE_BUFFER: &'static Mutex<TextBuffer> = &PRINT_BUFFER;

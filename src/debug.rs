@@ -39,7 +39,7 @@ pub fn handle_serial_input(c: u8) {
                 handle_serial_input(c);
             }
             Some(ref mut buf) => {
-                if c = 0xD {
+                if c == 0xD {
                     interpret_command(str::from_utf8(buf).unwrap());
                     COMMAND_BUFFER = Some(&mut *Box::into_raw(box vec![]));
                 } else {
@@ -64,9 +64,9 @@ const MNEMONICS: [&'static str; 2] = [HELP_MNEMONIC, DEBUG_MNEMOIC];
 const DESCRIPTIONS: [&'static str; 2] = [HELP_DESCRIPTION, DEBUG_DESCRIPTION];
 
 fn usage() {
-    printk!("Commands:");
+    print!("Commands:");
     for i in 0..COMMANDS.len() {
-        printk!("\t{} ({}) - {}", COMMANDS[i], MNEMONICS[i], DESCRIPTIONS[i]);
+        print!("\t{} ({}) - {}", COMMANDS[i], MNEMONICS[i], DESCRIPTIONS[i]);
     }
 }
 
@@ -77,7 +77,7 @@ fn interpret_command(cmd: &'static str) {
         }
         DEBUG_COMMAND | DEBUG_MNEMOIC => debug(),
         _ => {
-            printk!("Unknown command {}", cmd);
+            print!("Unknown command {}", cmd);
             usage();
         }
     }

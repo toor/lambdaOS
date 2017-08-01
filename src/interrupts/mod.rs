@@ -6,7 +6,7 @@ use x86_64::instructions::segmentation::set_cs;
 use x86_64::instructions::tables::load_tss;
 use memory::MemoryController;
 use spin::Once;
-use x86::irq;
+use x86::shared::irq;
 use core::fmt;
 use memory;
 
@@ -17,6 +17,10 @@ use constants::keyboard::KEYBOARD_INTERRUPT;
 use constants::serial::SERIAL_INTERRUPT;
 use constants::syscall::SYSCALL_INTERRUPT;
 use constants::timer::TIMER_INTERRUPT;
+
+use io::{keyboard, serial, timer, ChainedPics};
+
+use spin::Mutex;
 
 static TSS: Once<TaskStateSegment> = Once::new();
 static GDT: Once<gdt::Gdt> = Once::new();
@@ -267,3 +271,5 @@ extern "x86-interrupt" fn page_fault_handler(stack_frame: &mut ExceptionStackFra
 
     loop {}
 }
+
+pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
