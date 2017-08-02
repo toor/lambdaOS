@@ -19,6 +19,26 @@ pub struct Process {
     usage: usize,
 }
 
+fn test() {
+    let mut beans:u64 = 0;
+
+    loop {
+        beans += 1;
+
+        if beans % 10000000 == 0 {
+            unsafe {
+                asm!("cli");
+
+                use libtoorix;
+                let res = libtoorix::sys_time();
+                println!("{} {}", res, beans);
+
+                asm!("sti");
+            }
+        }
+    }
+}
+
 impl Process {
     fn new(pid: usize, start_fn: usize, stack: usize) -> Self {
         Process {
@@ -168,7 +188,7 @@ impl Scheduler {
             //printk!("Jumping to 0x{:x}", process.trap_frame);
 
             if process.pid == 1 {
-              printk  //printk!("pidiful");
+              //printk!("pidiful");
             }
 
             unsafe {
