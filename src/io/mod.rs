@@ -60,7 +60,7 @@ pub struct Port<T: InOut> {
 
 impl<T: InOut> Port<T> {
     //Create new port
-    unsafe fn new(port: u16) -> Port<T> {
+    const unsafe fn new(port: u16) -> Port<T> {
         Port {
             port: port,
             phantom: PhantomData,
