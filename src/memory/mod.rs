@@ -129,7 +129,6 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
 
     unsafe { allocator::init(HEAP_START, HEAP_SIZE) };
     
-
     let stack_allocator = {
         let stack_alloc_start = heap_end_page + 1;
         let stack_alloc_end = stack_alloc_start + 100;
