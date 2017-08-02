@@ -1,3 +1,4 @@
+use debug;
 use constants::serial::COM1;
 use x86::shared::io::{inb, outb};
 
@@ -23,8 +24,16 @@ unsafe fn serial_received() -> u8 {
     return inb(COM1 + 5) & 1;
 }
 
+pub fn read_char() -> char {
+    unsafe {
+        while serial_received() == 0 {}
+
+        inb(COM1) as char
+    }
+}
+
 pub fn read() {
-    unimplemented!();
+    debug::handle_serial_input(read_char() as u8);
 }
 
 pub fn init() {
