@@ -65,7 +65,7 @@ impl Scheduler {
         {
             let procs = self.procs.lock();
             let process = procs.get(&pid);
-            printk!("Initted proc 0 to {:?}", process);
+            println!("Initted proc 0 to {:?}", process);
         }
     }
 
@@ -73,7 +73,7 @@ impl Scheduler {
         // Create a new stack
         let new_stack = memory::memory_controller().alloc_stack(256)
             .expect("could not allocate new proc stack");
-        printk!("Top of new stack: {:x}", new_stack.top());
+        println!("Top of new stack: {:x}", new_stack.top());
         self.create_process(fn_ptr, new_stack.top());
     }
 
@@ -85,7 +85,7 @@ impl Scheduler {
             // Init proc 0 for the main kernel thread
             let p = Process::new(self.pid_counter, start_fn, stack_pointer);
             self.procs.lock().insert(self.pid_counter, p);
-            printk!("inserted proc {}, there are {} procs", self.pid_counter, self.procs.lock().len());
+            println!("inserted proc {}, there are {} procs", self.pid_counter, self.procs.lock().len());
             pid = self.pid_counter;
             self.pid_counter += 1;
         }
@@ -168,7 +168,7 @@ impl Scheduler {
             //printk!("Jumping to 0x{:x}", process.trap_frame);
 
             if process.pid == 1 {
-                //printk!("pidiful");
+              printk  //printk!("pidiful");
             }
 
             unsafe {
@@ -190,18 +190,12 @@ impl Scheduler {
         } else {
             // call init fn
             
-            printk!("Attempting to start process at {:x} {}", process.start_pointer, process.pid);
+            println!("Attempting to start process at {:x} {}", process.start_pointer, process.pid);
 
             unsafe {
-
                 asm!("movq $0, %rsp
                       sti
                       jmpq *$1" :: "r"(process.stack), "r"(test as usize) : );
-
-                // TODO: free stack
-
-                // If we fell through to here, the process is over.
-
                 use libtoorix;
                 libtoorix::sys_exit(/* exit */ process.pid);
             }
