@@ -11,8 +11,8 @@ pub struct KPrintBuffer {
     partial: String,
 }
 
-impl core::fmt::Write for KPrintBuffer {
-    fn write_str(&mut self, ss: &str) -> core::fmt::Result {
+impl ::core::fmt::Write for KPrintBuffer {
+    fn write_str(&mut self, ss: &str) -> ::core::fmt::Result {
         
         let mut s = String::from(ss);
         let endline = ss.find('\n').unwrap_or(255);
