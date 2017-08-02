@@ -43,6 +43,9 @@ mod util;
 mod event;
 mod task;
 
+#[macro_use]
+mod macros;
+
 static mut MEMORY_SAFE: bool = false;
 
 #[no_mangle]
@@ -65,8 +68,6 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
 
     //Heap is working so we can use kprint
     io::kprint::init();
-
-    state().scheduler.create_test_process();
 
     //Set up the Interrupt Descriptor table
     interrupts::init(&mut memory_controller);
