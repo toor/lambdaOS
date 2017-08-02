@@ -10,6 +10,7 @@
 #![feature(abi_x86_interrupt)]
 #![feature(asm)]
 #![feature(box_syntax)]
+#![feature(drop_types_in_const)]
 
 extern crate rlibc;
 extern crate volatile;
@@ -42,6 +43,8 @@ mod util;
 mod event;
 mod task;
 
+static mut MEMORY_SAFE: bool = false;
+
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
     vga::clear_screen();
@@ -56,9 +59,19 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     
     //Remap kernel and set up a guard page
     let mut memory_controller = memory::init(boot_info);
-    
+
+    state();
+    unsafe { MEMORY_SAFE = true; }
+
+    //Heap is working so we can use kprint
+    io::kprint::init();
+
+    state().scheduler.create_test_process();
+
     //Set up the Interrupt Descriptor table
     interrupts::init(&mut memory_controller);
+
+    io::init();
 
     //if you see this message it's all good
     println!("It did not crash!");
@@ -84,6 +97,10 @@ fn enable_write_protect_bit() {
 
 pub fn state() -> &'static mut state::State {
     state::state()
+}
+
+pub fn memory_safe() -> bool {
+    unsafe { MEMORY_SAFE } //Static mut so requires unsafe block
 }
 
 #[lang = "eh_personality"] extern fn eh_personality() {}
