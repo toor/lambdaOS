@@ -40,6 +40,7 @@ mod state;
 mod debug;
 mod util;
 mod event;
+mod task;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
