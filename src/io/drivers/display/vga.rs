@@ -62,7 +62,7 @@ impl VGA {
         unsafe { self.frame.as_mut() }
     }
 
-    pub fn sync_buffer(&mut self, buffer: &mut TextBuffer) {
+    pub fn sync_buffer(&mut self, buffer: &TextBuffer) {
         let frame = self.frame();
         for row in 0..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {

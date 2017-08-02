@@ -39,7 +39,7 @@ impl TextBuffer {
     fn sync(&self) {
         if self.active {
             unsafe {
-                VGA.lock().sync_buffer(&mut self);
+                VGA.lock().sync_buffer(&self);
                 VGA.lock().update_cursor(BUFFER_HEIGHT - 1, self.column_position);
             }
         }
