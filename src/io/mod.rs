@@ -17,6 +17,7 @@ pub mod keyboard;
 pub mod serial;
 pub mod timer;
 pub mod drivers;
+pub mod kprint;
 
 pub trait InOut {
     //Read value from a port
@@ -155,4 +156,11 @@ impl ChainedPics {
             self.pics[0].end_of_interrupt();
         }   
     }
+}
+
+//Main init function
+pub fn init() {
+    serial::init();
+    timer::init();
+    event::keyboard::init();
 }
