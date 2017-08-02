@@ -56,7 +56,7 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     
     //Remap kernel and set up a guard page
     let mut memory_controller = memory::init(boot_info);
-
+    
     //Set up the Interrupt Descriptor table
     interrupts::init(&mut memory_controller);
 
@@ -80,6 +80,10 @@ fn enable_write_protect_bit() {
     use x86_64::registers::control_regs::{cr0, cr0_write, Cr0};
 
     unsafe { cr0_write(cr0() | Cr0::WRITE_PROTECT) };
+}
+
+pub fn state() -> &'static mut state::State {
+    state::state()
 }
 
 #[lang = "eh_personality"] extern fn eh_personality() {}
