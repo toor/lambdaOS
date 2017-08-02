@@ -16,3 +16,7 @@ pub extern fn sys_time() -> u64 {
 pub fn sys_test() -> u64 {
     unsafe { syscall::syscall6(16, 32, 64, 128, 256, 512, 1024) }
 }
+
+pub fn sys_exit(pid: usize) {
+    panic!("Unimplemented");
+}
