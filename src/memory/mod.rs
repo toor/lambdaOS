@@ -11,6 +11,7 @@ mod stack_allocator;
 
 pub const PAGE_SIZE: usize = 4096;
 
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Frame {
     number: usize,
@@ -73,6 +74,19 @@ impl MemoryController {
                                     ref mut frame_allocator,
                                     ref mut stack_allocator } = self;
         stack_allocator.alloc_stack(active_table, frame_allocator, size_in_pages)
+    }
+}
+
+static mut MEMORY_CONTROLLER: Option<&'static mut MemoryController> = None;
+
+pub fn memory_controller() -> &'static mut MemoryController {
+    unsafe {
+        match MEMORY_CONTROLLER {
+            Some(ref mut a) => a,
+            None => {
+                panic!("stack allocator called before initializing");
+            }
+        }
     }
 }
 
