@@ -81,8 +81,7 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     interrupts::init(&mut memory_controller);
 
     io::init();
-
-
+    
     kprint!("Time is {}", io::timer::real_time());
 
     kprint!("Hello there.");
