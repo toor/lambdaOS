@@ -210,7 +210,7 @@ impl Scheduler {
         } else {
             // call init fn
             
-            println!("Attempting to start process at {:x} {}", process.start_pointer, process.pid);
+            kprint!("Attempting to start process at {:x} {}", process.start_pointer, process.pid);
 
             unsafe {
                 asm!("movq $0, %rsp
