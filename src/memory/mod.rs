@@ -105,9 +105,9 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         .unwrap();
         
 
-    println!("kernel start: 0x{:x}, kernel end: 0x{:x}",
+    kprint!("kernel start: 0x{:x}, kernel end: 0x{:x}",
         kernel_start, kernel_end);
-    println!("multiboot start: 0x{:x}, multiboot end: 0x{:x}",
+    kprint!("multiboot start: 0x{:x}, multiboot end: 0x{:x}",
         boot_info.start_address(), boot_info.end_address());
 
     let mut frame_allocator = AreaFrameAllocator::new(

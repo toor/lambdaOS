@@ -31,7 +31,7 @@ fn test() {
 
                 use libtoorix;
                 let res = libtoorix::sys_time();
-                println!("{} {}", res, beans);
+                kprint!("{} {}", res, beans);
 
                 asm!("sti");
             }
@@ -85,7 +85,7 @@ impl Scheduler {
         {
             let procs = self.procs.lock();
             let process = procs.get(&pid);
-            println!("Initted proc 0 to {:?}", process);
+            kprint!("Initted proc 0 to {:?}", process);
         }
     }
 
@@ -93,7 +93,7 @@ impl Scheduler {
         // Create a new stack
         let new_stack = memory::memory_controller().alloc_stack(256)
             .expect("could not allocate new proc stack");
-        println!("Top of new stack: {:x}", new_stack.top());
+        kprint!("Top of new stack: {:x}", new_stack.top());
         self.create_process(fn_ptr, new_stack.top());
     }
 
@@ -105,7 +105,7 @@ impl Scheduler {
             // Init proc 0 for the main kernel thread
             let p = Process::new(self.pid_counter, start_fn, stack_pointer);
             self.procs.lock().insert(self.pid_counter, p);
-            println!("inserted proc {}, there are {} procs", self.pid_counter, self.procs.lock().len());
+            kprint!("inserted proc {}, there are {} procs", self.pid_counter, self.procs.lock().len());
             pid = self.pid_counter;
             self.pid_counter += 1;
         }

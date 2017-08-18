@@ -72,7 +72,7 @@ impl fmt::Debug for InterruptContext {
 pub unsafe fn test_interrupt() {
     use libtoorix;
     let res = libtoorix::sys_test();
-    print!("Syscall result is {}", res);
+    kprint!("Syscall result is {}", res);
     test_passed = res == 2016;
 
     if !test_passed {
@@ -138,7 +138,7 @@ pub fn init(memory_controller: &mut MemoryController) {
 }
 
 extern "x86-interrupt" fn dummy_error_handler(stack_frame: &mut ExceptionStackFrame) {
-    println!("\nEXCEPTION: UNHANDLED at {:#x}\n{:#?}",
+    kprint!("\nEXCEPTION: UNHANDLED at {:#x}\n{:#?}",
             stack_frame.instruction_pointer, stack_frame);
     loop {}
 }
@@ -147,26 +147,26 @@ extern "x86-interrupt" fn dummy_error_handler(stack_frame: &mut ExceptionStackFr
 extern "x86-interrupt" fn breakpoint_handler(
     stack_frame: &mut ExceptionStackFrame)
 {
-    println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
+    kprint!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
 extern "x86-interrupt" fn double_fault_handler(
     stack_frame: &mut ExceptionStackFrame, _error_code: u64)
 {
-    println!("\nEXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
+    kprint!("\nEXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
     loop {}
 }
 
 extern "x86-interrupt" fn divide_by_zero_handler(stack_frame: &mut ExceptionStackFrame)
 {
-    println!("EXCEPTION: DIVIDE BY ZERO\n{:#?}", stack_frame);
+    kprint!("EXCEPTION: DIVIDE BY ZERO\n{:#?}", stack_frame);
     loop {}
 }
 
 extern "x86-interrupt" fn invalid_opcode_handler(stack_frame: &mut ExceptionStackFrame)
 {
     unsafe {
-        println!("EXCEPTION: INVALID OPCODE at {:#x}\n{:#?}",
+        kprint!("EXCEPTION: INVALID OPCODE at {:#x}\n{:#?}",
             stack_frame.instruction_pointer, stack_frame);
         loop {}
     }
@@ -264,7 +264,7 @@ extern "x86-interrupt" fn serial_handler(stack_frame: &mut ExceptionStackFrame) 
 extern "x86-interrupt" fn page_fault_handler(stack_frame: &mut ExceptionStackFrame, error_code: PageFaultErrorCode) {
     use x86_64::registers::control_regs;
 
-    println!("\n EXCEPTION: PAGE FAULT while accessing {:#x}\nerror code: \
+    kprint!("\n EXCEPTION: PAGE FAULT while accessing {:#x}\nerror code: \
                                     {:?}\n{:#?}",
               control_regs::cr2(),
               error_code,
