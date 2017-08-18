@@ -137,7 +137,7 @@ pub fn init(memory_controller: &mut MemoryController) {
     IDT.load();
 
     unsafe {
-        PICS.lock().initialize();
+        PICS.lock().init();
     }
 }
 
