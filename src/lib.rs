@@ -32,6 +32,9 @@ extern crate x86;
 extern crate libtoorix;
 
 #[macro_use]
+mod macros;
+
+#[macro_use]
 mod vga;
 mod memory;
 mod interrupts;
@@ -42,9 +45,6 @@ mod debug;
 mod util;
 mod event;
 mod task;
-
-#[macro_use]
-mod macros;
 
 static mut MEMORY_SAFE: bool = false;
 
@@ -79,7 +79,6 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
 
     kprint!("Hello there.");
     //if you see this message it's all good
-    println!("It did not crash!");
 
     loop {}
 }
