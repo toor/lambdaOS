@@ -49,6 +49,14 @@ mod task;
 static mut MEMORY_SAFE: bool = false;
 
 #[no_mangle]
+#![allow(non_snake_case)]
+pub fn _UnwindResume() {
+    kprint!("UNWIND!");
+    state().scheduler.idle();
+}
+
+
+#[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
     vga::clear_screen();
     println!("Hello World{}", "!");
