@@ -135,6 +135,10 @@ pub fn init(memory_controller: &mut MemoryController) {
     }
 
     IDT.load();
+
+    unsafe {
+        PICS.lock().initialize();
+    }
 }
 
 extern "x86-interrupt" fn dummy_error_handler(stack_frame: &mut ExceptionStackFrame) {
