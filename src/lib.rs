@@ -49,7 +49,7 @@ mod task;
 static mut MEMORY_SAFE: bool = false;
 
 #[no_mangle]
-#![allow(non_snake_case)]
+#[allow(non_snake_case)]
 pub fn _UnwindResume() {
     kprint!("UNWIND!");
     state().scheduler.idle();
@@ -81,7 +81,7 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     interrupts::init(&mut memory_controller);
 
     io::init();
-    
+
     kprint!("Time is {}", io::timer::real_time());
 
     kprint!("Hello there.");
