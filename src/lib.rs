@@ -74,6 +74,10 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
 
     io::init();
 
+
+    kprint!("Time is {}", io::timer::real_time());
+
+    kprint!("Hello there.");
     //if you see this message it's all good
     println!("It did not crash!");
 
