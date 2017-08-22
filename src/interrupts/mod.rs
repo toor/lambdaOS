@@ -138,6 +138,12 @@ pub fn init(memory_controller: &mut MemoryController) {
 
     unsafe {
         PICS.lock().init();
+
+        test_interrupt();
+
+        if test_passed {
+            kprint!("Test passed");
+        }
     }
 }
 
