@@ -115,7 +115,7 @@ impl ChainedPics {
         }
     }
 
-    unsafe fn init(&mut self) {
+    pub unsafe fn init(&mut self) {
         let mut wait_port: Port<u8> = Port::new(0x80);
         let mut wait = || wait_port.write(0); //Simple closure
 
