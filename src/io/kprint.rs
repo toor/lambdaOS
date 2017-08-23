@@ -6,6 +6,7 @@ use alloc::string::String;
 use io::serial;
 use spin::Mutex;
 
+//We create the buffer as a heap-allocated, growable array of Strings
 pub struct KPrintBuffer {
     buffer: Box<Vec<String>>,
     partial: String,
@@ -43,7 +44,7 @@ pub fn init() {
             buffer: Box::new(vec!()),
             partial: String::new(),
         }));
-    }
+    
 }
 
 pub fn print(args: fmt::Arguments) {
