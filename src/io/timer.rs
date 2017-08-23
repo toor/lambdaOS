@@ -9,6 +9,7 @@ static mut timer_ticks: u64 = 0;
 static mut timer_seconds: u64 = 0;
 static mut timer_millis: u16 = 0;
 
+//Start the PIT circuit.
 pub fn init() {
     let divisor: u32 = PIT_SCALE / SUBTICKS_PER_TICK as u32;
     unsafe {
@@ -20,18 +21,20 @@ pub fn init() {
     }
 }
 
+//An interrupt was called for a timer.
 pub fn timer_interrupt() {
     unsafe {
         timer_ticks += 1;
         timer_millis += 1;
 
-        if timer_millis == SUBTICKS_PER_TICK { //Another second passed, increment the seconds counter and reset millis counter
-            timer_seconds += 1;
+        if timer_millis == SUBTICKS_PER_TICK {
+            timer_seconds += 1; //Another second passed, increment seconds counter and reset ms counter.
             timer_millis = 0;
         }
     }
 }
 
+//How long was it since we started the counter.
 pub fn time_since_start() -> Time {
     unsafe { Time::new(timer_seconds, timer_millis as u32 * 1000, 0) }
 }
@@ -41,6 +44,7 @@ pub fn monotonic_clock() -> u64 {
     unsafe { timer_ticks }
 }
 
+//Real time in seconds
 pub fn real_time() -> u64 {
     unsafe { timer_start + timer_seconds }
 }
@@ -98,7 +102,7 @@ impl RealTimeClock {
             register_b = self.read(0xB);
         }
 
-        if register_b & 4 != 4 {
+        if register_b & 4 != 4 { //If bitwise AND register_b does not give a result of 4
             second = cvt_bcd(second);
             minute = cvt_bcd(second);
             hour = cvt_bcd(hour & 0x7F) | (hour & 0x80);
@@ -114,6 +118,7 @@ impl RealTimeClock {
 
         year += 1000 + century * 100;
 
+        //Years since 1970 as seconds
         let mut secs: u64 = (year as u64 - 1970) * 31536000;
 
         let mut leap_days = (year as u64 - 1972) / 4 + 1;
@@ -148,7 +153,8 @@ impl RealTimeClock {
         unsafe {
             secs += (timer_millis / 1000) as u64;
         }
-
+        
+        //Start our counter abstraction, from the seconds we retriveved from the hardware clock.
         Time::new(secs, 0, 0)
     }
 }

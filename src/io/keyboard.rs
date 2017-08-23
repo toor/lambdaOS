@@ -75,9 +75,6 @@ impl Modifiers {
     }
 
     fn update(&mut self, scancode: u8) {
-
-        // printk!("{:x} {:x}", self.last_key, scancode);
-
         match scancode {
             0x5B => self.l_cmd = true,
             0xDB => self.l_cmd = false,
@@ -90,7 +87,7 @@ impl Modifiers {
             0x1D => self.l_ctrl = true,
             0x9D => self.l_ctrl = false,
             0x3A => self.caps_lock = !self.caps_lock,
-            _ => {}
+            _ => {},
         }
 
         self.last_key = scancode;
@@ -116,13 +113,13 @@ impl Modifiers {
     }
 }
 
-/// Our global keyboard state, protected by a mutex.
+// Our global keyboard state, protected by a mutex.
 static STATE: Mutex<State> = Mutex::new(State {
     port: unsafe { Port::new(PORT) },
     modifiers: Modifiers::new(),
 });
 
-/// Try to read a single input character
+//Try to read a single input character.
 pub fn read() {
 
     let mut state = STATE.lock();
@@ -138,7 +135,6 @@ pub fn read() {
     //Modifiers get first chance at the scancode
     state.modifiers.update(scancode);
 
-    // We don't map any keys > 127.
     if scancode > 127 {
         return;
     }

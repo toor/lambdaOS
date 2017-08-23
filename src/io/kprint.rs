@@ -11,6 +11,7 @@ pub struct KPrintBuffer {
     partial: String,
 }
 
+//Let us call write methods on the KPrintBuffer struct.
 impl ::core::fmt::Write for KPrintBuffer {
     fn write_str(&mut self, ss: &str) -> ::core::fmt::Result {
         
@@ -32,8 +33,10 @@ impl ::core::fmt::Write for KPrintBuffer {
     }
 }
 
+//Our buffer static. We wrap the struct in a Mutex and an Option, and initalize it as None.
 static mut KPRINT_BUFFER: Option<Mutex<KPrintBuffer>> = None;
 
+//Create the Mutex state.
 pub fn init() {
     unsafe {
         KPRINT_BUFFER = Some(Mutex::new(KPrintBuffer {
@@ -46,9 +49,9 @@ pub fn init() {
 pub fn print(args: fmt::Arguments) {
     unsafe {
         match KPRINT_BUFFER {
-            Some(ref mut kp) => {
+            Some(ref mut kp) => { //If the KRPINT_BUFFER is Some (as it should be if we called init)
                 use core::fmt::Write;
-                let mut pb = kp.lock();
+                let mut pb = kp.lock(); 
                 (*pb).write_fmt(args).unwrap()
             },
             None => {},
