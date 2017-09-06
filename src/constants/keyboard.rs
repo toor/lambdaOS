@@ -8,8 +8,6 @@ pub struct Key {
     pub scancode: u8,
 }
 
-/// Super Boring Scancode Mappings below!
-
 pub const ZERO_KEY: Key = Key {
     lower: '0',
     upper: ')',
