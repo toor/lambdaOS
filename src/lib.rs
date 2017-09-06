@@ -70,7 +70,8 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     
     //Remap kernel and set up a guard page
     let mut memory_controller = memory::init(boot_info);
-
+    
+    //Create a new state instance.
     state();
     unsafe { MEMORY_SAFE = true; }
 
