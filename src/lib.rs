@@ -59,7 +59,6 @@ pub fn _UnwindResume() {
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
     vga::clear_screen();
-    kprint!("Hello World{}", "!");
 
     let boot_info = unsafe{ multiboot2::load(multiboot_information_address) };
 
