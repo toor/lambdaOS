@@ -44,7 +44,7 @@ pub fn init() {
             buffer: Box::new(vec!()),
             partial: String::new(),
         }));
-    
+    }
 }
 
 pub fn print(args: fmt::Arguments) {
