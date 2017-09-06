@@ -19,7 +19,6 @@ use constants::syscall::SYSCALL_INTERRUPT;
 use constants::timer::TIMER_INTERRUPT;
 
 use io::{keyboard, serial, timer, ChainedPics};
-use state::state;
 
 use spin::Mutex;
 
@@ -46,7 +45,7 @@ struct InterruptContext {
     r13: u64,
     r14: u64,
     r15: u64,
- }
+}
 
 impl fmt::Debug for InterruptContext {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -192,7 +191,7 @@ extern "x86-interrupt" fn syscall_handler(stack_frame: &mut ExceptionStackFrame)
         //An interrupt pushes 14 u64s to the stack, but we plan to return RAX, so we set the register directly rather than popping it from the stack
         my_sp -= 8 * 13;
 
-        state().interrupt_count[SYSCALL_INTERRUPT as usize] += 1;
+        ::state().interrupt_count[SYSCALL_INTERRUPT as usize] += 1;
 
         let sp = my_sp + 0x18;
 
@@ -240,19 +239,19 @@ extern "x86-interrupt" fn timer_handler(stack_frame: &mut ExceptionStackFrame) {
 
         my_sp -= 8 * 10;
 
-        state().interrupt_count[TIMER_INTERRUPT as usize] += 1;
+        ::state().interrupt_count[TIMER_INTERRUPT as usize] += 1;
 
         timer::timer_interrupt();
-        state().scheduler.update_trap_frame(my_sp);
+        ::state().scheduler.update_trap_frame(my_sp);
         PICS.lock().notify_end_of_interrupt(TIMER_INTERRUPT);
 
-        state().scheduler.schedule();
+        ::state().scheduler.schedule();
     }
 }
 
 extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackFrame)
 {
-    state().interrupt_count[KEYBOARD_INTERRUPT as usize] += 1;
+    ::state().interrupt_count[KEYBOARD_INTERRUPT as usize] += 1;
 
     keyboard::read();
 
@@ -262,7 +261,7 @@ extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackFrame
 }
 
 extern "x86-interrupt" fn serial_handler(stack_frame: &mut ExceptionStackFrame) {
-    state().interrupt_count[SERIAL_INTERRUPT as usize] += 1;
+    ::state().interrupt_count[SERIAL_INTERRUPT as usize] += 1;
 
     serial::read();
 
