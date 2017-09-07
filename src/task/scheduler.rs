@@ -91,7 +91,7 @@ impl Scheduler {
 
     pub fn start_new_process(&mut self, fn_ptr: usize) {
         // Create a new stack
-        let new_stack = memory::memory_controller().alloc_stack(256).unwrap();
+        let new_stack = memory::memory_controller().alloc_stack(256).expect("failed to create a process stack");
         kprint!("Top of new stack: {:x}", new_stack.top());
         self.create_process(fn_ptr, new_stack.top());
     }
