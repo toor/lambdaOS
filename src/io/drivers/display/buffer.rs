@@ -164,3 +164,9 @@ pub fn toggle() {
         ACTIVE_BUFFER.lock().sync();
     }
 }
+
+pub fn clear_screen() {
+    for _ in 0..BUFFER_HEIGHT {
+        println!("");
+    }
+}
