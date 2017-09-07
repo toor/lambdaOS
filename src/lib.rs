@@ -35,7 +35,6 @@ extern crate libtoorix;
 mod macros;
 
 #[macro_use]
-mod vga;
 mod memory;
 mod interrupts;
 mod constants;
@@ -46,6 +45,8 @@ mod util;
 mod event;
 mod task;
 
+use io::drivers::display::buffer;
+
 static mut MEMORY_SAFE: bool = false;
 
 #[no_mangle]
@@ -55,10 +56,9 @@ pub fn _UnwindResume() {
     state().scheduler.idle();
 }
 
-
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
-    vga::clear_screen();
+    buffer::clear_screen();
 
     let boot_info = unsafe{ multiboot2::load(multiboot_information_address) };
 
@@ -76,11 +76,15 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     //Heap is working so we can use kprint
     io::kprint::init();
+    
+    state().scheduler.create_test_process();
 
     //Set up the Interrupt Descriptor table
-    interrupts::init(&mut memory_controller);
+    interrupts::init();
 
     io::init();
+
+    state().scheduler.enable_interrupts();
     
     //If you see this message everything is ok
     kprint!("Hello there.");
@@ -107,6 +111,7 @@ fn enable_write_protect_bit() {
 pub fn state() -> &'static mut state::State {
     state::state()
 }
+
 
 pub fn memory_safe() -> bool {
     unsafe { MEMORY_SAFE } //Static mut so requires unsafe block
