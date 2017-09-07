@@ -105,9 +105,9 @@ lazy_static! {
     };
 }
 
-pub fn init(memory_controller: &mut MemoryController) {
+pub fn init() {
     //Create a stack for the double fault handler
-    let double_fault_stack = memory_controller.alloc_stack(1)
+    let double_fault_stack = memory::memory_controller().alloc_stack(1)
         .expect("Could not allocate double fault stack");
 
     let tss = TSS.call_once(|| {
