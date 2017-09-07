@@ -1,16 +1,16 @@
 pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::remap_the_kernel;
-use self::paging::{Page, PhysicalAddress, VirtualAddress};
+use self::paging::{Page, PhysicalAddress, VirtualAddress, ActivePageTable};
 use super::allocator;
 pub use self::stack_allocator::Stack;
 use multiboot2::BootInformation;
+use alloc::boxed::Box;
 
 mod area_frame_allocator;
 pub mod paging;
 mod stack_allocator;
 
 pub const PAGE_SIZE: usize = 4096;
-
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Frame {
@@ -63,21 +63,30 @@ pub trait FrameAllocator {
 }
 
 pub struct MemoryController {
-    active_table: paging::ActivePageTable,
-    frame_allocator: AreaFrameAllocator,
     stack_allocator: stack_allocator::StackAllocator,
 }
 
 impl MemoryController {
     pub fn alloc_stack(&mut self, size_in_pages: usize) -> Option<Stack> {
-        let &mut MemoryController { ref mut active_table,
-                                    ref mut frame_allocator,
-                                    ref mut stack_allocator } = self;
-        stack_allocator.alloc_stack(active_table, frame_allocator, size_in_pages)
+        let &mut MemoryController { ref mut stack_allocator } = self;
+        stack_allocator.alloc_stack(size_in_pages)
     }
 }
 
 static mut MEMORY_CONTROLLER: Option<&'static mut MemoryController> = None;
+static mut ACTIVE_TABLE_PTR: Option<&'static mut ActivePageTable> = None;
+static mut AREA_FRAME_ALLOCATOR_PTR: Option<&'static mut AreaFrameAllocator> = None;
+
+pub fn area_frame_allocator() -> &'static mut AreaFrameAllocator {
+    unsafe {
+        match AREA_FRAME_ALLOCATOR_PTR {
+            Some(ref mut a) => a,
+            None => {
+                panic!("frame_allocator called before init");
+            }
+        }
+    }
+}
 
 pub fn memory_controller() -> &'static mut MemoryController {
     unsafe {
@@ -90,7 +99,18 @@ pub fn memory_controller() -> &'static mut MemoryController {
     }
 }
 
-pub fn init(boot_info: &BootInformation) -> MemoryController {
+pub fn page_table() -> &'static mut ActivePageTable {
+    unsafe {
+        match ACTIVE_TABLE_PTR {
+            Some(ref mut a) => a,
+            None => {
+                panic!("active page table called before init");
+            }
+        }
+    }
+}
+
+pub fn init(boot_info: &BootInformation) {
     assert_has_not_been_called!("memory::init must only be called once");
 
     let memory_map_tag = boot_info.memory_map_tag()
@@ -110,35 +130,43 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     kprint!("multiboot start: 0x{:x}, multiboot end: 0x{:x}",
         boot_info.start_address(), boot_info.end_address());
 
-    let mut frame_allocator = AreaFrameAllocator::new(
+    let mut allocator = AreaFrameAllocator::new(
         kernel_start as usize, kernel_end as usize, boot_info.start_address(),
         boot_info.end_address(), memory_map_tag.memory_areas());
 
-    let mut active_table = paging::remap_the_kernel(&mut frame_allocator, boot_info);
+    let mut active_table = paging::remap_the_kernel(&mut allocator, boot_info);
 
     use self::paging::Page;
 
     use allocator::{HEAP_START, HEAP_SIZE};
 
     let heap_start_page = Page::containing_address(HEAP_START);
-        let heap_end_page = Page::containing_address(HEAP_START + HEAP_SIZE-1);
+    let heap_end_page = Page::containing_address(HEAP_START + HEAP_SIZE-1);
 
     for page in Page::range_inclusive(heap_start_page, heap_end_page) {
-            active_table.map(page, paging::WRITABLE, &mut frame_allocator);
-        }
+        active_table.map(page, paging::WRITABLE, &mut allocator);
+    }
+    
+    unsafe { allocator::init(HEAP_START, HEAP_SIZE); }
 
-    unsafe { allocator::init(HEAP_START, HEAP_SIZE) };
+    unsafe {
+        AREA_FRAME_ALLOCATOR_PTR = Some(&mut *Box::into_raw(Box::new(allocator)));
+    }
+
+    unsafe {
+        ACTIVE_TABLE_PTR = Some(&mut *Box::into_raw(Box::new(active_table)))
+    }
     
     let stack_allocator = {
         let stack_alloc_start = heap_end_page + 1;
-        let stack_alloc_end = stack_alloc_start + 100;
+        let stack_alloc_end = stack_alloc_start + 10000;
         let stack_alloc_range = Page::range_inclusive(stack_alloc_start, stack_alloc_end);
         stack_allocator::StackAllocator::new(stack_alloc_range)
     };
 
-    MemoryController {
-        active_table: active_table,
-        frame_allocator: frame_allocator,
+    let mc = MemoryController {
         stack_allocator: stack_allocator,
-    }
+    };
+
+    unsafe { MEMORY_CONTROLLER = Some(&mut *Box::into_raw(Box::new(mc))) }
 }
