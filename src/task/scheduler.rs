@@ -91,8 +91,7 @@ impl Scheduler {
 
     pub fn start_new_process(&mut self, fn_ptr: usize) {
         // Create a new stack
-        let new_stack = memory::memory_controller().alloc_stack(256)
-            .expect("could not allocate new proc stack");
+        let new_stack = memory::memory_controller().alloc_stack(256).unwrap();
         kprint!("Top of new stack: {:x}", new_stack.top());
         self.create_process(fn_ptr, new_stack.top());
     }
@@ -208,8 +207,6 @@ impl Scheduler {
                         iretq" : /* no outputs */ : "r"(process.trap_frame) : );
             }
         } else {
-            // call init fn
-            
             kprint!("Attempting to start process at {:x} {}", process.start_pointer, process.pid);
 
             unsafe {
