@@ -18,9 +18,13 @@ macro_rules! kprint {
 
 macro_rules! print {
    ($($arg:tt)*) => ({
-      //$crate::io::drivers::display::text_buffer::print(format_args!($($arg)*));
-      $crate::io::kprint::print(format_args!($($arg)*));
+      $crate::io::drivers::display::buffer::print(format_args!($($arg)*));
    });
+}
+
+macro_rules! println {
+    ($fmt:expr) => (print!(concat!($fmt, "\n")));
+    ($fmt:expr, $($arg:tt)*) => (print!(concat!($fmt, "\n"), $($arg)*));
 }
 
 macro_rules! format {
