@@ -11,6 +11,7 @@
 #![feature(asm)]
 #![feature(box_syntax)]
 #![feature(drop_types_in_const)]
+#![allow(warnings)]
 
 extern crate rlibc;
 extern crate volatile;
