@@ -15,67 +15,6 @@ const MODE_8086: u8 = 0x01;
 pub mod keyboard;
 pub mod drivers;
 
-pub trait InOut {
-    //Read value from a port
-    unsafe fn port_in(port: u16) -> Self;
-    
-    //Write some bytes to a port
-    unsafe fn port_out(port: u16, value: Self);
-}
-
-impl InOut for u8 {
-    unsafe fn port_in(port: u16) -> u8 {
-        inb(port) //Read one byte.
-    }
-
-    unsafe fn port_out(port: u16, value: u8) {
-        outb(port, value); //Write one byte.
-    }
-}
-
-impl InOut for u16 {
-    unsafe fn port_in(port: u16) -> u16 {
-        inw(port) //Read a word (16 bits because x86 is odd)
-    }
-    unsafe fn port_out(port: u16, value: u16) {
-        outw(port, value); //Write a word
-    }
-}
-
-impl InOut for u32 {
-    unsafe fn port_in(port: u16) -> u32 {
-        inl(port) //Read 32 bits
-    }
-    unsafe fn port_out(port: u16, value: u32) {
-        outl(port, value); //Write 32 bits
-    }
-}
-
-pub struct Port<T: InOut> {
-    port: u16,
-    phantom: PhantomData<T>,
-}
-
-impl<T: InOut> Port<T> {
-    //Create new port
-    const unsafe fn new(port: u16) -> Port<T> {
-        Port {
-            port: port,
-            phantom: PhantomData,
-        }
-    }
-
-    pub fn read(&mut self) -> T {
-        unsafe { T::port_in(self.port) }
-    }
-
-    pub fn write(&mut self, value: T) {
-        unsafe {
-            T::port_out(self.port, value);
-        }
-    }
-}
-
 struct Pic {
     offset: u8,
     command: Port<u8>, //Commands are sent on one address and data on the other
@@ -153,11 +92,4 @@ impl ChainedPics {
             self.pics[0].end_of_interrupt();
         }   
     }
-}
-
-//Main init function
-pub fn init() {
-    serial::init();
-    timer::init();
-    event::keyboard::init();
 }
