@@ -24,7 +24,7 @@ pub struct KeyEvent {
     pub controls: ControlKeyState,
 }
 
-pub struct KeyEventScreenWriter;
+pub struct KeyEventScreenWriter {}
 
 impl IsListener<KeyEvent> for KeyEventScreenWriter {
     fn handles_event(&self, ev: &KeyEvent) -> bool {
@@ -48,7 +48,7 @@ impl IsListener<KeyEvent> for KeyEventScreenWriter {
     }
 }
 
-pub struct ToggleWatcher;
+pub struct ToggleWatcher {}
 
 impl IsListener<KeyEvent> for ToggleWatcher {
     fn handles_event(&self, ev: &KeyEvent) -> bool {
@@ -62,7 +62,7 @@ impl IsListener<KeyEvent> for ToggleWatcher {
     }
 }
 
-pub struct DebugWatcher;
+pub struct DebugWatcher {}
 
 impl IsListener<KeyEvent> for DebugWatcher {
     fn handles_event(&self, ev: &KeyEvent) -> bool {
@@ -79,7 +79,7 @@ pub fn init() {
     use alloc::boxed::Box;
     use state;
 
-    state::register_key_event_listener(Box::new(KeyEventScreenWriter));
-    state::register_key_event_listener(Box::new(ToggleWatcher));
-    state::register_key_event_listener(Box::new(DebugWatcher));
+    state::register_key_event_listener(Box::new(KeyEventScreenWriter {}));
+    state::register_key_event_listener(Box::new(ToggleWatcher {}));
+    state::register_key_event_listener(Box::new(DebugWatcher {}));
 }
