@@ -25,8 +25,12 @@ use spin::Mutex;
 static TSS: Once<TaskStateSegment> = Once::new();
 static GDT: Once<gdt::Gdt> = Once::new();
 
+//Wrap the PICS static in a mutex to avoid data races.
+pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
+
 const DOUBLE_FAULT_IST_INDEX: usize = 0;
 
+//Boolean to check if a syscall interrupt worked.
 pub static mut test_passed: bool = false;
 
 #[repr(C, packed)]
@@ -75,7 +79,7 @@ pub unsafe fn test_interrupt() {
     test_passed = res == 2016;
 
     if !test_passed {
-        panic!("test SYSCALL passed");
+        panic!("test SYSCALL failed.");
     }
 }
 
@@ -281,5 +285,3 @@ extern "x86-interrupt" fn page_fault_handler(stack_frame: &mut ExceptionStackFra
 
     loop {}
 }
-
-pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
