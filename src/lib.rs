@@ -80,10 +80,6 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     //Set up the Interrupt Descriptor table
     interrupts::init();
-
-    io::init();
-
-    state().scheduler.enable_interrupts();
 }
 
 fn enable_nxe_bit() {
