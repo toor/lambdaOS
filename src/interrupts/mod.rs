@@ -263,11 +263,11 @@ extern "x86-interrupt" fn timer_handler(stack_frame: &mut ExceptionStackFrame) {
 
 extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackFrame)
 {
-    ::state().interrupt_count[KEYBOARD_INTERRUPT as usize] += 1;
-
-    keyboard::read();
-
     unsafe {
+        ::state().interrupt_count[KEYBOARD_INTERRUPT as usize] += 1;
+
+        keyboard::read();
+
         PICS.lock().notify_end_of_interrupt(KEYBOARD_INTERRUPT);
     }
 }
