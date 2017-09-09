@@ -13,10 +13,7 @@ const MODE_8086: u8 = 0x01;
 
 #[macro_use]
 pub mod keyboard;
-pub mod serial;
-pub mod timer;
 pub mod drivers;
-pub mod kprint;
 
 pub trait InOut {
     //Read value from a port
