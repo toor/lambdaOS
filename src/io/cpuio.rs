@@ -37,3 +37,70 @@ mod x86 {
         asm!("outl %eax, %dx" :: "{dx}"(port), "{eax}"(value) :: "volatile");
     }
 }
+
+pub trait InOut {
+    unsafe fn port_in(port: u16) -> Self;
+    unsafe fn port_out(port: u16, value: Self);
+}
+
+impl InOut for u8 {
+    unsafe fn port_in(port: u16) -> u8 { inb(port) }
+    unsafe fn port_out(port: u16, value: u8) { outb(value, port); }
+}
+
+impl InOut for u16 {
+    unsafe fn port_in(port: u16) -> u16 { inw(port) }
+    unsafe fn port_out(port: u16, value: u16) { outw(value, port); }
+}
+
+impl InOut for u32 {
+    unsafe fn port_in(port: u16) -> u32 { inl(port) }
+    unsafe fn port_out(port: u16, value: u32) { outl(value, port); }
+}
+
+#[derive(Debug)]
+pub struct Port<T: InOut> {
+    // Port address.
+    port: u16,
+
+    // Zero-byte placeholder.  This is only here so that we can have a
+    // type parameter `T` without a compiler error.
+    phantom: PhantomData<T>,
+}
+
+impl<T: InOut> Port<T> {
+    pub const unsafe fn new(port: u16) -> Port<T> {
+        Port { port: port, phantom: PhantomData }
+    }
+
+    pub fn read(&mut self) -> T {
+        unsafe { T::port_in(self.port) }
+    }
+
+    pub fn write(&mut self, value: T) {
+        unsafe { T::port_out(self.port, value); }
+    }
+}
+
+#[derive(Debug)]
+pub struct UnsafePort<T: InOut> {
+    port: u16,
+    phantom: PhantomData<T>,
+}
+
+impl<T: InOut> UnsafePort<T> {
+    // Create a new I/O port.
+    pub const unsafe fn new(port: u16) -> UnsafePort<T> {
+        UnsafePort { port: port, phantom: PhantomData }
+    }
+
+    // Read data from the port.
+    pub unsafe fn read(&mut self) -> T {
+        T::port_in(self.port)
+    }
+
+    // Write data to the port.
+    pub unsafe fn write(&mut self, value: T) {
+        T::port_out(self.port, value);
+    }
+}
