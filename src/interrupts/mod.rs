@@ -113,35 +113,43 @@ pub fn init() {
     //Create a stack for the double fault handler
     let double_fault_stack = memory::memory_controller().alloc_stack(1)
         .expect("Could not allocate double fault stack");
-
+    
+    //Create the Task State Segment.
     let tss = TSS.call_once(|| {
         let mut tss = TaskStateSegment::new();
         tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] = VirtualAddress(
             double_fault_stack.top());
         tss
     });
-
+    
+    //Placeholders to for the GDT to use.
     let mut code_selector = SegmentSelector(0);
     let mut tss_selector = SegmentSelector(0);
-
+    
+    //Create a new GDT with the given properties.
     let gdt = GDT.call_once(|| {
         let mut gdt = gdt::Gdt::new();
         code_selector = gdt.add_entry(gdt::Descriptor::kernel_code_segment());
         tss_selector = gdt.add_entry(gdt::Descriptor::tss_segment(&tss));
         gdt
     });
+    //Load this new GDT.
     gdt.load();
-
+    
     unsafe {
+        //Reload the code segment register and load our TSS.
         set_cs(code_selector);
         load_tss(tss_selector);
     }
-
+    
+    //Load our Interrupt Descriptor table.
     IDT.load();
 
     unsafe {
+        //Lock the PIC chips and initialize.
         PICS.lock().init();
-
+        
+        //Test that the PICS work ok by triggering an interrupt.
         test_interrupt();
 
         if test_passed {
