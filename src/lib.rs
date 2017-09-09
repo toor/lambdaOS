@@ -48,8 +48,6 @@ mod task;
 
 use io::drivers::display::buffer;
 
-static mut MEMORY_SAFE: bool = false;
-
 #[no_mangle]
 #[allow(non_snake_case)]
 pub fn _UnwindResume() {
@@ -70,13 +68,6 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     
     //Remap kernel and set up a guard page
     let mut memory_controller = memory::init(boot_info);
-    
-    //Create a new state instance.
-    state();
-    unsafe { MEMORY_SAFE = true; }
-
-    //Heap is working so we can use kprint
-    io::kprint::init();
 
     //Set up the Interrupt Descriptor table
     interrupts::init();
@@ -96,15 +87,6 @@ fn enable_write_protect_bit() {
     use x86_64::registers::control_regs::{cr0, cr0_write, Cr0};
 
     unsafe { cr0_write(cr0() | Cr0::WRITE_PROTECT) };
-}
-
-pub fn state() -> &'static mut state::State {
-    state::state()
-}
-
-
-pub fn memory_safe() -> bool {
-    unsafe { MEMORY_SAFE } //Static mut so requires unsafe block
 }
 
 #[lang = "eh_personality"] extern fn eh_personality() {}
