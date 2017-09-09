@@ -121,7 +121,6 @@ static STATE: Mutex<State> = Mutex::new(State {
 
 //Try to read a single input character.
 pub fn read() {
-
     let mut state = STATE.lock();
 
     // Read a single scancode off our keyboard port.

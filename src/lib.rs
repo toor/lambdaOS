@@ -84,9 +84,6 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     io::init();
 
     state().scheduler.enable_interrupts();
-
-    kprint!("Idling.");
-    state().scheduler.idle();
 }
 
 fn enable_nxe_bit() {
