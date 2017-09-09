@@ -77,8 +77,6 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     //Heap is working so we can use kprint
     io::kprint::init();
-    
-    state().scheduler.create_test_process();
 
     //Set up the Interrupt Descriptor table
     interrupts::init();
@@ -86,11 +84,9 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     io::init();
 
     state().scheduler.enable_interrupts();
-    
-    //If you see this message everything is ok
-    kprint!("Hello there.");
 
-    loop {}
+    kprint!("Idling.");
+    state().scheduler.idle();
 }
 
 fn enable_nxe_bit() {
