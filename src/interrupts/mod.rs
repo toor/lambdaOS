@@ -68,14 +68,14 @@ pub unsafe extern "C" fn rust_interrupt_handler(ctx: &InterruptContext) {
                 }
             }
         }
-        0x80 => println!("This isn't actually Linux, sorry about that.");
+        0x80 => println!("This isn't actually Linux, sorry about that."),
         _ => {
             println!("Unknown interrupt: #{}", ctx.int_id);
             loop {}
         }
     }
 
-    PICS.lock().notify_end_of_interrupt();
+    PICS.lock().notify_end_of_interrupt(ctx.int_id as u8);
 }
 
 struct Idt {
@@ -102,7 +102,7 @@ impl Idt {
             base: &self.table[0] as *const IdtEntry as u64,
             limit: (size_of::<IdtEntry>() * IDT_ENTRY_COUNT) as u16,
         };
-        x86::dtables::lidt(&pointer);
+        x86::shared::dtables::lidt(&pointer);
     }
 }
 
