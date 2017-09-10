@@ -1,7 +1,7 @@
 use core::mem::size_of;
 use core::ptr;
 use memory;
-use io::{ChainedPics};
+use io::{keyboard, ChainedPics};
 use spin::Mutex;
 use x86;
 use x86::shared::irq::IdtEntry;
@@ -37,13 +37,13 @@ pub struct InterruptContext {
 
 fn cpu_exception_handler(ctx: &InterruptContext) {
     //Print some general info.
-    println!("{}, error: 0x{:x}", x86::irq::EXCEPTIONS[ctx.int_id as usize],
+    println!("{}, error: 0x{:x}", x86::shared::irq::EXCEPTIONS[ctx.int_id as usize],
              ctx.error_code);
 
     //Match against error codes we know about and print more info if we have it.
     match ctx.int_id {
         14 => {
-            let err = x86::irq::PageFaultError::from_bits(ctx.error_code);
+            let err = x86::bits64::irq::PageFaultError::from_bits(ctx.error_code);
             println!("{:?}", err);
         }
 
@@ -98,7 +98,7 @@ impl Idt {
     }
 
     unsafe fn load(&self) {
-        let pointer = x86::dtables::DescriptorTablePointer {
+        let pointer = x86::shared::dtables::DescriptorTablePointer {
             base: &self.table[0] as *const IdtEntry as u64,
             limit: (size_of::<IdtEntry>() * IDT_ENTRY_COUNT) as u16,
         };
@@ -130,7 +130,7 @@ pub unsafe fn initialize() {
     test_interrupt();
     
     //Turn on real interrupts.
-    x86::irq::enable();
+    x86::shared::irq::enable();
 }
 
 const fn missing_handler() -> IdtEntry {
