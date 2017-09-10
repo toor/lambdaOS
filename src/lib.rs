@@ -29,6 +29,7 @@ extern crate hole_list_allocator as allocator;
 #[macro_use]
 extern crate lazy_static;
 extern crate bit_field;
+#[macro_use(int)]
 extern crate x86;
 extern crate libtoorix;
 
@@ -40,20 +41,8 @@ mod memory;
 mod interrupts;
 mod constants;
 mod io;
-mod state;
-mod debug;
-mod util;
-mod event;
-mod task;
 
 use io::drivers::display::buffer;
-
-#[no_mangle]
-#[allow(non_snake_case)]
-pub fn _UnwindResume() {
-    kprint!("UNWIND!");
-    state().scheduler.idle();
-}
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
@@ -70,7 +59,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     let mut memory_controller = memory::init(boot_info);
 
     //Set up the Interrupt Descriptor table
-    interrupts::init();
+    interrupts::initialize();
 }
 
 fn enable_nxe_bit() {
@@ -94,7 +83,7 @@ fn enable_write_protect_bit() {
 #[lang = "panic_fmt"]
 #[no_mangle]
 pub extern fn panic_fmt(fmt: core::fmt::Arguments, file: &'static str, line: u32) -> ! {
-    kprint!("\n\nPANIC in {} at line {}:", file, line);
-    kprint!("    {}", fmt);
+    println!("\n\nPANIC in {} at line {}:", file, line);
+    println!("    {}", fmt);
     loop{}
 }
