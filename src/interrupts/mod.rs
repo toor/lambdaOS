@@ -1,7 +1,6 @@
 use core::mem::size_of;
 use core::ptr;
 use memory;
-use constants::keyboard::KEYBOARD_INTERRUPT;
 use io::{ChainedPics};
 use spin::Mutex;
 use x86;
@@ -21,18 +20,143 @@ extern {
 
 #[repr(C, packed)]
 pub struct InterruptContext {
-    rax: u64,
-    rbx: u64,
-    rcx: u64,
-    rdx: u64,
     rsi: u64,
     rdi: u64,
-    r8: u64,
-    r9: u64,
-    r10: u64,
     r11: u64,
-    r12: u64,
-    r13: u64,
-    r14: u64,
-    r15: u64,
+    r10: u64,
+    r9: u64,
+    r8: u64,
+    rdx: u64,
+    rcx: u64,
+    rax: u64,
+    int_id: u32,
+    _pad_1: u32,
+    error_code: u32,
+    _pad_2: u32,
+}
+
+fn cpu_exception_handler(ctx: &InterruptContext) {
+    //Print some general info.
+    println!("{}, error: 0x{:x}", x86::irq::EXCEPTIONS[ctx.int_id as usize],
+             ctx.error_code);
+
+    //Match against error codes we know about and print more info if we have it.
+    match ctx.int_id {
+        14 => {
+            let err = x86::irq::PageFaultError::from_bits(ctx.error_code);
+            println!("{:?}", err);
+        }
+
+        _ => {}
+    }
+    
+    //Just loop.
+    loop {}
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rust_interrupt_handler(ctx: &InterruptContext) {
+    match ctx.int_id {
+        0x00..0x0F => cpu_exception_handler(ctx),
+        0x20 => {/*Timer*/}
+        0x21 => {
+            if let Some(input) = keyboard::read_char() {
+                if input = '\r' {
+                    println!("");
+                } else {
+                    println!("{}", input);
+                }
+            }
+        }
+        0x80 => println!("This isn't actually Linux, sorry about that.");
+        _ => {
+            println!("Unknown interrupt: #{}", ctx.int_id);
+            loop {}
+        }
+    }
+
+    PICS.lock().notify_end_of_interrupt();
+}
+
+struct Idt {
+    table: [IdtEntry; IDT_ENTRY_COUNT],
+}
+
+impl Idt {
+    pub fn initialize(&mut self) {
+        self.add_handlers(); //Add our handler functions.
+        self.load();
+    }
+    
+    //Fill in the IDT with our handlers.
+    fn add_handler(&mut self) {
+        for (index, &handler) in interrupt_handlers.iter().enumerate() {
+            if handler != ptr::null() {
+                self.table[index] = IdtEntry::new(gdt64_code_offset, handler);
+            }
+        }
+    }
+
+    unsafe fn load(&self) {
+        let pointer = x86::dtables::DescriptorTablePointer {
+            base: &self.table[0] as *const IdtEntry as u64,
+            limit: (size_of::<IdtEntry>() * IDT_ENTRY_COUNT) as u16,
+        };
+        x86::dtables::lidt(&pointer);
+    }
+}
+
+//Global IDT
+static IDT: Mutex<Idt> = Mutex::new(Idt {
+    table: [missing_handler(); IDT_ENTRY_COUNT]
+});
+
+#[allow(dead_code)]
+pub unsafe fn test_interrupt() {
+    println!("triggering interrupt.");
+    int!(0x80);
+    println!("Interrupt returned.");
+
+}
+
+pub unsafe fn initialize() {
+    //Run PIC init sequence.
+    PICS.lock().initialize();
+
+    //Create a new IDT.
+    IDT.lock().initialize();
+    
+    //Trigger a test interrupt.
+    test_interrupt();
+    
+    //Turn on real interrupts.
+    x86::irq::enable();
+}
+
+const fn missing_handler() -> IdtEntry {
+    IdtEntry {
+        base_lo: 0,
+        sel: 0,
+        res0: 0,
+        flags: 0,
+        base_hi: 0,
+        res1: 0,
+    }
+}
+
+trait IdtEntryExt {
+    fn new(gdt_code_selector: u16, handler: *const u8) -> IdtEntry;
+}
+
+impl IdtEntryExt for IdtEntry {
+    fn new(gdt_code_selector: u16, handler: *const u8) -> IdtEntry {
+        IdtEntry {
+            base_lo: ((handler as u64) & 0xFFFF) as u16,
+            sel: gdt_code_selector,
+            res0: 0,
+            flags: 0b100_01110,
+            base_hi: (handler as u64) >> 16,
+            res1: 0,
+        }
+    }
 }
