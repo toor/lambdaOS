@@ -1,15 +1,15 @@
 use core::marker::PhantomData;
 
-mod x86 {
+mod x86_io {
     //Read a single byte from the port.
     pub unsafe fn inb(port: u16) -> u8 {
-        let result: u8,
+        let result: u8;
         asm!("inb %dx, %al" : "={al}"(result) : "{dx}"(port) :: "volatile");
         result
     }
     
     //Write a single byte to the port.
-    pub unsafe fn outb(port: u16) -> u8 {
+    pub unsafe fn outb(value: u8, port: u16) -> u8 {
         asm!("outb %al, %dx" :: "{dx}"(port), "{al}"(value) :: "volatile");
     }
     
@@ -37,6 +37,8 @@ mod x86 {
         asm!("outl %eax, %dx" :: "{dx}"(port), "{eax}"(value) :: "volatile");
     }
 }
+
+use x86_io::{inb, outb, inw, outw, inl, outl};
 
 pub trait InOut {
     unsafe fn port_in(port: u16) -> Self;
