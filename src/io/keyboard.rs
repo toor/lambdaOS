@@ -1,6 +1,5 @@
 use spin::Mutex;
-use cpuio;
-
+use io::cpuio;
 
 //A pair of keys which appear on both sides of the keyboard, i.e the alt keys.
 #[derive(Debug)]
