@@ -86,6 +86,18 @@ static STATE: Mutex<State> = Mutex::new(State {
     modifiers: Modifiers::new(),
 });
 
+fn find_ascii(scancode: u8) -> Option<u8> {
+    let idx = scancode as usize;
+    match scancode {
+        0x01 ... 0x0E => Some(b"\x1B1234567890-=\0x02"[idx-0x01]),
+        0x0F ... 0x1C => Some(b"\tqwertyuiop[]\r"[idx-0x0F]),
+        0x1E ... 0x28 => Some(b"asdfghjkl;'"[idx-0x1E]),
+        0x2C ... 0x35 => Some(b"zxcvbnm,./"[idx-0x2C]),
+        0x39 => Some(b' '),
+        _ => None,
+    }
+}
+
 //Try reading a single input character.
 pub fn read_char() -> Option<char> {
     let mut state = STATE.lock();
