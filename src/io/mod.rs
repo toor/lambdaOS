@@ -1,6 +1,4 @@
 use core::marker::PhantomData;
-use x86::shared::io::{inl, outl, outw, inw, outb, inb};
-use event;
 
 //Begin init of the PIC chip
 const CMD_INIT: u8 = 0x11;
@@ -14,6 +12,8 @@ const MODE_8086: u8 = 0x01;
 #[macro_use]
 pub mod keyboard;
 pub mod drivers;
+pub mod cpuio;
+use cpuio::Port;
 
 struct Pic {
     offset: u8,
