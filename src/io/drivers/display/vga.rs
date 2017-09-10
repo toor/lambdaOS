@@ -2,6 +2,7 @@ use constants::vga::{BUFFER_HEIGHT, BUFFER_WIDTH};
 use constants::vga::{GREEN_BLANK, RED_BLANK};
 
 use io::drivers::display::buffer::TextBuffer;
+use io::cpuio::Port;
 
 use core::fmt;
 use core::ptr::Unique;
