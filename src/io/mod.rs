@@ -11,7 +11,6 @@ const MODE_8086: u8 = 0x01;
 
 #[macro_use]
 pub mod keyboard;
-pub mod drivers;
 pub mod cpuio;
 use cpuio::Port;
 
