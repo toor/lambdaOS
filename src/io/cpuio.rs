@@ -38,7 +38,7 @@ mod x86_io {
     }
 }
 
-use x86_io::{inb, outb, inw, outw, inl, outl};
+use self::x86_io::{inb, outb, inw, outw, inl, outl};
 
 pub trait InOut {
     unsafe fn port_in(port: u16) -> Self;
