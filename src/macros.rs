@@ -1,6 +1,7 @@
 macro_rules! print {
    ($($arg:tt)*) => ({
-      $crate::io::drivers::display::buffer::print(format_args!($($arg)*));
+       use core::fmt::Write;
+       $crate::console::CONSOLE.lock().write_fmt(format_args!($($arg)*)).unwrap();
    });
 }
 
