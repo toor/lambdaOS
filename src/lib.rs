@@ -40,8 +40,8 @@ mod macros;
 mod memory;
 mod interrupts;
 mod io;
-
-use io::drivers::display::buffer;
+mod console;
+mod vga;
 
 #[allow(non_snake_case)]
 #[no_mangle]
