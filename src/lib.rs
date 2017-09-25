@@ -44,6 +44,12 @@ mod io;
 
 use io::drivers::display::buffer;
 
+#[allow(non_snake_case)]
+#[no_mangle]
+pub fn _UnwindResume() {
+    loop {}
+}
+
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
     buffer::clear_screen();
