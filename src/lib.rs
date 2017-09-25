@@ -39,7 +39,6 @@ mod macros;
 #[macro_use]
 mod memory;
 mod interrupts;
-mod constants;
 mod io;
 
 use io::drivers::display::buffer;
