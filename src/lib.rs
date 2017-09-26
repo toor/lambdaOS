@@ -1,17 +1,6 @@
-#![feature(lang_items)]
-#![feature(const_fn)]
-#![feature(unique)]
+#![feature(lang_items, const_fn, alloc, custom_attributes, global_allocator, box_syntax, drop_types_in_const,unique, allocator_internals, abi_x86_interrupts, asm, exclusive_range_pattern)]
 #![no_std]
-#![feature(alloc)]
-#![feature(custom_attributes)]
-#![feature(allocator_internals)]
-#![feature(global_allocator)]
 #![default_lib_allocator]
-#![feature(abi_x86_interrupt)]
-#![feature(asm)]
-#![feature(box_syntax)]
-#![feature(drop_types_in_const)]
-#![allow(warnings)]
 
 extern crate rlibc;
 extern crate volatile;
