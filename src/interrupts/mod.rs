@@ -100,7 +100,7 @@ impl Idt {
 
     unsafe fn load(&self) {
         let pointer = x86::shared::dtables::DescriptorTablePointer {
-            base: &self.table[0] as *const IdtEntry as u64,
+            base: &self.table[0] as *const IdtEntry,
             limit: (size_of::<IdtEntry>() * IDT_ENTRY_COUNT) as u16,
         };
         x86::shared::dtables::lidt(&pointer);
