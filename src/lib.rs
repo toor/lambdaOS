@@ -45,7 +45,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     SCREEN.lock()
           .clear(DarkGrey)
-          .set_colours(ColorScheme::new(Green, DarkGrey));
+          .set_colors(ColorScheme::new(Green, DarkGrey));
     println!("Hello world!");
 
     let boot_info = unsafe{ multiboot2::load(multiboot_information_address) };
