@@ -51,7 +51,13 @@ pub fn _UnwindResume() {
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
-    buffer::clear_screen();
+    use vga::{SCREEN, ColorScheme};
+    use vga::Color::*;
+
+    SCREEN.lock()
+          .clear(DarkGrey)
+          .set_colours(ColorScheme::new(Green, DarkGrey));
+    println!("Hello world!");
 
     let boot_info = unsafe{ multiboot2::load(multiboot_information_address) };
 
