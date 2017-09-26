@@ -5,6 +5,7 @@ use io::{keyboard, ChainedPics};
 use spin::Mutex;
 use x86;
 use x86::bits64::irq::IdtEntry;
+use x86::shared::descriptor::Flags;
 
 //Wrap the PICS static in a mutex to avoid data races.
 pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
@@ -89,7 +90,7 @@ impl Idt {
     }
     
     //Fill in the IDT with our handlers.
-    fn add_handler(&mut self) {
+    fn add_handlers(&mut self) {
         for (index, &handler) in interrupt_handlers.iter().enumerate() {
             if handler != ptr::null() {
                 self.table[index] = IdtEntry::new(gdt64_code_offset, handler);
@@ -138,7 +139,7 @@ const fn missing_handler() -> IdtEntry {
         base_lo: 0,
         selector: 0,
         reserved0: 0,
-        flags: 0,
+        flags: Flags::from_bits(0).unwrap(),
         base_hi: 0,
         reserved1: 0,
     }
@@ -154,7 +155,7 @@ impl IdtEntryExt for IdtEntry {
             base_lo: ((handler as u64) & 0xFFFF) as u16,
             selector: gdt_code_selector,
             reserved0: 0,
-            flags: 0b100_01110,
+            flags: Flags::from_bits(0b100_01110).unwrap(),
             base_hi: (handler as u64) >> 16,
             reserved1: 0,
         }
