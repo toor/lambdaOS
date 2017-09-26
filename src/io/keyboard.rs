@@ -60,7 +60,7 @@ impl Modifiers {
             0x38 => self.alt.left = true,
             //Caps toggles on the leading edge.
             0x3A => self.caps_lock = !self.caps_lock,
-            0x9D => self.control.left = false,
+            0x9D => self.ctrl.left = false,
             0xAA => self.shift.left = false,
             0xB6 => self.shift.right = false,
             0xB8 => self.alt.left = false,
