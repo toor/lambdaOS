@@ -131,7 +131,7 @@ impl Screen {
     }
 
     fn buffer(&mut self) -> &mut Buffer {
-        unsafe { self.buffer.get_mut() }
+        unsafe { self.buffer.as_mut() }
     }
 }
 
@@ -147,5 +147,5 @@ pub static SCREEN: Mutex<Screen> = Mutex::new(Screen {
     colors: ColorScheme::new(Color::White, Color::Black),
     x: 0,
     y: 0,
-    buffer: unsafe { Unique::new(0xb8000 as *mut _) },
+    buffer: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
 });
