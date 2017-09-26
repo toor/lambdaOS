@@ -51,7 +51,7 @@ fn cpu_exception_handler(ctx: &InterruptContext) {
         _ => {}
     }
     
-    //Just loop.
+    //Just put the CPU into a loop until we can do something about this exception.
     loop {}
 }
 
