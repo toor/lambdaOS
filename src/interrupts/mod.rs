@@ -62,7 +62,7 @@ pub unsafe extern "C" fn rust_interrupt_handler(ctx: &InterruptContext) {
         0x20 => {/*Timer*/}
         0x21 => {
             if let Some(input) = keyboard::read_char() {
-                if input = '\r' {
+                if input == '\r' {
                     println!("");
                 } else {
                     println!("{}", input);
