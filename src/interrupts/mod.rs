@@ -136,11 +136,11 @@ pub unsafe fn initialize() {
 const fn missing_handler() -> IdtEntry {
     IdtEntry {
         base_lo: 0,
-        sel: 0,
-        res0: 0,
+        selector: 0,
+        reserved0: 0,
         flags: 0,
         base_hi: 0,
-        res1: 0,
+        reserved1: 0,
     }
 }
 
@@ -152,11 +152,11 @@ impl IdtEntryExt for IdtEntry {
     fn new(gdt_code_selector: u16, handler: *const u8) -> IdtEntry {
         IdtEntry {
             base_lo: ((handler as u64) & 0xFFFF) as u16,
-            sel: gdt_code_selector,
-            res0: 0,
+            selector: gdt_code_selector,
+            reserved0: 0,
             flags: 0b100_01110,
             base_hi: (handler as u64) >> 16,
-            res1: 0,
+            reserved1: 0,
         }
     }
 }
