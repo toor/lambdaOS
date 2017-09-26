@@ -9,7 +9,7 @@ mod x86_io {
     }
     
     //Write a single byte to the port.
-    pub unsafe fn outb(value: u8, port: u16) -> u8 {
+    pub unsafe fn outb(value: u8, port: u16) {
         asm!("outb %al, %dx" :: "{dx}"(port), "{al}"(value) :: "volatile");
     }
     
