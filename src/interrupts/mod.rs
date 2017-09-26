@@ -4,7 +4,7 @@ use memory;
 use io::{keyboard, ChainedPics};
 use spin::Mutex;
 use x86;
-use x86::shared::irq::IdtEntry;
+use x86::bits64::irq::IdtEntry;
 
 //Wrap the PICS static in a mutex to avoid data races.
 pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
