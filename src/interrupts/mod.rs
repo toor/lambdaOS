@@ -122,7 +122,7 @@ pub unsafe fn test_interrupt() {
 
 pub unsafe fn initialize() {
     //Run PIC init sequence.
-    PICS.lock().initialize();
+    PICS.lock().init();
 
     //Create a new IDT.
     IDT.lock().initialize();
