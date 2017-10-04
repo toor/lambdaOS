@@ -12,6 +12,7 @@ const MODE_8086: u8 = 0x01;
 #[macro_use]
 pub mod keyboard;
 pub mod cpuio;
+pub mod serial;
 use self::cpuio::Port;
 
 struct Pic {
