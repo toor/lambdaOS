@@ -6,6 +6,8 @@ use spin::Mutex;
 use x86;
 use x86::bits64::irq::IdtEntry;
 use x86::shared::descriptor::Flags;
+use x86::shared::PrivilegeLevel;
+use x86::shared::paging::VAddr;
 
 //Wrap the PICS static in a mutex to avoid data races.
 pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
@@ -93,7 +95,7 @@ impl Idt {
     fn add_handlers(&mut self) {
         for (index, &handler) in interrupt_handlers.iter().enumerate() {
             if handler != ptr::null() {
-                self.table[index] = IdtEntry::new(gdt64_code_offset, handler);
+                self.table[index] = IdtEntry::new(VAddr::from_usize(gdt64_code_offset as usize), (handler as u16), PrivilegeLevel::Ring0, false);
             }
         }
     }
