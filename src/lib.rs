@@ -1,4 +1,4 @@
-#![feature(lang_items, const_fn, alloc, custom_attributes, global_allocator, box_syntax, drop_types_in_const,unique, allocator_internals, abi_x86_interrupts, asm, exclusive_range_pattern)]
+#![feature(lang_items, const_fn, const_unsafe_cell_new, alloc, custom_attributes, global_allocator, box_syntax, drop_types_in_const,unique, allocator_internals, abi_x86_interrupts, asm, exclusive_range_pattern)]
 #![no_std]
 #![default_lib_allocator]
 
