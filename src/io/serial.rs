@@ -37,13 +37,13 @@ impl ComPort {
 
         //Set Baud and 8N1 mode.
         self.set_baud_divisor(2); //115,200 divided by 2.
-        self.port(LineControl).write(0x03);
+        self.port(LineControlReg).write(0x03);
         
         //Enable interrupt FIFOs with 14-byte threshold.
         self.port(InterruptIdAndFifo).write(0xC7);
 
         //Configure the modem as having RTS/DSR and IRQs on.
-        self.port(ModemControl).write(0x0B);
+        self.port(ModemControlReg).write(0x0B);
     }
     
     //Return the COM port + register offset
@@ -56,15 +56,15 @@ impl ComPort {
     fn set_baud_divisor(&mut self, divisor: u16) {
         unsafe {
            self.lazy_initialize();
-           let saved_line_control = self.port(LineControl).read();
-           self.port(LineControl).write(0x80 | saved_line_control);
+           let saved_line_control = self.port(LineControlReg).read();
+           self.port(LineControlReg).write(0x80 | saved_line_control);
            
 
            self.port(DataOrBaudLsb).write(divisor as u8);
            self.port(InterruptEnableOrBaudMsb).write((divisor >> 8) as u8);
 
            //Restore old port modes.
-           self.port(LineControl).write(saved_line_control);
+           self.port(LineControlReg).write(saved_line_control);
         }
     }
 
@@ -72,7 +72,33 @@ impl ComPort {
         unsafe {
             self.lazy_initialize();
 
-            (self.port(LineStatus).read() & 0x20) != 0
+            (self.port(LineStatusReg).read() & 0x20) != 0
         }
     }
 }
+
+impl fmt::Write for ComPort {
+    //Output a string to the com port.
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        unsafe {
+            self.lazy_initialize();
+
+            //Output each byte (character) one-by-one.
+            for b in s.bytes() {
+                //Loop until we can get a hold of the port.
+                while !self.can_transmit() {}
+                
+                //Write the byte.
+                self.port(DataOrBaudLsb).write(b);
+            }
+        }
+
+        Ok(())
+    }
+}
+
+
+//Our primary serial port.
+pub static COM1: Mutex<ComPort> = Mutex::new( unsafe {
+    ComPort::new(0x03F8)
+});
