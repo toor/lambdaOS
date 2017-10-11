@@ -1,6 +1,8 @@
-#![feature(lang_items, const_fn, const_unsafe_cell_new, alloc, custom_attributes, global_allocator, box_syntax, drop_types_in_const,unique, allocator_internals, abi_x86_interrupts, asm, exclusive_range_pattern)]
+#![feature(lang_items, const_fn, const_unsafe_cell_new, alloc, custom_attributes, global_allocator, box_syntax, drop_types_in_const, unique, const_unique_new, allocator_internals, abi_x86_interrupts, asm, exclusive_range_pattern)]
 #![no_std]
 #![default_lib_allocator]
+#![allow(safe_extern_statics)]
+#![allow(const_err)]
 
 extern crate rlibc;
 extern crate volatile;
@@ -57,9 +59,6 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     
     //Remap kernel and set up a guard page
     let mut memory_controller = memory::init(boot_info);
-
-    //Set up the Interrupt Descriptor table
-    interrupts::initialize();
 }
 
 fn enable_nxe_bit() {
