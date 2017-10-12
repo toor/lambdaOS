@@ -29,7 +29,6 @@ mod macros;
 
 #[macro_use]
 mod memory;
-mod interrupts;
 mod io;
 mod console;
 mod vga;
