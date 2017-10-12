@@ -1,1 +1,0 @@
-SCREEN_BASE equ 0xb8000
