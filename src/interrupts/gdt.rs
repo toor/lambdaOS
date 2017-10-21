@@ -1,4 +1,6 @@
 use x86_64::structures::tss::TaskStateSegment;
+use x86_64::structures::gdt::SegmentSelector;
+use x86_64::PrivilegeLevel;
 
 /* User segments span the complete address space, and contain only a few flags. They fit into a
  * single GDT Entry.
@@ -65,5 +67,44 @@ impl Gdt {
             table: [0; 8],
             next_free: 1,
         }
+    }
+
+    pub fn add_entry(&mut self, entry: Descriptor) -> SegmentSelector {
+        //Match against the Descriptor type to check how we should populate the GDT.
+        let index = match entry {
+            Descriptor::UserSegment(value) => self.push(value),
+            Descriptor::SystemSegment(value_low, value_high) => {
+                let index = self.push(value_low);
+                self.push(value_high);
+                index
+            }
+        };
+
+        SegmentSelector::new(index as u16, PrivilegeLevel::Ring0)
+    }
+    
+    //Push entry to the table array.
+    fn push(&mut self, value: u64) -> usize {
+        if self.next_free < self.table.len() {
+            let index = self.next_free;
+            self.table[index] = value;
+            self.next_free += 1;
+            index
+        } else {
+            panic!("GDT full");
+        }
+    }
+    
+    //Present our newly created GDT to the CPU.
+    pub fn load(&'static self) {
+        use x86_64::instructions::tables::{DescriptorTablePointer, lgdt};
+        use core::mem::size_of;
+
+        let ptr = DescriptorTablePointer {
+            base: self.table.as_ptr() as u64,
+            limit: (self.table.len() * size_of::<u64>() -1) as u16,
+        };
+
+        unsafe { lgdt(&ptr) };
     }
 }
