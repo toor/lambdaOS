@@ -149,3 +149,11 @@ pub static SCREEN: Mutex<Screen> = Mutex::new(Screen {
     y: 0,
     buffer: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
 });
+
+
+//Completely clear the screen
+pub fn clear_screen() {
+    for _ in 0..HEIGHT {
+        println!("");
+    }
+}

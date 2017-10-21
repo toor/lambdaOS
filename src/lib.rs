@@ -20,8 +20,6 @@ extern crate hole_list_allocator as allocator;
 #[macro_use]
 extern crate lazy_static;
 extern crate bit_field;
-#[macro_use(int)]
-extern crate x86;
 extern crate libtoorix;
 
 #[macro_use]
@@ -43,10 +41,7 @@ pub fn _UnwindResume() {
 pub extern "C" fn kmain(multiboot_information_address: usize) {
     use vga::{SCREEN, ColorScheme};
     use vga::Color::*;
-
-    SCREEN.lock()
-          .clear(DarkGrey)
-          .set_colors(ColorScheme::new(Green, DarkGrey));
+    vga::clear_screen();
     println!("Hello world!");
 
     let boot_info = unsafe{ multiboot2::load(multiboot_information_address) };
