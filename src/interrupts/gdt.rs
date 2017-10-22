@@ -68,7 +68,8 @@ impl Gdt {
             next_free: 1,
         }
     }
-
+    
+    //Add the entry.
     pub fn add_entry(&mut self, entry: Descriptor) -> SegmentSelector {
         //Match against the Descriptor type to check how we should populate the GDT.
         let index = match entry {

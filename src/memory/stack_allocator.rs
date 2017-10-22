@@ -1,5 +1,5 @@
-use memory::paging::{self, PageIter, Page, ActivePageTable};
-use memory::{PAGE_SIZE, FrameAllocator, page_table, area_frame_allocator};
+use memory::paging::{self, ActivePageTable, Page, PageIter};
+use memory::{area_frame_allocator, page_table, FrameAllocator, PAGE_SIZE};
 
 pub struct StackAllocator {
     range: PageIter,
@@ -9,10 +9,9 @@ impl StackAllocator {
     pub fn new(page_range: PageIter) -> StackAllocator {
         StackAllocator { range: page_range }
     }
-    
+
     //Create a new stack
-    pub fn alloc_stack(&mut self, size_in_pages: usize) -> Option<Stack>
-    {
+    pub fn alloc_stack(&mut self, size_in_pages: usize) -> Option<Stack> {
         if size_in_pages == 0 {
             return None; //This makes no sense
         }

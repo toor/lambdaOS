@@ -7,12 +7,12 @@ mod x86_io {
         asm!("inb %dx, %al" : "={al}"(result) : "{dx}"(port) :: "volatile");
         result
     }
-    
+
     //Write a single byte to the port.
     pub unsafe fn outb(value: u8, port: u16) {
         asm!("outb %al, %dx" :: "{dx}"(port), "{al}"(value) :: "volatile");
     }
-    
+
     //Read a u16 sized value from the port
     pub unsafe fn inw(port: u16) -> u16 {
         let result: u16;
@@ -38,7 +38,7 @@ mod x86_io {
     }
 }
 
-use self::x86_io::{inb, outb, inw, outw, inl, outl};
+use self::x86_io::{inb, inl, inw, outb, outl, outw};
 
 pub trait InOut {
     unsafe fn port_in(port: u16) -> Self;
@@ -46,18 +46,30 @@ pub trait InOut {
 }
 
 impl InOut for u8 {
-    unsafe fn port_in(port: u16) -> u8 { inb(port) }
-    unsafe fn port_out(port: u16, value: u8) { outb(value, port); }
+    unsafe fn port_in(port: u16) -> u8 {
+        inb(port)
+    }
+    unsafe fn port_out(port: u16, value: u8) {
+        outb(value, port);
+    }
 }
 
 impl InOut for u16 {
-    unsafe fn port_in(port: u16) -> u16 { inw(port) }
-    unsafe fn port_out(port: u16, value: u16) { outw(value, port); }
+    unsafe fn port_in(port: u16) -> u16 {
+        inw(port)
+    }
+    unsafe fn port_out(port: u16, value: u16) {
+        outw(value, port);
+    }
 }
 
 impl InOut for u32 {
-    unsafe fn port_in(port: u16) -> u32 { inl(port) }
-    unsafe fn port_out(port: u16, value: u32) { outl(value, port); }
+    unsafe fn port_in(port: u16) -> u32 {
+        inl(port)
+    }
+    unsafe fn port_out(port: u16, value: u32) {
+        outl(value, port);
+    }
 }
 
 #[derive(Debug)]
@@ -72,7 +84,10 @@ pub struct Port<T: InOut> {
 
 impl<T: InOut> Port<T> {
     pub const unsafe fn new(port: u16) -> Port<T> {
-        Port { port: port, phantom: PhantomData }
+        Port {
+            port: port,
+            phantom: PhantomData,
+        }
     }
 
     pub fn read(&mut self) -> T {
@@ -80,7 +95,9 @@ impl<T: InOut> Port<T> {
     }
 
     pub fn write(&mut self, value: T) {
-        unsafe { T::port_out(self.port, value); }
+        unsafe {
+            T::port_out(self.port, value);
+        }
     }
 }
 
@@ -93,7 +110,10 @@ pub struct UnsafePort<T: InOut> {
 impl<T: InOut> UnsafePort<T> {
     // Create a new I/O port.
     pub const unsafe fn new(port: u16) -> UnsafePort<T> {
-        UnsafePort { port: port, phantom: PhantomData }
+        UnsafePort {
+            port: port,
+            phantom: PhantomData,
+        }
     }
 
     // Read data from the port.

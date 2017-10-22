@@ -15,10 +15,10 @@ pub mod serial;
 use self::cpuio::Port;
 
 //See http://wiki.osdev.org/PIC#Programming_with_the_8259_PIC for information on where this
-//structure comes from. 
+//structure comes from.
 struct Pic {
     offset: u8,
-    command: Port<u8>, 
+    command: Port<u8>,
     data: Port<u8>,
 }
 
@@ -44,21 +44,23 @@ impl ChainedPics {
     //PICS, this is done by the init function below.
     pub const unsafe fn new(offset1: u8, offset2: u8) -> ChainedPics {
         ChainedPics {
-            pics: [Pic {
-                //The data port has an offset of 1 from the command ports of both the Master and
-                //Slave PICS.
-                offset: offset1,
-                command: Port::new(0x20),
-                data: Port::new(0x21),
-            },
-            Pic {
-                offset: offset2,
-                command: Port::new(0xA0),
-                data: Port::new(0xA1),
-            }],
+            pics: [
+                Pic {
+                    //The data port has an offset of 1 from the command ports of both the Master and
+                    //Slave PICS.
+                    offset: offset1,
+                    command: Port::new(0x20),
+                    data: Port::new(0x21),
+                },
+                Pic {
+                    offset: offset2,
+                    command: Port::new(0xA0),
+                    data: Port::new(0xA1),
+                },
+            ],
         }
     }
-    
+
     //Remap the IRQs and setup the 8259 PIC.
     pub unsafe fn init(&mut self) {
         //Write garbage data to a port as a method of telling the CPU to wait for a bit in-between
@@ -66,7 +68,7 @@ impl ChainedPics {
         let mut wait_port: Port<u8> = Port::new(0x80);
         let mut wait = || wait_port.write(0);
 
-        //Send each PIC the 0x11 byte to tell them to expect initialization 
+        //Send each PIC the 0x11 byte to tell them to expect initialization
         self.pics[0].command.write(CMD_INIT);
         wait();
         self.pics[1].command.write(CMD_INIT);
@@ -91,12 +93,12 @@ impl ChainedPics {
         wait();
         self.pics[1].data.write(MODE_8086);
     }
-    
+
     //Cycle through the PICS until we find one that can handle this interrupt.
     pub fn handles_interrupt(&self, interrupt_id: u8) -> bool {
         self.pics.iter().any(|p| p.handles_interrupt(interrupt_id))
     }
-    
+
     //Write magic EOI command.
     pub unsafe fn notify_end_of_interrupt(&mut self, interrupt_id: u8) {
         if self.handles_interrupt(interrupt_id) {
@@ -104,9 +106,9 @@ impl ChainedPics {
             if self.pics[1].handles_interrupt(interrupt_id) {
                 self.pics[1].end_of_interrupt();
             }
-            
+
             //Notify the Master PIC that the interrupt has ended.
             self.pics[0].end_of_interrupt();
-        }   
+        }
     }
 }

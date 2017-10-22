@@ -1,4 +1,4 @@
-use core::fmt::{Write, Result};
+use core::fmt::{Result, Write};
 use core::ptr::Unique;
 use spin::Mutex;
 
@@ -37,7 +37,9 @@ pub struct ColorScheme {
 
 impl ColorScheme {
     pub const fn new(fore: Color, back: Color) -> Self {
-        ColorScheme { value: (back as u8) << 4 | (fore as u8) }
+        ColorScheme {
+            value: (back as u8) << 4 | (fore as u8),
+        }
     }
 }
 
@@ -121,12 +123,12 @@ impl Screen {
         // Move existing lines up one.
         let buffer: &mut _ = self.buffer();
         for y in 1..HEIGHT {
-            buffer[y-1] = buffer[y];
+            buffer[y - 1] = buffer[y];
         }
 
         // Clear the last line.
         for x in 0..WIDTH {
-            buffer[HEIGHT-1][x] = clear;
+            buffer[HEIGHT - 1][x] = clear;
         }
     }
 

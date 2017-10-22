@@ -1,6 +1,6 @@
 pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::remap_the_kernel;
-use self::paging::{Page, PhysicalAddress, VirtualAddress, ActivePageTable};
+use self::paging::{ActivePageTable, Page, PhysicalAddress, VirtualAddress};
 use super::allocator;
 pub use self::stack_allocator::Stack;
 use multiboot2::BootInformation;
@@ -19,7 +19,9 @@ pub struct Frame {
 
 impl Frame {
     fn containing_address(address: usize) -> Frame {
-        Frame{ number: address / PAGE_SIZE }
+        Frame {
+            number: address / PAGE_SIZE,
+        }
     }
 
     fn start_address(&self) -> PhysicalAddress {
@@ -27,7 +29,9 @@ impl Frame {
     }
 
     fn clone(&self) -> Frame {
-        Frame { number: self.number }
+        Frame {
+            number: self.number,
+        }
     }
 
     fn range_inclusive(start: Frame, end: Frame) -> FrameIter {
@@ -55,7 +59,7 @@ impl Iterator for FrameIter {
             None
         }
     }
- }
+}
 
 pub trait FrameAllocator {
     fn allocate_frame(&mut self) -> Option<Frame>;
@@ -68,7 +72,9 @@ pub struct MemoryController {
 
 impl MemoryController {
     pub fn alloc_stack(&mut self, size_in_pages: usize) -> Option<Stack> {
-        let &mut MemoryController { ref mut stack_allocator } = self;
+        let &mut MemoryController {
+            ref mut stack_allocator,
+        } = self;
         stack_allocator.alloc_stack(size_in_pages)
     }
 }
@@ -113,50 +119,67 @@ pub fn page_table() -> &'static mut ActivePageTable {
 pub fn init(boot_info: &BootInformation) {
     assert_has_not_been_called!("memory::init must only be called once");
 
-    let memory_map_tag = boot_info.memory_map_tag()
-        .expect("Memory map tag required");
-    let elf_sections_tag = boot_info.elf_sections_tag()
+    let memory_map_tag = boot_info.memory_map_tag().expect("Memory map tag required");
+    let elf_sections_tag = boot_info
+        .elf_sections_tag()
         .expect("Elf sections tag required");
 
-    let kernel_start = elf_sections_tag.sections()
-        .filter(|s| s.is_allocated()).map(|s| s.addr).min().unwrap();
-    let kernel_end = elf_sections_tag.sections()
-        .filter(|s| s.is_allocated()).map(|s| s.addr + s.size).max()
+    let kernel_start = elf_sections_tag
+        .sections()
+        .filter(|s| s.is_allocated())
+        .map(|s| s.addr)
+        .min()
         .unwrap();
-        
+    let kernel_end = elf_sections_tag
+        .sections()
+        .filter(|s| s.is_allocated())
+        .map(|s| s.addr + s.size)
+        .max()
+        .unwrap();
 
-    println!("kernel start: 0x{:x}, kernel end: 0x{:x}",
-        kernel_start, kernel_end);
-    println!("multiboot start: 0x{:x}, multiboot end: 0x{:x}",
-        boot_info.start_address(), boot_info.end_address());
+
+    println!(
+        "kernel start: 0x{:x}, kernel end: 0x{:x}",
+        kernel_start,
+        kernel_end
+    );
+    println!(
+        "multiboot start: 0x{:x}, multiboot end: 0x{:x}",
+        boot_info.start_address(),
+        boot_info.end_address()
+    );
 
     let mut allocator = AreaFrameAllocator::new(
-        kernel_start as usize, kernel_end as usize, boot_info.start_address(),
-        boot_info.end_address(), memory_map_tag.memory_areas());
+        kernel_start as usize,
+        kernel_end as usize,
+        boot_info.start_address(),
+        boot_info.end_address(),
+        memory_map_tag.memory_areas(),
+    );
 
     let mut active_table = paging::remap_the_kernel(&mut allocator, boot_info);
 
     use self::paging::Page;
 
-    use allocator::{HEAP_START, HEAP_SIZE};
+    use allocator::{HEAP_SIZE, HEAP_START};
 
     let heap_start_page = Page::containing_address(HEAP_START);
-    let heap_end_page = Page::containing_address(HEAP_START + HEAP_SIZE-1);
+    let heap_end_page = Page::containing_address(HEAP_START + HEAP_SIZE - 1);
 
     for page in Page::range_inclusive(heap_start_page, heap_end_page) {
         active_table.map(page, paging::WRITABLE, &mut allocator);
     }
-    
-    unsafe { allocator::init(HEAP_START, HEAP_SIZE); }
+
+    unsafe {
+        allocator::init(HEAP_START, HEAP_SIZE);
+    }
 
     unsafe {
         AREA_FRAME_ALLOCATOR_PTR = Some(&mut *Box::into_raw(Box::new(allocator)));
     }
 
-    unsafe {
-        ACTIVE_TABLE_PTR = Some(&mut *Box::into_raw(Box::new(active_table)))
-    }
-    
+    unsafe { ACTIVE_TABLE_PTR = Some(&mut *Box::into_raw(Box::new(active_table))) }
+
     let stack_allocator = {
         let stack_alloc_start = heap_end_page + 1;
         let stack_alloc_end = stack_alloc_start + 10000;
