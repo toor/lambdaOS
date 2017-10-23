@@ -25,3 +25,7 @@ pub fn initialize() {
     //Remap the 8259 PIC.
     PICS.lock().init();
 }
+
+pub unsafe fn test_interrupt() {
+    asm!("int 0x15" :::: "volatile", "intel");
+}
