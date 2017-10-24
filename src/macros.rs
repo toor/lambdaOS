@@ -1,7 +1,6 @@
 macro_rules! print {
    ($($arg:tt)*) => ({
-       use core::fmt::Write;
-       $crate::console::CONSOLE.lock().write_fmt(format_args!($($arg)*)).unwrap();
+       $crate::vga::print(format_args!($($arg)*));
    });
 }
 

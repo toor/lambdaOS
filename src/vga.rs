@@ -1,9 +1,21 @@
-use core::fmt::{Result, Write};
+use core::fmt::{self, Write};
 use core::ptr::Unique;
 use spin::Mutex;
+use volatile::Volatile;
 
 const WIDTH: usize = 80;
 const HEIGHT: usize = 25;
+
+pub static SCREEN: Mutex<Screen> = Mutex::new(Screen {
+    column_position: 0,
+    color_code: ColorCode::new(Color::LightGreen, Color::DarkGrey),
+    buffer: unsafe { Unique::new(0xb8000 as *mut _) },
+});
+
+pub fn print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    SCREEN.lock().write_fmt(args).unwrap();
+}
 
 //Standard VGA colors.
 #[derive(Copy, Clone)]
@@ -29,11 +41,9 @@ pub enum Color {
 }
 
 //VGA foreground and background color set.
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 #[repr(C)]
-pub struct ColorScheme {
-    value: u8,
-}
+pub struct ColorCode(u8);
 
 impl ColorScheme {
     pub const fn new(fore: Color, back: Color) -> Self {
@@ -51,111 +61,69 @@ pub struct Char {
     pub colors: ColorScheme,
 }
 
-type Buffer = [[Char; WIDTH]; HEIGHT];
+struct Buffer {
+    chars: [[Volatile<Char>; WIDTH]; HEIGHT],
+}
 
 //A VGA screen, in character mode.
 pub struct Screen {
-    colors: ColorScheme,
-    x: usize,
-    y: usize,
+    color_code: ColorCode,
+    col_pos: usize
     buffer: Unique<Buffer>,
 }
 
 impl Screen {
-    // Clear the screen to the specified color.
-    pub fn clear(&mut self, color: Color) -> &mut Self {
-        let colors = ColorScheme::new(color, color);
-        let c = Char {
-            code: b' ',
-            colors: colors,
-        };
-        for y in 0..HEIGHT {
-            for x in 0..WIDTH {
-                self.buffer()[y][x] = c;
+    pub fn write_byte(&mut self, byte: u8) {
+        match byte {
+            b'\n' => self.new_line(),
+            byte => {
+                //Row filled.
+                if self.column_position >= WIDTH {
+                    self.new_line();
+                }
+                let row = HEIGHT - 1;
+                let col = self.column_position;
+
+                let color_code = self.color_code;
+
+                self.buffer().chars[row][col].write(Char {
+                    code: byte,
+                    color_code: color_code,
+                });
+                self.column_position += 1;
             }
-        }
-        self
-    }
-
-    //Set the current text colors.
-    pub fn set_colors(&mut self, colors: ColorScheme) -> &mut Self {
-        self.colors = colors;
-        self
-    }
-
-    //Write a string to the screen.
-    pub fn write(&mut self, text: &[u8]) {
-        for c in text {
-            self.write_byte(*c);
-        }
-    }
-
-    //Write a single character to the screen.
-    pub fn write_byte(&mut self, code: u8) {
-        if code == b'\n' {
-            self.x = 0;
-            self.y += 1;
-        } else {
-            let c = Char {
-                code: code,
-                colors: self.colors,
-            };
-            self.buffer()[self.y][self.x] = c;
-            self.x += 1;
-            if self.x >= WIDTH {
-                self.x = 0;
-                self.y += 1;
-            }
-        }
-        if self.y >= HEIGHT {
-            self.y = HEIGHT - 1;
-            self.scroll();
-        }
-    }
-
-    fn scroll(&mut self) {
-        // We'll use character to clear newly exposed areas.
-        let clear = Char {
-            code: b' ',
-            colors: self.colors,
-        };
-
-        // Move existing lines up one.
-        let buffer: &mut _ = self.buffer();
-        for y in 1..HEIGHT {
-            buffer[y - 1] = buffer[y];
-        }
-
-        // Clear the last line.
-        for x in 0..WIDTH {
-            buffer[HEIGHT - 1][x] = clear;
         }
     }
 
     fn buffer(&mut self) -> &mut Buffer {
-        unsafe { self.buffer.as_mut() }
+        unsafe { self.bufer.as_mut() } 
+    }
+
+    fn new_line(&mut self) {
+        for row in 1..HEIGHT {
+            for col in 0..WIDTH {
+                let buffer = self.buffer();
+                let character = buffer.chars[row][col].read();
+                buffer.chars[row - 1][col].write(character);
+            }
+        }
+        self.clear_row(HEIGHT - 1);
+        self.column_position = 0;
+    }
+
+    fn clear_row(&mut self. row: usize) {
+        let blank = Char {
+            code: b' ',
+            color_code: self.color_code,
+        };
     }
 }
 
 impl Write for Screen {
-    fn write_str(&mut self, s: &str) -> Result {
-        self.write(s.as_bytes());
+    fn write_str(&mut self, s: &str) -> ::core::fmt::Result {
+        for byte in s.bytes() {
+            self.write_byte(byte)
+        }
         Ok(())
-    }
-}
-
-//The system's VGA screen.
-pub static SCREEN: Mutex<Screen> = Mutex::new(Screen {
-    colors: ColorScheme::new(Color::White, Color::Black),
-    x: 0,
-    y: 0,
-    buffer: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
-});
-
-
-//Completely clear the screen
-pub fn clear_screen() {
-    for _ in 0..HEIGHT {
-        println!("");
     }
 }
