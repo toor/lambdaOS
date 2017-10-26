@@ -22,6 +22,7 @@ extern crate rlibc;
 extern crate spin;
 extern crate volatile;
 extern crate x86_64;
+extern crate x86;
 
 #[macro_use]
 mod macros;
@@ -29,7 +30,7 @@ mod macros;
 #[macro_use]
 mod memory;
 mod io;
-mod console;
+mod interrupts;
 mod vga;
 
 #[allow(non_snake_case)]
@@ -40,7 +41,7 @@ pub fn _UnwindResume() {
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
-    use vga::{ColorScheme, SCREEN};
+    use vga::{ColorCode, SCREEN};
     use vga::Color::*;
     vga::clear_screen();
     println!("Hello world!");
@@ -54,6 +55,9 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     //Remap kernel and set up a guard page
     let mut memory_controller = memory::init(boot_info);
+
+    //Interrupts.
+    interrupts::initialize();
 }
 
 fn enable_nxe_bit() {

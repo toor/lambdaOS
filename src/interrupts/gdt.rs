@@ -1,6 +1,7 @@
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::gdt::SegmentSelector;
 use x86_64::PrivilegeLevel;
+use self::gdt::DescriptorFlags::{CONFORMING, EXECUTABLE, USER_SEGMENT, PRESENT, LONG_MODE};
 
 /* User segments span the complete address space, and contain only a few flags. They fit into a
  * single GDT Entry.
@@ -10,7 +11,7 @@ use x86_64::PrivilegeLevel;
 */
 pub enum Descriptor { 
     UserSegment(u64),
-    SystemSegments(u64, u64),
+    SystemSegment(u64, u64),
 }
 
 impl Descriptor {

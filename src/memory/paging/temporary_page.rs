@@ -18,10 +18,10 @@ impl TemporaryPage {
         }
     }
 
-    /// Maps the temporary page to the given frame in the active table.
-    /// Returns the start address of the temporary page.
+    // Maps the temporary page to the given frame in the active table.
+    // Returns the start address of the temporary page.
     pub fn map(&mut self, frame: Frame, active_table: &mut ActivePageTable) -> VirtualAddress {
-        use super::entry::WRITABLE;
+        use super::entry::EntryFlags::WRITABLE;
 
         assert!(
             active_table.translate_page(self.page).is_none(),
@@ -31,13 +31,13 @@ impl TemporaryPage {
         self.page.start_address()
     }
 
-    /// Unmaps the temporary page in the active table.
+    // Unmaps the temporary page in the active table.
     pub fn unmap(&mut self, active_table: &mut ActivePageTable) {
         active_table.unmap(self.page, &mut self.allocator)
     }
 
-    /// Maps the temporary page to the given page table frame in the active
-    /// table. Returns a reference to the now mapped table.
+    // Maps the temporary page to the given page table frame in the active
+    // table. Returns a reference to the now mapped table.
     pub fn map_table_frame(
         &mut self,
         frame: Frame,

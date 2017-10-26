@@ -7,8 +7,8 @@ const WIDTH: usize = 80;
 const HEIGHT: usize = 25;
 
 pub static SCREEN: Mutex<Screen> = Mutex::new(Screen {
-    column_position: 0,
     color_code: ColorCode::new(Color::LightGreen, Color::DarkGrey),
+    col_pos: 0,
     buffer: unsafe { Unique::new(0xb8000 as *mut _) },
 });
 
@@ -45,11 +45,9 @@ pub enum Color {
 #[repr(C)]
 pub struct ColorCode(u8);
 
-impl ColorScheme {
-    pub const fn new(fore: Color, back: Color) -> Self {
-        ColorScheme {
-            value: (back as u8) << 4 | (fore as u8),
-        }
+impl ColorCode {
+    pub const fn new(foreground: Color, background: Color) -> Self {
+        ColorCode((background as u8) << 4 | (foreground as u8))
     }
 }
 
@@ -58,7 +56,7 @@ impl ColorScheme {
 #[repr(C)]
 pub struct Char {
     pub code: u8,
-    pub colors: ColorScheme,
+    pub colors: ColorCode,
 }
 
 struct Buffer {
@@ -68,7 +66,7 @@ struct Buffer {
 //A VGA screen, in character mode.
 pub struct Screen {
     color_code: ColorCode,
-    col_pos: usize
+    col_pos: usize,
     buffer: Unique<Buffer>,
 }
 
@@ -96,7 +94,7 @@ impl Screen {
     }
 
     fn buffer(&mut self) -> &mut Buffer {
-        unsafe { self.bufer.as_mut() } 
+        unsafe { self.buffer.as_mut() } 
     }
 
     fn new_line(&mut self) {
@@ -111,7 +109,7 @@ impl Screen {
         self.column_position = 0;
     }
 
-    fn clear_row(&mut self. row: usize) {
+    fn clear_row(&mut self, row: usize) {
         let blank = Char {
             code: b' ',
             color_code: self.color_code,

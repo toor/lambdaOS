@@ -1,3 +1,6 @@
+use x86::bits64::irq::IdtEntry;
+use x86::shared::PrivilegeLevel;
+
 macro_rules! make_handler {
   ($num:expr, $name:ident, $body:expr) => {{
     fn body () {
