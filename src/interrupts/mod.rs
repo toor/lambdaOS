@@ -5,7 +5,7 @@ use x86::bits64::irq::IdtEntry;
 use io::ChainedPics;
 use x86;
 
-pub static PICS: Mutex<ChainedPics> = ChainedPics::new(0x20, 0x28);
+pub static PICS: Mutex<ChainedPics> = Mutex::new(ChainedPics::new(0x20, 0x28));
 
 macro_rules! make_idt_entry {
     ($name:ident, $body:expr) => {{
@@ -70,7 +70,7 @@ macro_rules! make_idt_entry {
 
 
 //CPU looks at this table when it wants to know what do do on an interrupt.
-static IDT: Mutex<[IdtEntry; 256]> = Mutex::new(IdtEntry::MISSING, 256);
+static IDT: Mutex<[IdtEntry; 256]> = Mutex::new([IdtEntry::MISSING; 256]);
 
 //Point to this table
 pub struct Idt {
