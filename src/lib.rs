@@ -31,6 +31,8 @@ mod macros;
 mod memory;
 mod io;
 mod vga;
+#[macro_use]
+mod interrupts;
 
 #[allow(non_snake_case)]
 #[no_mangle]
@@ -38,10 +40,10 @@ pub fn _UnwindResume() {
     loop {}
 }
 
+static IDT: Mutex<interrupts::Idt> = Mutex::new(interrupts::Idt::new());
+
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
-    use vga::{ColorCode, SCREEN};
-    use vga::Color::*;
     vga::clear_screen();
     println!("Hello world!");
 
@@ -54,6 +56,32 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     //Remap kernel and set up a guard page
     let mut memory_controller = memory::init(boot_info);
+
+    use interrupts::PICS;
+    
+    //Remap the Programmable Interrupt Controllers. (src/io/mod.rs).
+    PICS.lock().init();
+
+    //Interrupt Service 13, 0xD. General Protection Fault. We can't handle this at the moment, so
+    //just panic.
+    let gpf = make_idt_entry!(isr13, {
+        panic!("General Protection Fault!");
+    });
+    
+    //Timer is IRQ 0. Remapped IRQs start at 0x20 = 32. 32+0 = 32.
+    let timer = make_idt_entry!(isr32, {
+        PICS.lock().notify_end_of_interrupt(0x20);
+    });
+    
+    //32+1 = 33
+    let keyboard = make_idt_entry!(isr33, {
+        let port = unsafe { io::cpuio::Port::new(0x60); }
+        
+        //Read a single code off the port.
+        let scancode = port.read();
+
+        //TODO.
+    })
 }
 
 fn enable_nxe_bit() {
