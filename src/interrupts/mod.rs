@@ -3,6 +3,7 @@ use x86::shared::dtables::DescriptorTablePointer;
 use x86::shared::dtables;
 use x86::bits64::irq::IdtEntry;
 use io::ChainedPics;
+use x86;
 
 pub static PICS: Mutex<ChainedPics> = ChainedPics::new(0x20, 0x28);
 
@@ -55,7 +56,7 @@ macro_rules! make_idt_entry {
                   pop r15
                   pop rbp
                   iretq" :: "s"(body as fn()) :: "volatile" :: "intel");
-            intrinsics::unreachable();
+            ::core::intrinsics::unreachable();
         }
 
         use x86::shared::paging::VAddr;
