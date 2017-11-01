@@ -30,7 +30,6 @@ mod macros;
 #[macro_use]
 mod memory;
 mod io;
-mod interrupts;
 mod vga;
 
 #[allow(non_snake_case)]
@@ -55,9 +54,6 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     //Remap kernel and set up a guard page
     let mut memory_controller = memory::init(boot_info);
-
-    //Interrupts.
-    interrupts::initialize();
 }
 
 fn enable_nxe_bit() {
