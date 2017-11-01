@@ -80,7 +80,12 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
         //Read a single code off the port.
         let scancode = port.read();
 
-        //TODO.
+        if let Some(c) = io::keyboard::from_scancode(scancode as usize) {
+            println!("{}", c);
+        }
+        
+        //outb(0x20, 0x20), outb(0xA0, 0x20) - notify master and slave of EOI.
+        PICS.lock().notify_end_of_interrupt(0x21);
     })
 }
 
