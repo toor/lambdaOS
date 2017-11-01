@@ -12,6 +12,7 @@ const MODE_8086: u8 = 0x01;
 #[macro_use]
 pub mod cpuio;
 pub mod serial;
+pub mod keyboard;
 use self::cpuio::Port;
 
 //See http://wiki.osdev.org/PIC#Programming_with_the_8259_PIC for information on where this
