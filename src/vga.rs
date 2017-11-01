@@ -9,7 +9,7 @@ const HEIGHT: usize = 25;
 pub static SCREEN: Mutex<Screen> = Mutex::new(Screen {
     color_code: ColorCode::new(Color::LightGreen, Color::DarkGrey),
     col_pos: 0,
-    buffer: unsafe { Unique::new(0xb8000 as *mut _) },
+    buffer: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
 });
 
 pub fn print(args: fmt::Arguments) {
