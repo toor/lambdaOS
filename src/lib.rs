@@ -1,6 +1,6 @@
 #![feature(lang_items, const_fn, const_unsafe_cell_new, alloc, custom_attributes, global_allocator,
           box_syntax, drop_types_in_const, unique, const_unique_new, allocator_internals,
-          abi_x86_interrupts, asm, exclusive_range_pattern)]
+          abi_x86_interrupts, asm, exclusive_range_pattern, naked_functions, core_intrinsics)]
 #![no_std]
 #![default_lib_allocator]
 #![allow(safe_extern_statics)]
@@ -75,7 +75,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     
     //32+1 = 33
     let keyboard = make_idt_entry!(isr33, {
-        let port = unsafe { io::cpuio::Port::new(0x60); }
+        let port = unsafe { io::cpuio::Port::new(0x60) };
         
         //Read a single code off the port.
         let scancode = port.read();
@@ -86,7 +86,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
         
         //outb(0x20, 0x20), outb(0xA0, 0x20) - notify master and slave of EOI.
         PICS.lock().notify_end_of_interrupt(0x21);
-    })
+    });
 }
 
 fn enable_nxe_bit() {
