@@ -74,7 +74,7 @@ static IDT: Mutex<[IdtEntry; 256]> = Mutex::new(IdtEntry::MISSING, 256);
 //Point to this table
 pub struct Idt {
     ptr: DescriptorTablePointer<IdtEntry>,
-    idt: &'static Mutex<[IdtEntry, 256]>,
+    idt: &'static Mutex<[IdtEntry; 256]>,
 }
 
 unsafe impl ::core::marker::Sync for Idt {} 
