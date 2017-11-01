@@ -8,7 +8,7 @@ const HEIGHT: usize = 25;
 
 pub static SCREEN: Mutex<Screen> = Mutex::new(Screen {
     color_code: ColorCode::new(Color::LightGreen, Color::DarkGrey),
-    col_pos: 0,
+    column_position: 0,
     buffer: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
 });
 
@@ -56,7 +56,7 @@ impl ColorCode {
 #[repr(C)]
 pub struct Char {
     pub code: u8,
-    pub colors: ColorCode,
+    pub color_code: ColorCode,
 }
 
 struct Buffer {
@@ -66,7 +66,7 @@ struct Buffer {
 //A VGA screen, in character mode.
 pub struct Screen {
     color_code: ColorCode,
-    col_pos: usize,
+    column_position: usize,
     buffer: Unique<Buffer>,
 }
 
