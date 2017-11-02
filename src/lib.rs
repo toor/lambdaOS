@@ -75,12 +75,12 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     
     //32+1 = 33
     let keyboard = make_idt_entry!(isr33, {
-        let port = unsafe { io::cpuio::Port::new(0x60) };
+        let port = unsafe { io::cpuio::Port::new(0x60 as u16) };
         
         //Read a single code off the port.
         let scancode = port.read();
 
-        if let Some(c) = io::keyboard::from_scancode(scancode as usize) {
+        if let Some(c) = io::keyboard::scancode_to_ascii(scancode as usize) {
             println!("{}", c);
         }
         
