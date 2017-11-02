@@ -40,18 +40,16 @@ pub fn _UnwindResume() {
     loop {}
 }
 
+use spin::Mutex;
 static IDT: Mutex<interrupts::Idt> = Mutex::new(interrupts::Idt::new());
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
-    vga::clear_screen();
     println!("Hello world!");
 
     let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
 
-    //Set NXE bit so we can use the NO_EXECUTE flag.
     enable_nxe_bit();
-    //Enable write protect so we are no longer able to access the .rodata and etc. sections.
     enable_write_protect_bit();
 
     //Remap kernel and set up a guard page
@@ -61,6 +59,8 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     
     //Remap the Programmable Interrupt Controllers. (src/io/mod.rs).
     PICS.lock().init();
+    
+    use x86::bits64::irq::IdtEntry;
 
     //Interrupt Service 13, 0xD. General Protection Fault. We can't handle this at the moment, so
     //just panic.
