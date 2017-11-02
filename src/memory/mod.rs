@@ -165,9 +165,11 @@ pub fn init(boot_info: &BootInformation) {
 
     let heap_start_page = Page::containing_address(HEAP_START);
     let heap_end_page = Page::containing_address(HEAP_START + HEAP_SIZE - 1);
+    
+    use self::paging::entry::EntryFlags;
 
     for page in Page::range_inclusive(heap_start_page, heap_end_page) {
-        active_table.map(page, paging::WRITABLE, &mut allocator);
+        active_table.map(page, EntryFlags::WRITABLE, &mut allocator);
     }
 
     unsafe {

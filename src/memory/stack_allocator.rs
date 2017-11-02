@@ -29,9 +29,11 @@ impl StackAllocator {
         match (guard_page, stack_start, stack_end) {
             (Some(_), Some(start), Some(end)) => {
                 self.range = range;
+                
+                use self::paging::entry::EntryFlags;
 
                 for page in Page::range_inclusive(start, end) {
-                    page_table().map(page, paging::WRITABLE, area_frame_allocator());
+                    page_table().map(page, EntryFlags::WRITABLE, area_frame_allocator());
                 }
 
                 //Create a new stack

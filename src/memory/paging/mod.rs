@@ -1,4 +1,5 @@
 pub use self::entry::*;
+pub use self::entry::EntryFlags;
 pub use self::mapper::Mapper;
 use core::ops::{Deref, DerefMut};
 use core::ptr::Unique;
@@ -9,7 +10,7 @@ use self::temporary_page::TemporaryPage;
 use x86_64::instructions::tlb;
 use core::ops::Add;
 
-mod entry;
+pub mod entry;
 mod table;
 mod temporary_page;
 pub mod mapper;
@@ -136,14 +137,14 @@ impl ActivePageTable {
             let p4_table = temporary_page.map_table_frame(backup.clone(), self);
 
             // overwrite recursive mapping
-            self.p4_mut()[511].set(table.p4_frame.clone(), PRESENT | WRITABLE);
+            self.p4_mut()[511].set(table.p4_frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE);
             tlb::flush_all();
 
             // execute f in the new context
             f(self);
 
             // restore recursive mapping to original p4 table
-            p4_table[511].set(backup, PRESENT | WRITABLE);
+            p4_table[511].set(backup, EntryFlags::PRESENT | EntryFlags::WRITABLE);
             tlb::flush_all();
         }
 
@@ -179,7 +180,7 @@ impl InactivePageTable {
             // now we are able to zero the table
             table.zero();
             // set up recursive mapping for the table
-            table[511].set(frame.clone(), PRESENT | WRITABLE);
+            table[511].set(frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE);
         }
         temporary_page.unmap(active_table);
 
@@ -205,8 +206,6 @@ where
             .expect("Memory map tag required");
 
         for section in elf_sections_tag.sections() {
-            use self::entry::WRITABLE;
-
             if !section.is_allocated() {
                 // section is not loaded to memory
                 continue;
@@ -233,13 +232,13 @@ where
 
         // identity map the VGA text buffer
         let vga_buffer_frame = Frame::containing_address(0xb8000);
-        mapper.identity_map(vga_buffer_frame, WRITABLE, allocator);
+        mapper.identity_map(vga_buffer_frame, EntryFlags::WRITABLE, allocator);
 
         // identity map the multiboot info structure
         let multiboot_start = Frame::containing_address(boot_info.start_address());
         let multiboot_end = Frame::containing_address(boot_info.end_address() - 1);
         for frame in Frame::range_inclusive(multiboot_start, multiboot_end) {
-            mapper.identity_map(frame, PRESENT, allocator);
+            mapper.identity_map(frame, EntryFlags::PRESENT, allocator);
         }
     });
 

@@ -1,17 +1,5 @@
 use memory::Frame;
 use multiboot2::ElfSection;
-pub use EntryFlags::{
-    PRESENT,
-    WRITABLE,
-    USER_ACCESSIBLE,
-    WRITE_THROUGH,
-    NO_CACHE,
-    ACCESSED,
-    DIRTY,
-    HUGE_PAGE,
-    GLOBAL,
-    NO_EXECUTE,
-};
 
 pub struct Entry(u64);
 
@@ -29,7 +17,7 @@ impl Entry {
     }
 
     pub fn pointed_frame(&self) -> Option<Frame> {
-        if self.flags().contains(PRESENT) {
+        if self.flags().contains(EntryFlags::PRESENT) {
             Some(Frame::containing_address(
                 self.0 as usize & 0x000fffff_fffff000,
             ))
@@ -68,13 +56,13 @@ impl EntryFlags {
 
         if section.flags().contains(ELF_SECTION_ALLOCATED) {
             // section is loaded to memory
-            flags = flags | PRESENT;
+            flags = flags | EntryFlags::PRESENT;
         }
         if section.flags().contains(ELF_SECTION_WRITABLE) {
-            flags = flags | WRITABLE;
+            flags = flags | EntryFlags::WRITABLE;
         }
         if !section.flags().contains(ELF_SECTION_EXECUTABLE) {
-            flags = flags | NO_EXECUTE;
+            flags = flags | EntryFlags::NO_EXECUTE;
         }
 
         flags
