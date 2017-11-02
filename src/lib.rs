@@ -34,15 +34,6 @@ mod vga;
 #[macro_use]
 mod interrupts;
 
-#[allow(non_snake_case)]
-#[no_mangle]
-pub fn _UnwindResume() {
-    loop {}
-}
-
-use spin::Mutex;
-static IDT: Mutex<interrupts::Idt> = Mutex::new(interrupts::Idt::new());
-
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
     println!("Hello world!");
@@ -55,7 +46,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     //Remap kernel and set up a guard page
     let mut memory_controller = memory::init(boot_info);
 
-    use interrupts::PICS;
+    use interrupts::{PICS, IDT};
     
     //Remap the Programmable Interrupt Controllers. (src/io/mod.rs).
     PICS.lock().init();
@@ -75,11 +66,13 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     
     //32+1 = 33
     let keyboard = make_idt_entry!(isr33, {
+        //Create an interface to the keyboard port.
         let port = unsafe { io::cpuio::Port::new(0x60 as u16) };
         
         //Read a single code off the port.
-        let scancode = port.read();
-
+        let scancode: u8 = port.read();
+        
+        //Some => scancode matches available ascii types.
         if let Some(c) = io::keyboard::scancode_to_ascii(scancode as usize) {
             println!("{}", c);
         }
@@ -89,6 +82,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     });
 }
 
+//Enabling this bit prevents us from accessing 0x0.
 fn enable_nxe_bit() {
     use x86_64::registers::msr::{rdmsr, wrmsr, IA32_EFER};
 
@@ -99,10 +93,22 @@ fn enable_nxe_bit() {
     }
 }
 
+//Prevents us from writing to the .rodata program section.
 fn enable_write_protect_bit() {
     use x86_64::registers::control_regs::{Cr0, cr0, cr0_write};
 
     unsafe { cr0_write(cr0() | Cr0::WRITE_PROTECT) };
+}
+
+/* Everything below here is runtime glue that Rust expects the compiler to provide, but since we
+ * are bare-metal we have to do it ourselves.
+ * _UnwindResume is returning from a stack unwind.
+ * eh_personality and panic_fmt are language items that Rust uses to when panicking.
+*/
+#[allow(non_snake_case)]
+#[no_mangle]
+pub fn _UnwindResume() {
+    loop {}
 }
 
 #[lang = "eh_personality"]
