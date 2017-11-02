@@ -1,5 +1,5 @@
 //Decode a scancode from the scancode table 1 (legacy as usual).
-pub fn from_scancode(code: usize) -> Option<char> {
+pub fn scancode_to_ascii(code: usize) -> Option<char> {
     let printable = match code {
         0x1e => 'a',
         0x30 => 'b',
