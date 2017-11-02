@@ -46,7 +46,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     //Remap kernel and set up a guard page
     let mut memory_controller = memory::init(boot_info);
 
-    use interrupts::{PICS, IDT};
+    use interrupts::{PICS, IDT_INTERFACE};
     
     //Remap the Programmable Interrupt Controllers. (src/io/mod.rs).
     PICS.lock().init();
