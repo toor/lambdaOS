@@ -6,7 +6,7 @@ use io::ChainedPics;
 use x86;
 
 pub static PICS: Mutex<ChainedPics> = Mutex::new(ChainedPics::new(0x20, 0x28));
-pub static IDT_INTERFACE: Mutex<Idt> = Mutex::new(Idt::new());
+lazy_static! { pub static ref IDT_INTERFACE: Mutex<Idt> = Mutex::new(Idt::new()); }
 
 macro_rules! make_idt_entry {
     ($name:ident, $body:expr) => {{
@@ -79,7 +79,8 @@ pub struct Idt {
     idt: &'static Mutex<[IdtEntry; 256]>,
 }
 
-unsafe impl ::core::marker::Sync for Idt {} 
+unsafe impl ::core::marker::Sync for Idt {}
+unsafe impl ::core::marker::Send for Idt {}
 
 impl Idt {
     //Create a new pointer to Idt
