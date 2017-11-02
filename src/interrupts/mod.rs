@@ -6,6 +6,7 @@ use io::ChainedPics;
 use x86;
 
 pub static PICS: Mutex<ChainedPics> = Mutex::new(ChainedPics::new(0x20, 0x28));
+pub static IDT: Mutex<Idt> = Mutex::new(Idt::new());
 
 macro_rules! make_idt_entry {
     ($name:ident, $body:expr) => {{
@@ -83,14 +84,14 @@ unsafe impl ::core::marker::Sync for Idt {}
 impl Idt {
     //Create a new pointer to Idt
     pub fn new() -> Idt {
-        let r = Idt {
+        let idt = Idt {
             ptr: DescriptorTablePointer::new_idtp(&IDT.lock()[..]),
             idt: &IDT,
         };
 
-        unsafe { dtables::lidt(&r.ptr) };
+        unsafe { dtables::lidt(&idt.ptr) };
 
-        r
+        idt
     }
 
     pub fn set_handler(&self, index: usize, entry: IdtEntry) {
