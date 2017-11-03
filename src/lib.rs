@@ -49,7 +49,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     use interrupts::{PICS, IDT_INTERFACE};
     
     //Remap the Programmable Interrupt Controllers. (src/io/mod.rs).
-    PICS.lock().init();
+    unsafe { PICS.lock().init(); }
     
     use x86::bits64::irq::IdtEntry;
 
@@ -61,13 +61,13 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     
     //Timer is IRQ 0. Remapped IRQs start at 0x20 = 32. 32+0 = 32.
     let timer = make_idt_entry!(isr32, {
-        PICS.lock().notify_end_of_interrupt(0x20);
+        unsafe { PICS.lock().notify_end_of_interrupt(0x20); }
     });
     
     //32+1 = 33
     let keyboard = make_idt_entry!(isr33, {
         //Create an interface to the keyboard port.
-        let port = unsafe { io::cpuio::Port::new(0x60 as u16) };
+        let mut port = unsafe { io::cpuio::Port::new(0x60 as u16) };
         
         //Read a single code off the port.
         let scancode: u8 = port.read();
@@ -78,7 +78,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
         }
         
         //outb(0x20, 0x20), outb(0xA0, 0x20) - notify master and slave of EOI.
-        PICS.lock().notify_end_of_interrupt(0x21);
+        unsafe { PICS.lock().notify_end_of_interrupt(0x21); }
     });
 }
 

@@ -5,8 +5,12 @@ use x86::bits64::irq::IdtEntry;
 use io::ChainedPics;
 use x86;
 
-pub static PICS: Mutex<ChainedPics> = Mutex::new(ChainedPics::new(0x20, 0x28));
-lazy_static! { pub static ref IDT_INTERFACE: Mutex<Idt> = Mutex::new(Idt::new()); }
+pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
+
+//Lazy initialized interface to our Idt.
+lazy_static! { 
+    pub static ref IDT_INTERFACE: Mutex<Idt> = Mutex::new(Idt::new()); 
+}
 
 macro_rules! make_idt_entry {
     ($name:ident, $body:expr) => {{
