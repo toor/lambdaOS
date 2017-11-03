@@ -36,6 +36,7 @@ mod interrupts;
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
+    vga::clear_screen();
     println!("Hello world!");
 
     let boot_info = unsafe { multiboot2::load(multiboot_information_address) };

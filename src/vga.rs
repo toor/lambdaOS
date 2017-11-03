@@ -7,7 +7,7 @@ const WIDTH: usize = 80;
 const HEIGHT: usize = 25;
 
 pub static SCREEN: Mutex<Screen> = Mutex::new(Screen {
-    color_code: ColorCode::new(Color::LightGreen, Color::DarkGrey),
+    color_code: ColorCode::new(Color::Red, Color::Black),
     column_position: 0,
     buffer: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
 });
@@ -15,6 +15,12 @@ pub static SCREEN: Mutex<Screen> = Mutex::new(Screen {
 pub fn print(args: fmt::Arguments) {
     use core::fmt::Write;
     SCREEN.lock().write_fmt(args).unwrap();
+}
+
+pub fn clear_screen() {
+    for _ in 0..HEIGHT {
+        println!("");
+    }
 }
 
 //Standard VGA colors.
