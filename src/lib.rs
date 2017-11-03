@@ -36,7 +36,6 @@ mod interrupts;
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
-    vga::clear_screen();
     println!("Hello world!");
 
     let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
@@ -81,6 +80,10 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
         //outb(0x20, 0x20), outb(0xA0, 0x20) - notify master and slave of EOI.
         unsafe { PICS.lock().notify_end_of_interrupt(0x21); }
     });
+
+    IDT_INTERFACE.lock().set_handler(13, gpf);
+    IDT_INTERFACE.lock().set_handler(32, timer);
+    IDT_INTERFACE.lock().set_handler(33, keyboard);
 }
 
 //Enabling this bit prevents us from accessing 0x0.
