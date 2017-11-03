@@ -60,7 +60,7 @@ macro_rules! make_idt_entry {
                   pop r14
                   pop r15
                   pop rbp
-                  iretq" :: "s"(body as fn()) :: "volatile" :: "intel");
+                  iretq" :: "s"(body as fn()) :: "volatile", "intel");
             ::core::intrinsics::unreachable();
         }
 
