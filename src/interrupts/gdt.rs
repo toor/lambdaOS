@@ -18,6 +18,42 @@ impl Gdt {
             next_free: 1,
         }
     }
+
+    pub fn add_entry(&mut self, entry: Descriptor) -> SegmentSelector {
+        let index = match entry {
+            Descriptor::UserSegment(value) => self.push(value),
+            Descriptor::SystemSegment(low, high) => {
+                let index  = self.push(low);
+                self.push(high);
+                index
+            }
+        };
+
+        SegmentSelector::new(index as u16, PrivilegeLevel::Ring0)
+    }
+
+    fn push(&mut self, value: u64) -> usize {
+        if self.next_free < self.table.len() {
+            let index = self.next_free;
+            self.table[index] = value;
+            self.next_free += 1;
+            index
+        } else {
+            panic!("GDT full");
+        }
+    }
+
+    pub fn load(&'static self) {
+        use x86_64::instructions::tables::{DescriptorTablePointer, lgdt};
+        use core::mem::size_of;
+
+        let ptr = DescriptorTablePointer {
+            base: self.table.as_ptr() as u64,
+            limit: (self.table.len() * size_of::<u64>() - 1) as u16,
+        };
+
+        unsafe { lgdt(&ptr) }; 
+    }
 }
 
 pub enum Descriptor {
