@@ -21,10 +21,50 @@ impl Gdt {
 }
 
 pub enum Descriptor {
-    UserSegmnet(u64),
+    UserSegment(u64),
     SystemSegment(u64, u64),
 }
 
 impl Descriptor {
     //Using flags, we can identify the kernel segment.
+    pub fn kernel_code_segment() -> Descriptor {
+        //Kernel is in long mode, is a user segment and is and executable code segment
+        let flags = USER_SEGMENT | PRESENT | EXECUTABLE | LONG_MODE;
+        Descriptor::UserSegment(flags.bits())
+    }
+    
+    //Only system segment we need worry about
+    pub fn tss_segment(tss: &'static TaskStateSegment) -> Descriptor {
+        use core::mem::size_of;
+        use bit_field::BitField;
+
+
+        let ptr = tss as *const _ as u64;
+
+        let mut low = PRESENT.bits();
+
+        //Base
+        low.set_bits(16..40, ptr.get_bits(0..24));
+        low.set_bits(56..64, ptr.get_bits(24..32));
+        //Limit
+        low.set_bits(0..16, (size_of::<TaskStateSegment>() -1) as u64);
+        //Type = 0b1001 => available 64-bit tss.
+        low.set_bits(0..44, 0b1001);
+
+        let mut high = 0;
+
+        high.set_bits(0..32, ptr.get_bits(32..64));
+
+        Descriptor::SystemSegment(low, high);
+    }
+}
+
+bitflags! {
+    struct DescriptorFlags {
+        const CONFORMING        = 1 << 42;
+        const EXECUTABLE        = 1 << 43;
+        const USER_SEGMENT      = 1 << 44;
+        const PRESENT           = 1 << 45;
+        const LONG_MODE         = 1 << 53;
+    }
 }
