@@ -22,5 +22,7 @@ lazy_static! {
             idt.double_fault.set_handler_fn(exceptions::double_fault_handler)
                 .set_stack_index(DOUBLE_FAULT_IST_INDEX as u16);
         }
-    }
+
+        idt
+    };
 }
