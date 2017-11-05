@@ -45,45 +45,6 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     //Remap kernel and set up a guard page
     let mut memory_controller = memory::init(boot_info);
-
-    use interrupts::{PICS, IDT_INTERFACE};
-    
-    //Remap the Programmable Interrupt Controllers. (src/io/mod.rs).
-    unsafe { PICS.lock().init(); }
-    
-    use x86::bits64::irq::IdtEntry;
-
-    //Interrupt Service 13, 0xD. General Protection Fault. We can't handle this at the moment, so
-    //just panic.
-    let gpf = make_idt_entry!(isr13, {
-        panic!("General Protection Fault!");
-    });
-    
-    //Timer is IRQ 0. Remapped IRQs start at 0x20 = 32. 32+0 = 32.
-    let timer = make_idt_entry!(isr32, {
-        unsafe { PICS.lock().notify_end_of_interrupt(0x20); }
-    });
-    
-    //32+1 = 33
-    let keyboard = make_idt_entry!(isr33, {
-        //Create an interface to the keyboard port.
-        let mut port = unsafe { io::cpuio::Port::new(0x60 as u16) };
-        
-        //Read a single code off the port.
-        let scancode: u8 = port.read();
-        
-        //Some => scancode matches available ascii types.
-        if let Some(c) = io::keyboard::scancode_to_ascii(scancode as usize) {
-            println!("{}", c);
-        }
-        
-        //outb(0x20, 0x20), outb(0xA0, 0x20) - notify master and slave of EOI.
-        unsafe { PICS.lock().notify_end_of_interrupt(0x21); }
-    });
-
-    IDT_INTERFACE.lock().set_handler(13, gpf);
-    IDT_INTERFACE.lock().set_handler(32, timer);
-    IDT_INTERFACE.lock().set_handler(33, keyboard);
 }
 
 //Enabling this bit prevents us from accessing 0x0.
