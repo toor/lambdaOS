@@ -148,7 +148,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         let stack_alloc_start = heap_end_page + 1;
         let stack_alloc_end = stack_alloc_start + 100;
         let stack_alloc_range = Page::range_inclusive(stack_alloc_start, stack_alloc_end);
-        stack_allocator::StackAllocator::neW(stack_alloc_range)
+        stack_allocator::StackAllocator::new(stack_alloc_range)
     };
 
     MemoryController {

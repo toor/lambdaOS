@@ -91,7 +91,7 @@ impl Descriptor {
 
         high.set_bits(0..32, ptr.get_bits(32..64));
 
-        Descriptor::SystemSegment(low, high);
+        Descriptor::SystemSegment(low, high)
     }
 }
 
