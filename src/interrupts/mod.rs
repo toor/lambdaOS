@@ -25,6 +25,9 @@ lazy_static! {
                 .set_stack_index(DOUBLE_FAULT_IST_INDEX as u16);
         }
 
+        idt.interrupts[0].set_handler_fn(irq::timer_handler);
+        idt.interrupts[1].set_handler_fn(irq::keyboard_handler);
+
         idt
     };
 }
