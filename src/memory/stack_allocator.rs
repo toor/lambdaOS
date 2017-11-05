@@ -7,11 +7,15 @@ pub struct StackAllocator {
 
 impl StackAllocator {
     pub fn new(page_range: PageIter) -> StackAllocator {
-        StackAllocator { range: page_range }
+        StackAllocator {range: page_range}
     }
-
     //Create a new stack
-    pub fn alloc_stack(&mut self, size_in_pages: usize) -> Option<Stack> {
+    pub fn alloc_stack<FA: FrameALlocator>(
+        &mut self,
+        active_table: &mut ActivePageTable,
+        frame_allocator: &mut FA,
+        size_in_pages: usize,
+    ) -> Option<Stack> {
         if size_in_pages == 0 {
             return None; //This makes no sense
         }
