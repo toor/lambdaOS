@@ -67,56 +67,23 @@ pub trait FrameAllocator {
 }
 
 pub struct MemoryController {
+    active_table: paging::ActivePageTable,
+    frame_allocator: AreaFrameAllocator,
     stack_allocator: stack_allocator::StackAllocator,
 }
 
 impl MemoryController {
     pub fn alloc_stack(&mut self, size_in_pages: usize) -> Option<Stack> {
         let &mut MemoryController {
+            ref mut active_table,
+            ref mut frame_allocator,
             ref mut stack_allocator,
         } = self;
-        stack_allocator.alloc_stack(size_in_pages)
+        stack_allocator.alloc_stack(active_table, frame_allocator, size_in_pages)
     }
 }
 
-static mut MEMORY_CONTROLLER: Option<&'static mut MemoryController> = None;
-static mut ACTIVE_TABLE_PTR: Option<&'static mut ActivePageTable> = None;
-static mut AREA_FRAME_ALLOCATOR_PTR: Option<&'static mut AreaFrameAllocator> = None;
-
-pub fn area_frame_allocator() -> &'static mut AreaFrameAllocator {
-    unsafe {
-        match AREA_FRAME_ALLOCATOR_PTR {
-            Some(ref mut a) => a,
-            None => {
-                panic!("frame_allocator called before init");
-            }
-        }
-    }
-}
-
-pub fn memory_controller() -> &'static mut MemoryController {
-    unsafe {
-        match MEMORY_CONTROLLER {
-            Some(ref mut a) => a,
-            None => {
-                panic!("stack allocator called before initializing");
-            }
-        }
-    }
-}
-
-pub fn page_table() -> &'static mut ActivePageTable {
-    unsafe {
-        match ACTIVE_TABLE_PTR {
-            Some(ref mut a) => a,
-            None => {
-                panic!("active page table called before init");
-            }
-        }
-    }
-}
-
-pub fn init(boot_info: &BootInformation) {
+pub fn init(boot_info: &BootInformation) -> MemoryController {
     assert_has_not_been_called!("memory::init must only be called once");
 
     let memory_map_tag = boot_info.memory_map_tag().expect("Memory map tag required");
@@ -176,22 +143,17 @@ pub fn init(boot_info: &BootInformation) {
         allocator::init(HEAP_START, HEAP_SIZE);
     }
 
-    unsafe {
-        AREA_FRAME_ALLOCATOR_PTR = Some(&mut *Box::into_raw(Box::new(allocator)));
-    }
-
-    unsafe { ACTIVE_TABLE_PTR = Some(&mut *Box::into_raw(Box::new(active_table))) }
-
+    //Create a new stack allocator.
     let stack_allocator = {
         let stack_alloc_start = heap_end_page + 1;
-        let stack_alloc_end = stack_alloc_start + 10000;
+        let stack_alloc_end = stack_alloc_start + 100;
         let stack_alloc_range = Page::range_inclusive(stack_alloc_start, stack_alloc_end);
-        stack_allocator::StackAllocator::new(stack_alloc_range)
+        stack_allocator::StackAllocator::neW(stack_alloc_range)
     };
 
-    let mc = MemoryController {
+    MemoryController {
+        active_table: active_table,
+        frame_allocator: frame_allocator,
         stack_allocator: stack_allocator,
-    };
-
-    unsafe { MEMORY_CONTROLLER = Some(&mut *Box::into_raw(Box::new(mc))) }
+    }
 }
