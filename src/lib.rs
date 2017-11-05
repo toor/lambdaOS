@@ -1,6 +1,6 @@
 #![feature(lang_items, const_fn, const_unsafe_cell_new, alloc, custom_attributes, global_allocator,
           box_syntax, drop_types_in_const, unique, const_unique_new, allocator_internals,
-          abi_x86_interrupts, asm, exclusive_range_pattern, naked_functions, core_intrinsics)]
+          abi_x86_interrupt, asm, exclusive_range_pattern, naked_functions, core_intrinsics)]
 #![no_std]
 #![default_lib_allocator]
 #![allow(safe_extern_statics)]
