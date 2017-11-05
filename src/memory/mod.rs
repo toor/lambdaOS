@@ -116,7 +116,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         boot_info.end_address()
     );
 
-    let mut allocator = AreaFrameAllocator::new(
+    let mut frame_allocator = AreaFrameAllocator::new(
         kernel_start as usize,
         kernel_end as usize,
         boot_info.start_address(),

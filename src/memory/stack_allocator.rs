@@ -39,7 +39,7 @@ impl StackAllocator {
                 use self::paging::entry::EntryFlags;
 
                 for page in Page::range_inclusive(start, end) {
-                    active_table.map(page, EntryFlags::WRITABLE, area_frame_allocator());
+                    active_table.map(page, EntryFlags::WRITABLE, frame_allocator);
                 }
 
                 //Create a new stack
