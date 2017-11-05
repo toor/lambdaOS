@@ -65,7 +65,7 @@ impl Descriptor {
     //Using flags, we can identify the kernel segment.
     pub fn kernel_code_segment() -> Descriptor {
         //Kernel is in long mode, is a user segment and is and executable code segment
-        let flags = USER_SEGMENT | PRESENT | EXECUTABLE | LONG_MODE;
+        let flags = DescriptorFlags::USER_SEGMENT | DescriptorFlags::PRESENT | DescriptorFlags::EXECUTABLE | DescriptorFlags::LONG_MODE;
         Descriptor::UserSegment(flags.bits())
     }
     
@@ -77,7 +77,7 @@ impl Descriptor {
 
         let ptr = tss as *const _ as u64;
 
-        let mut low = PRESENT.bits();
+        let mut low = DescriptorFlags::PRESENT.bits();
 
         //Base
         low.set_bits(16..40, ptr.get_bits(0..24));

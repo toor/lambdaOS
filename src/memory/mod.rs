@@ -124,7 +124,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         memory_map_tag.memory_areas(),
     );
 
-    let mut active_table = paging::remap_the_kernel(&mut allocator, boot_info);
+    let mut active_table = paging::remap_the_kernel(&mut frame_allocator, boot_info);
 
     use self::paging::Page;
 
@@ -136,7 +136,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     use self::paging::entry::EntryFlags;
 
     for page in Page::range_inclusive(heap_start_page, heap_end_page) {
-        active_table.map(page, EntryFlags::WRITABLE, &mut allocator);
+        active_table.map(page, EntryFlags::WRITABLE, &mut frame_allocator);
     }
 
     unsafe {
