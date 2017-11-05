@@ -14,7 +14,7 @@ pub struct Gdt {
 impl Gdt {
     pub fn new() -> Gdt {
         Gdt {
-            table: [0; 8]
+            table: [0; 8],
             next_free: 1,
         }
     }
@@ -96,7 +96,7 @@ impl Descriptor {
 }
 
 bitflags! {
-    struct DescriptorFlags {
+    struct DescriptorFlags: u64 {
         const CONFORMING        = 1 << 42;
         const EXECUTABLE        = 1 << 43;
         const USER_SEGMENT      = 1 << 44;
