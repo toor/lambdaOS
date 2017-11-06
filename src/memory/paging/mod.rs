@@ -1,24 +1,19 @@
-pub use self::entry::*;
 pub use self::entry::EntryFlags;
-pub use self::mapper::Mapper;
-use core::ops::{Deref, DerefMut};
-use core::ptr::Unique;
-use memory::{Frame, FrameAllocator, PAGE_SIZE};
-use multiboot2::BootInformation;
-use self::table::{Level4, Table};
+use memory::{PAGE_SIZE, Frame, FrameAllocator};
 use self::temporary_page::TemporaryPage;
-use x86_64::instructions::tlb;
-use core::ops::Add;
+pub use self::mapper::Mapper;
+use core::ops::{Add, Deref, DerefMut};
+use multiboot2::BootInformation;
 
-pub mod entry;
+mod entry;
 mod table;
 mod temporary_page;
-pub mod mapper;
+mod mapper;
 
 const ENTRY_COUNT: usize = 512;
 
-pub type VirtualAddress = usize;
 pub type PhysicalAddress = usize;
+pub type VirtualAddress = usize;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Page {
@@ -26,20 +21,16 @@ pub struct Page {
 }
 
 impl Page {
-    //Which page contains this address
     pub fn containing_address(address: VirtualAddress) -> Page {
         assert!(
             address < 0x0000_8000_0000_0000 || address >= 0xffff_8000_0000_0000,
             "invalid address: 0x{:x}",
             address
         );
-        Page {
-            number: address / PAGE_SIZE,
-        }
+        Page { number: address / PAGE_SIZE }
     }
 
-    //Where a page starts
-    pub fn start_address(&self) -> VirtualAddress {
+    pub fn start_address(&self) -> usize {
         self.number * PAGE_SIZE
     }
 
@@ -68,9 +59,7 @@ impl Add<usize> for Page {
     type Output = Page;
 
     fn add(self, rhs: usize) -> Page {
-        Page {
-            number: self.number + rhs,
-        }
+        Page { number: self.number + rhs }
     }
 }
 
@@ -114,9 +103,7 @@ impl DerefMut for ActivePageTable {
 
 impl ActivePageTable {
     unsafe fn new() -> ActivePageTable {
-        ActivePageTable {
-            mapper: Mapper::new(),
-        }
+        ActivePageTable { mapper: Mapper::new() }
     }
 
     pub fn with<F>(
@@ -127,8 +114,8 @@ impl ActivePageTable {
     ) where
         F: FnOnce(&mut Mapper),
     {
-        use x86_64::instructions::tlb;
         use x86_64::registers::control_regs;
+        use x86_64::instructions::tlb;
 
         {
             let backup = Frame::containing_address(control_regs::cr3().0 as usize);
@@ -177,9 +164,7 @@ impl InactivePageTable {
     ) -> InactivePageTable {
         {
             let table = temporary_page.map_table_frame(frame.clone(), active_table);
-            // now we are able to zero the table
             table.zero();
-            // set up recursive mapping for the table
             table[511].set(frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE);
         }
         temporary_page.unmap(active_table);
@@ -205,16 +190,17 @@ where
             .elf_sections_tag()
             .expect("Memory map tag required");
 
+        // identity map the allocated kernel sections
         for section in elf_sections_tag.sections() {
             if !section.is_allocated() {
                 // section is not loaded to memory
                 continue;
             }
+
             assert!(
-                section.start_address() % PAGE_SIZE == 0,
+                section.addr as usize % PAGE_SIZE == 0,
                 "sections need to be page aligned"
             );
-
             println!(
                 "mapping section at addr: {:#x}, size: {:#x}",
                 section.addr,
@@ -245,9 +231,9 @@ where
     let old_table = active_table.switch(new_table);
     println!("NEW TABLE!!!");
 
-    // turn the old p4 page into a guard page
     let old_p4_page = Page::containing_address(old_table.p4_frame.start_address());
     active_table.unmap(old_p4_page, allocator);
     println!("guard page at {:#x}", old_p4_page.start_address());
+
     active_table
 }

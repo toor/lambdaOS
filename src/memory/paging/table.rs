@@ -1,8 +1,8 @@
-use core::marker::PhantomData;
-use core::ops::{Index, IndexMut};
-use memory::FrameAllocator;
 use memory::paging::entry::*;
 use memory::paging::ENTRY_COUNT;
+use memory::FrameAllocator;
+use core::ops::{Index, IndexMut};
+use core::marker::PhantomData;
 
 pub const P4: *mut Table<Level4> = 0xffffffff_fffff000 as *mut _;
 
@@ -90,7 +90,9 @@ where
 pub trait TableLevel {}
 
 pub enum Level4 {}
+#[allow(dead_code)]
 pub enum Level3 {}
+#[allow(dead_code)]
 pub enum Level2 {}
 pub enum Level1 {}
 

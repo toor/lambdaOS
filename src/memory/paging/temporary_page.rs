@@ -1,5 +1,14 @@
-use super::{ActivePageTable, Page, VirtualAddress};
-use super::table::{Level1, Table};
+// Copyright 2016 Philipp Oppermann. See the README.md
+// file at the top-level directory of this distribution.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+use super::{Page, ActivePageTable, VirtualAddress};
+use super::table::{Table, Level1};
 use memory::{Frame, FrameAllocator};
 
 pub struct TemporaryPage {
@@ -31,19 +40,19 @@ impl TemporaryPage {
         self.page.start_address()
     }
 
-    // Unmaps the temporary page in the active table.
-    pub fn unmap(&mut self, active_table: &mut ActivePageTable) {
-        active_table.unmap(self.page, &mut self.allocator)
-    }
-
-    // Maps the temporary page to the given page table frame in the active
-    // table. Returns a reference to the now mapped table.
+    /// Maps the temporary page to the given page table frame in the active table.
+    /// Returns a reference to the now mapped table.
     pub fn map_table_frame(
         &mut self,
         frame: Frame,
         active_table: &mut ActivePageTable,
     ) -> &mut Table<Level1> {
         unsafe { &mut *(self.map(frame, active_table) as *mut Table<Level1>) }
+    }
+
+    /// Unmaps the temporary page in the active table.
+    pub fn unmap(&mut self, active_table: &mut ActivePageTable) {
+        active_table.unmap(self.page, &mut self.allocator)
     }
 }
 
