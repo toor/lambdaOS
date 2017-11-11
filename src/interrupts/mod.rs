@@ -70,8 +70,6 @@ pub fn init(memory_controller: &mut MemoryController) {
 
         load_tss(tss_selector);
     }
-
-    IDT.load();
 }
 
 //Our interface to the 8259 PIC.
