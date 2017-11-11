@@ -13,26 +13,26 @@ pub mod x86_io {
         asm!("outb %al, %dx" :: "{dx}"(port), "{al}"(value) :: "volatile");
     }
 
-    //Read a word from the port.
+    ///Read a word from the port.
     pub unsafe fn inw(port: u16) -> u16 {
         let result: u16;
         asm!("inw %dx, %ax" : "={ax}"(result) : "{dx}"(port) :: "volatile");
         result
     }
 
-    // Write a word to the port.
+    ///Write a word to the port.
     pub unsafe fn outw(value: u16, port: u16) {
         asm!("outw %ax, %dx" :: "{dx}"(port), "{ax}"(value) :: "volatile");
     }
 
-    // Read a dword from the port.
+    ///Read a dword from the port.
     pub unsafe fn inl(port: u16) -> u32 {
         let result: u32;
         asm!("inl %dx, %eax" : "={eax}"(result) : "{dx}"(port) :: "volatile");
         result
     }
 
-    // Write a dword to the port.
+    ///Write a dword to the port.
     pub unsafe fn outl(value: u32, port: u16) {
         asm!("outl %eax, %dx" :: "{dx}"(port), "{eax}"(value) :: "volatile");
     }
