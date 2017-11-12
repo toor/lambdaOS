@@ -18,8 +18,8 @@ pub fn print(args: fmt::Arguments) {
 }
 
 pub fn clear_screen() {
-    for _ in 0..HEIGHT {
-        println!("");
+    for row in 0..HEIGHT {
+        SCREEN.lock().clear_row(row);
     }
 }
 
