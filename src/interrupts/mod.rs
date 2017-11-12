@@ -15,18 +15,16 @@ lazy_static! {
         let mut idt = Idt::new();
 
         //Set exception handlers.
-        idt.breakpoint.set_handler_fn(exceptions::breakpoint_handler);
         idt.divide_by_zero.set_handler_fn(exceptions::divide_by_zero_handler);
+        idt.breakpoint.set_handler_fn(exceptions::breakpoint_handler);
         idt.invalid_opcode.set_handler_fn(exceptions::invalid_opcode_handler);
         idt.page_fault.set_handler_fn(exceptions::page_fault_handler);
+        idt.general_protection_fault.set_handler_fn(exceptions::gpf_handler);
 
         unsafe {
             idt.double_fault.set_handler_fn(exceptions::double_fault_handler)
                 .set_stack_index(DOUBLE_FAULT_IST_INDEX as u16);
         }
-
-        idt.interrupts[0].set_handler_fn(irq::timer_handler);
-        idt.interrupts[1].set_handler_fn(irq::keyboard_handler);
 
         idt
     };
@@ -72,8 +70,6 @@ pub fn init(memory_controller: &mut MemoryController) {
 
         load_tss(tss_selector);
     }
-
-    IDT.load();
 }
 
 //Our interface to the 8259 PIC.

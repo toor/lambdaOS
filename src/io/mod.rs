@@ -1,12 +1,12 @@
 use core::marker::PhantomData;
 
-//Begin init of the PIC chip
+//Command to begin init of the PIC chip.
 const CMD_INIT: u8 = 0x11;
 
-//Interrupt acknowledgement
+///EOI command, that tells the PIC it can begin receiving other interrupts again.
 const CMD_END_OF_INTERRUPT: u8 = 0x20;
 
-//PIC mode
+///The PIC lives in ancient 8086 land.
 const MODE_8086: u8 = 0x01;
 
 #[macro_use]
@@ -15,34 +15,36 @@ pub mod serial;
 pub mod keyboard;
 use self::cpuio::Port;
 
-//See http://wiki.osdev.org/PIC#Programming_with_the_8259_PIC for information on where this
-//structure comes from.
-struct Pic {
+///A single interrupt controller.
+///The `offset` is set to the value from which the handled IRQs begin.
+pub struct Pic {
     offset: u8,
     command: Port<u8>,
     data: Port<u8>,
 }
 
-//Commands for a simple PIC, to check whether it handles the interrupt and to tell it that an
-//interrupt has ended.
+
 impl Pic {
+    ///The offset is less than or equal to the interrupt id and the interrupt id is less than the
+    ///offset + 8. This is done because the master PIC handles IRQs 0-7, where the vector number of
+    ///IRQ 0 is the offset of the master PIC.
     fn handles_interrupt(&self, interrupt_id: u8) -> bool {
         self.offset <= interrupt_id && interrupt_id < self.offset + 8
     }
-
+    
+    ///Write the EOI command for a single PIC.
     unsafe fn end_of_interrupt(&mut self) {
         self.command.write(CMD_END_OF_INTERRUPT);
     }
 }
 
-//An array of two linked PIC chips.
+///A master and slave PIC.
 pub struct ChainedPics {
     pics: [Pic; 2],
 }
 
 impl ChainedPics {
-    //Return an instance of two PICS, Master and slave. Note that this function does not link the
-    //PICS, this is done by the init function below.
+    ///Create a new pair of controllers.
     pub const unsafe fn new(offset1: u8, offset2: u8) -> ChainedPics {
         ChainedPics {
             pics: [
@@ -62,7 +64,7 @@ impl ChainedPics {
         }
     }
 
-    //Remap the IRQs and setup the 8259 PIC.
+    ///Initialize PICS. We remap the IRQs to begin at 0x20, and the slave IRQs to begin at 0x28.
     pub unsafe fn init(&mut self) {
         //Write garbage data to a port as a method of telling the CPU to wait for a bit in-between
         //commands.
@@ -95,12 +97,12 @@ impl ChainedPics {
         self.pics[1].data.write(MODE_8086);
     }
 
-    //Cycle through the PICS until we find one that can handle this interrupt.
+    ///Cycle through the PICS until we find one that can handle this interrupt.
     pub fn handles_interrupt(&self, interrupt_id: u8) -> bool {
         self.pics.iter().any(|p| p.handles_interrupt(interrupt_id))
     }
 
-    //Write magic EOI command.
+    ///Notify EOI for master and slave.
     pub unsafe fn notify_end_of_interrupt(&mut self, interrupt_id: u8) {
         if self.handles_interrupt(interrupt_id) {
             //If the Slave can handle this interrupt, tell it the interrupt has ended.

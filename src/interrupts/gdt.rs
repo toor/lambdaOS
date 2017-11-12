@@ -22,13 +22,12 @@ impl Gdt {
     pub fn add_entry(&mut self, entry: Descriptor) -> SegmentSelector {
         let index = match entry {
             Descriptor::UserSegment(value) => self.push(value),
-            Descriptor::SystemSegment(low, high) => {
-                let index  = self.push(low);
-                self.push(high);
+            Descriptor::SystemSegment(value_low, value_high) => {
+                let index  = self.push(value_low);
+                self.push(value_high);
                 index
             }
         };
-
         SegmentSelector::new(index as u16, PrivilegeLevel::Ring0)
     }
 

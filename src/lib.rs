@@ -28,11 +28,11 @@ extern crate x86;
 mod macros;
 
 #[macro_use]
-mod memory;
-mod io;
-mod vga;
+pub mod memory;
+pub mod io;
+pub mod vga;
 #[macro_use]
-mod interrupts;
+pub mod interrupts;
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {

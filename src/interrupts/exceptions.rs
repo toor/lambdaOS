@@ -34,3 +34,8 @@ pub extern "x86-interrupt" fn page_fault_handler(stack_frame: &mut ExceptionStac
 
     loop {}
 }
+
+pub extern "x86-interrupt" fn gpf_handler(stack_frame: &mut ExceptionStackFrame, _error_code: u64) 
+{
+    println!("Exception: General Protection Fault\n{:#?}", stack_frame);
+}
