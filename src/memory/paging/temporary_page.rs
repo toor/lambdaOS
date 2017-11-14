@@ -1,12 +1,3 @@
-// Copyright 2016 Philipp Oppermann. See the README.md
-// file at the top-level directory of this distribution.
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 use super::{Page, ActivePageTable, VirtualAddress};
 use super::table::{Table, Level1};
 use memory::{Frame, FrameAllocator};
@@ -27,8 +18,8 @@ impl TemporaryPage {
         }
     }
 
-    // Maps the temporary page to the given frame in the active table.
-    // Returns the start address of the temporary page.
+    /// Maps the temporary page to the given frame in the active table.
+    /// Returns the start address of the temporary page.
     pub fn map(&mut self, frame: Frame, active_table: &mut ActivePageTable) -> VirtualAddress {
         use super::entry::EntryFlags;
 

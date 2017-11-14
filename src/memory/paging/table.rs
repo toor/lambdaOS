@@ -1,3 +1,4 @@
+use memory::paging::entry::EntryFlags;
 use memory::paging::entry::*;
 use memory::paging::ENTRY_COUNT;
 use memory::FrameAllocator;

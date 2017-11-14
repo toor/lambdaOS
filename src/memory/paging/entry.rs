@@ -60,8 +60,6 @@ impl EntryFlags {
         if section.flags().contains(ELF_SECTION_WRITABLE) {
             flags = flags | EntryFlags::WRITABLE;
         }
-        
-        //Data segment
         if !section.flags().contains(ELF_SECTION_EXECUTABLE) {
             flags = flags | EntryFlags::NO_EXECUTE;
         }

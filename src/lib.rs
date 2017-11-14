@@ -1,55 +1,64 @@
-#![feature(lang_items, const_fn, const_unsafe_cell_new, alloc, custom_attributes, global_allocator,
-          box_syntax, drop_types_in_const, unique, const_unique_new, allocator_internals,
-          abi_x86_interrupt, asm, exclusive_range_pattern, naked_functions, core_intrinsics)]
+#![feature(lang_items)]
+#![feature(const_fn, unique)]
+#![feature(alloc)]
+#![feature(asm)]
+#![feature(naked_functions)]
+#![feature(abi_x86_interrupt)]
+#![feature(const_unique_new)]
 #![no_std]
-#![default_lib_allocator]
-#![allow(safe_extern_statics)]
-#![allow(const_err)]
 
-#[macro_use]
-extern crate alloc;
-extern crate bit_field;
-#[macro_use]
-extern crate bitflags;
-extern crate hole_list_allocator as allocator;
-#[macro_use]
-extern crate lazy_static;
-extern crate linked_list_allocator;
+extern crate rlibc;
+extern crate volatile;
+extern crate spin;
 extern crate multiboot2;
 #[macro_use]
-extern crate once;
-extern crate rlibc;
-extern crate spin;
-extern crate volatile;
+extern crate bitflags;
 extern crate x86_64;
-extern crate x86;
+#[macro_use]
+extern crate once;
+extern crate bit_field;
+#[macro_use]
+extern crate lazy_static;
+
+extern crate hole_list_allocator as allocator;
+#[macro_use]
+extern crate alloc;
 
 #[macro_use]
 mod macros;
+mod vga;
+mod memory;
+mod io;
+mod interrupts;
 
-#[macro_use]
-pub mod memory;
-pub mod io;
-pub mod vga;
-#[macro_use]
-pub mod interrupts;
+pub const HEAP_START: usize = 0o_000_001_000_000_0000;
+pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
+
 
 #[no_mangle]
-pub extern "C" fn kmain(multiboot_information_address: usize) {
-    println!("Hello world!");
+pub extern "C" fn rust_main(multiboot_information_address: usize) {
+    // ATTENTION: we have a very small stack and no guard page
+    vga::clear_screen();
+    println!("Hello World{}", "!");
 
     let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
-
     enable_nxe_bit();
     enable_write_protect_bit();
 
-    //Remap kernel and set up a guard page
+    // set up guard page and map the heap pages
     let mut memory_controller = memory::init(boot_info);
+
+    // initialize our IDT
+    interrupts::init(&mut memory_controller);
+    
+    vga::clear_screen();
+
+    println!("It did not crash!");
+    loop {}
 }
 
-//Enabling this bit prevents us from accessing 0x0.
 fn enable_nxe_bit() {
-    use x86_64::registers::msr::{rdmsr, wrmsr, IA32_EFER};
+    use x86_64::registers::msr::{IA32_EFER, rdmsr, wrmsr};
 
     let nxe_bit = 1 << 11;
     unsafe {
@@ -58,31 +67,28 @@ fn enable_nxe_bit() {
     }
 }
 
-//Prevents us from writing to the .rodata program section.
 fn enable_write_protect_bit() {
-    use x86_64::registers::control_regs::{Cr0, cr0, cr0_write};
+    use x86_64::registers::control_regs::{cr0, cr0_write, Cr0};
 
     unsafe { cr0_write(cr0() | Cr0::WRITE_PROTECT) };
 }
 
-/* Everything below here is runtime glue that Rust expects the compiler to provide, but since we
- * are bare-metal we have to do it ourselves.
- * _UnwindResume is returning from a stack unwind.
- * eh_personality and panic_fmt are language items that Rust uses to when panicking.
-*/
-#[allow(non_snake_case)]
-#[no_mangle]
-pub fn _UnwindResume() {
-    loop {}
-}
-
+#[cfg(not(test))]
 #[lang = "eh_personality"]
-extern "C" fn eh_personality() {}
+#[no_mangle]
+pub extern "C" fn eh_personality() {}
 
+#[cfg(not(test))]
 #[lang = "panic_fmt"]
 #[no_mangle]
 pub extern "C" fn panic_fmt(fmt: core::fmt::Arguments, file: &'static str, line: u32) -> ! {
     println!("\n\nPANIC in {} at line {}:", file, line);
     println!("    {}", fmt);
+    loop {}
+}
+
+#[allow(non_snake_case)]
+#[no_mangle]
+pub extern "C" fn _Unwind_Resume() -> ! {
     loop {}
 }
