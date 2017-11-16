@@ -34,6 +34,10 @@ mod interrupts;
 pub const HEAP_START: usize = 0o_000_001_000_000_0000;
 pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
 
+use io::ChainedPics;
+use spin::Mutex;
+
+pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
@@ -50,8 +54,9 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
 
     // initialize our IDT
     interrupts::init(&mut memory_controller);
-    
-    vga::clear_screen();
+
+    //Init PICS.
+    unsafe { PICS.lock().init() };
 
     println!("It did not crash!");
     loop {}
