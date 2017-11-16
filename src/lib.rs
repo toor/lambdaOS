@@ -52,11 +52,17 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     // set up guard page and map the heap pages
     let mut memory_controller = memory::init(boot_info);
 
+    //Clear interrupts
+    unsafe { asm!("cli") };
     // initialize our IDT
+    println!("Loading IDT.");
     interrupts::init(&mut memory_controller);
 
     //Init PICS.
     unsafe { PICS.lock().init() };
+    
+    //Start real interrupts.
+    unsafe { asm!("sti") };
 
     println!("It did not crash!");
     loop {}

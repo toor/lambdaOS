@@ -84,7 +84,7 @@ pub extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackF
     let scancode: u8 = port.read();
     
     if let Some(c) = keyboard::scancode_to_ascii(scancode as usize) {
-        println!("{}", c);
+        print!("{}", c);
     }
 
     unsafe { PICS.lock().notify_end_of_interrupt(0x21) };
