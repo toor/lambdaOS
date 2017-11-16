@@ -2,6 +2,7 @@ use memory::MemoryController;
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
 use spin::Once;
+use PICS;
 
 mod gdt;
 
@@ -21,6 +22,9 @@ lazy_static! {
             idt.double_fault.set_handler_fn(double_fault_handler)
                 .set_stack_index(DOUBLE_FAULT_IST_INDEX as u16);
         }
+
+        idt.interrupts[0].set_handler_fn(timer_handler);
+        idt.interrupts[1].set_handler_fn(keyboard_handler);
 
         idt
     };
@@ -66,6 +70,27 @@ pub fn init(memory_controller: &mut MemoryController) {
     IDT.load();
 }
 
+//IRQs.
+pub extern "x86-interrupt" fn timer_handler(stack_frame: &mut ExceptionStackFrame) {
+    unsafe { PICS.lock().notify_end_of_interrupt(0x20) };
+}
+
+pub extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackFrame) {
+    use io::cpuio::Port;
+    use io::keyboard;
+    //Open the keyboard port.
+    let mut port = unsafe { Port::new(0x60) };
+
+    let scancode: u8 = port.read();
+    
+    if let Some(c) = keyboard::scancode_to_ascii(scancode as usize) {
+        println!("{}", c);
+    }
+
+    unsafe { PICS.lock().notify_end_of_interrupt(0x21) };
+}
+
+//Exception handlers.
 extern "x86-interrupt" fn divide_by_zero_handler(stack_frame: &mut ExceptionStackFrame) {
     println!("\nEXCEPTION: DIVIDE BY ZERO\n{:#?}", stack_frame);
     loop {}
