@@ -36,8 +36,11 @@ pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
 
 use io::ChainedPics;
 use spin::Mutex;
+use multiboot2::BootInformation;
 
 pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
+
+pub static mut BOOT_INFO: Option<&BootInformation> = None;
 
 #[no_mangle]
 pub extern "C" fn rust_main(multiboot_information_address: usize) {
@@ -46,6 +49,7 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     println!("Hello World{}", "!");
 
     let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
+    unsafe { BOOT_INFO = Some(boot_info) };
     enable_nxe_bit();
     enable_write_protect_bit();
 

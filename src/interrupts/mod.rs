@@ -77,8 +77,15 @@ pub extern "x86-interrupt" fn timer_handler(stack_frame: &mut ExceptionStackFram
 }
 
 pub extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackFrame) {
+    use super::vga;
+
     if let Some(c) = read_char() {
         print!("{}", c);
+
+        match c {
+            'c' => vga::clear_screen(),
+            _ => {},
+        }
     }
 
     unsafe { PICS.lock().notify_end_of_interrupt(0x21) };
