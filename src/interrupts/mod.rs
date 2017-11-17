@@ -3,6 +3,7 @@ use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
 use spin::Once;
 use PICS;
+use io::keyboard::read_char;
 
 mod gdt;
 
@@ -76,14 +77,7 @@ pub extern "x86-interrupt" fn timer_handler(stack_frame: &mut ExceptionStackFram
 }
 
 pub extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackFrame) {
-    use io::cpuio::Port;
-    use io::keyboard;
-    //Open the keyboard port.
-    let mut port = unsafe { Port::new(0x60) };
-
-    let scancode: u8 = port.read();
-    
-    if let Some(c) = keyboard::scancode_to_ascii(scancode as usize) {
+    if let Some(c) = read_char() {
         print!("{}", c);
     }
 
