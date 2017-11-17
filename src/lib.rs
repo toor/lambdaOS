@@ -65,6 +65,8 @@ pub extern "C" fn rust_main(multiboot_information_address: usize) {
     unsafe { asm!("sti") };
 
     println!("It did not crash!");
+
+    vga::clear_screen();
     loop {}
 }
 
