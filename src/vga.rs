@@ -103,7 +103,7 @@ impl Screen {
         unsafe { self.buffer.as_mut() } 
     }
 
-    fn new_line(&mut self) {
+    pub fn new_line(&mut self) {
         for row in 1..HEIGHT {
             for col in 0..WIDTH {
                 let buffer = self.buffer();
@@ -120,6 +120,10 @@ impl Screen {
             code: b' ',
             color_code: self.color_code,
         };
+
+        for col in 0..WIDTH {
+            self.buffer().chars[row][col].write(blank);
+        }
     }
 }
 
