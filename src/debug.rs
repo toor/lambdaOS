@@ -1,6 +1,7 @@
 use memory::PAGE_SIZE;
+use multiboot2::BootInformation;
 
-pub fn debug() {
+pub fn debug(boot_info: &BootInformation) {
     let elf_sections_tag = boot_info
         .elf_sections_tag()
         .expect("Memory map tag required");
@@ -21,6 +22,4 @@ pub fn debug() {
                  section.size
         );
     }
-
-    
 }

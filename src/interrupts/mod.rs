@@ -4,6 +4,7 @@ use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
 use spin::Once;
 use PICS;
 use io::keyboard::read_char;
+use debug::debug;
 
 mod gdt;
 
@@ -84,6 +85,11 @@ pub extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackF
 
         match c {
             'c' => vga::clear_screen(),
+            'd' => {
+                if let Some(b) = unsafe { super::BOOT_INFO } {
+                    debug(b);
+                }
+            }
             _ => {},
         }
     }
