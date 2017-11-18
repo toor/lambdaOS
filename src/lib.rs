@@ -44,7 +44,7 @@ pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20,
 pub static mut BOOT_INFO: Option<&BootInformation> = None;
 
 #[no_mangle]
-pub extern "C" fn rust_main(multiboot_information_address: usize) {
+pub extern "C" fn kmain(multiboot_information_address: usize) {
     // ATTENTION: we have a very small stack and no guard page
     vga::clear_screen();
     println!("Hello World{}", "!");

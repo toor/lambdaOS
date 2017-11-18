@@ -1,5 +1,5 @@
 global long_mode_start
-extern rust_main
+extern kmain
 
 section .text
 bits 64
@@ -13,7 +13,7 @@ long_mode_start:
     mov gs, ax
 
     ; call rust main (with multiboot pointer in rdi)
-    call rust_main
+    call kmain
 .os_returned:
     ; rust main returned, print `OS returned!`
     mov rax, 0x4f724f204f534f4f
