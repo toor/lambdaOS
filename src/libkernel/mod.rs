@@ -16,9 +16,9 @@ pub fn kalloc(size: usize) {
         if size > (100 * 1024) {
             panic!("requested size is larger than the available heap memory");
         } else {
-            let mut heap = HEAP.lock();
-            let mut heap = heap.as_mut();
-            let mut heap = heap.unwrap();
+            let heap = HEAP.lock();
+            let heap = heap.as_mut();
+            let heap = heap.unwrap();
 
             unsafe { heap.alloc(l).unwrap() };
         }
