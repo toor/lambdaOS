@@ -10,6 +10,12 @@ const SUCCESS: u8 = 0;
 const EOF: i8 = -1;
 const FAILURE: i8 = -2;
 
+const DEV_NAMES = ["hda", "hdb", 
+"hdc", "hdd", "hde", "hdf", "hdg"
+"hdh", "hdi", "hdj", "hdk", "hdl",
+"hdm", "hdn", "hdo", "hdp", "hdq", 
+"hdr", "hds", "hdt", "hdu", "hdv",
+"hdw", "hdx", "hdy", "hdz"];
 
 pub struct CachedSector {
     cache: &u8,
@@ -18,7 +24,7 @@ pub struct CachedSector {
 }
 
 pub struct AtaDevice {
-    master: bool,
+    master: u8,
     identify: [u8; 256],
     data_port: cpuio::Port<u16>,
     error_port: cpuio::Port<u16>,
@@ -32,4 +38,13 @@ pub struct AtaDevice {
     exists: u8,
     sector_count: u64,
     bytes_per_sector: u16,
+    cache: &CachedSector,
+}
+
+impl AtaDevice {
+    pub fn new(&self) -> AtaDevice {
+        AtaDevice {
+            
+        }
+    }
 }
