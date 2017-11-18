@@ -13,7 +13,6 @@ const MODE_8086: u8 = 0x01;
 pub mod cpuio;
 pub mod serial;
 pub mod keyboard;
-pub mod ata;
 use self::cpuio::Port;
 
 ///A single interrupt controller.
