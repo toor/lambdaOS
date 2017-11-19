@@ -1,7 +1,6 @@
 extern crate hole_list_allocator;
 extern crate linked_list_allocator;
 
-
 use self::hole_list_allocator::HEAP;
 use alloc::heap::Layout;
 use alloc::heap::Alloc;
@@ -20,7 +19,7 @@ pub fn kalloc(size: usize) {
             let heap = heap.as_mut();
             let heap = heap.unwrap();
 
-            unsafe { heap.alloc(l).unwrap() };
+            unsafe { heap.alloc_zeroed(l).unwrap() };
         }
     } else {
         panic!("Invalid layout");
