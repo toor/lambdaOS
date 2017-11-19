@@ -18,6 +18,14 @@ impl TextBuffer {
         //TODO: Update cursor.
         unimplemented!();
     }
+
+    pub fn chars(&self) -> &[[u8; BUFFER_WIDTH]; BUFFER_HEIGHT] {
+        &self.chars
+    }
+
+    pub fn color_code(&self) -> ColorCode {
+        self.color_code
+    }
     
     //Same as usual.
     pub fn write_byte(&mut self, byte: u8) {
