@@ -34,15 +34,15 @@ mod interrupts;
 mod debug;
 mod libkernel;
 
-pub const HEAP_START: usize = 0o_000_001_000_000_0000;
-pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
-
 use io::ChainedPics;
 use spin::Mutex;
 use multiboot2::BootInformation;
+use libkernel::*;
 
+//Constants and statics.
+pub const HEAP_START: usize = 0o_000_001_000_000_0000;
+pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
 pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
-
 pub static mut BOOT_INFO: Option<&BootInformation> = None;
 
 #[no_mangle]
@@ -72,7 +72,9 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     unsafe { asm!("sti") };
 
     println!("It did not crash!");
-
+    
+    //Test kalloc
+    kalloc(128);
     vga::clear_screen();
     loop {}
 }
