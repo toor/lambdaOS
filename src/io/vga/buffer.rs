@@ -1,6 +1,5 @@
 use spin::Mutex;
-
-//use io::vga::vga::{VGA, Color, ColorCode};
+use io::vga::vga::{VGA, Color, ColorCode};
 
 pub const BUFFER_WIDTH: usize = 80;
 pub const BUFFER_HEIGHT: usize = 25;
@@ -94,3 +93,9 @@ impl ::core::fmt::Write for TextBuffer {
         }
     }
 }
+
+pub static SCREEN: Mutex<TextBuffer> = Mutex::new(TextBuffer {
+    column_position: 0,
+    color_code: ColorCode::new(Color::LightGreen, Color::Black),
+    chars: [[b' '; BUFFER_WIDTH]; BUFFER_HEIGHT],
+});
