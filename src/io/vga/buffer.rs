@@ -1,5 +1,12 @@
 use spin::Mutex;
 use io::vga::vga::{VGA, Color, ColorCode};
+use core::fmt;
+
+//Main print interface.
+pub fn print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    SCREEN.lock().write_fmt(args).unwrap();
+}
 
 pub const BUFFER_WIDTH: usize = 80;
 pub const BUFFER_HEIGHT: usize = 25;
@@ -13,9 +20,10 @@ pub struct TextBuffer {
 }
 
 impl TextBuffer {
-    fn sync() {
+    fn sync(&self) {
         //TODO: Update cursor.
-        unimplemented!();
+        VGA.lock().sync_buffer(&self);
+        VGA.lock().update_cursor(BUFFER_HEIGHT -1, self.column_position);
     }
 
     pub fn chars(&self) -> &[[u8; BUFFER_WIDTH]; BUFFER_HEIGHT] {
@@ -59,7 +67,7 @@ impl TextBuffer {
         self.sync();
     }
 
-    pub new_line(&mut self) {
+    pub fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
                 self.chars[row - 1][col] = self.chars[row][col]
@@ -69,13 +77,6 @@ impl TextBuffer {
         self.clear_row(BUFFER_HEIGHT - 1);
         //Set position to start of row.
         self.column_position = 0;
-    }
-
-    #[allow(dead_code)]
-    pub fn clear(&mut self) {
-        for row in 0..BUFFER_HEIGHT {
-            self.new_line();
-        }
     }
 
     pub fn clear_row(&mut self, row: usize) {
@@ -89,10 +90,12 @@ impl TextBuffer {
 impl ::core::fmt::Write for TextBuffer {
     fn write_str(&mut self, s: &str) -> ::core::fmt::Result {
         for byte in s.bytes() {
-            self.write_byte(byte);
+            self.write_byte(byte)
         }
+
+        Ok(())
     }
-}
+} 
 
 pub static SCREEN: Mutex<TextBuffer> = Mutex::new(TextBuffer {
     column_position: 0,
