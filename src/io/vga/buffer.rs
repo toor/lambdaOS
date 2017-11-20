@@ -19,6 +19,13 @@ pub struct TextBuffer {
     color_code: ColorCode,
 }
 
+//Move this out of the TextBuffer impl just because it seems to work that way.
+pub fn clear_screen() {
+    for row in 0..BUFFER_HEIGHT {
+        SCREEN.lock().new_line();
+    }
+}
+
 impl TextBuffer {
     fn sync(&self) {
         //TODO: Update cursor.
