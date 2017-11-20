@@ -78,13 +78,13 @@ pub extern "x86-interrupt" fn timer_handler(stack_frame: &mut ExceptionStackFram
 }
 
 pub extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackFrame) {
-    use super::vga;
+    use super::io;
 
     if let Some(c) = read_char() {
         print!("{}", c);
 
         match c {
-            'c' => vga::clear_screen(),
+            'c' => io::vga::buffer::clear_screen(),
             'd' => {
                 if let Some(b) = unsafe { super::BOOT_INFO } {
                     debug(b);
