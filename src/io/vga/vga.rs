@@ -27,10 +27,11 @@ pub enum Color {
     White = 15,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct ColorCode(u8);
 
 impl ColorCode {
-    pub const fn new(foreground: Color, Background: Color) -> ColorCode {
+    pub const fn new(foreground: Color, background: Color) -> ColorCode {
         ColorCode((background as u8) << 4 | (foreground as u8))
     }
 }
@@ -46,14 +47,14 @@ struct ScreenBuffer {
     chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
 }
 
-struct Vga {
+pub struct Vga {
     frame: Unique<ScreenBuffer>,
 }
 
 pub static VGA: Mutex<Vga> = Mutex::new( Vga { frame: unsafe { Unique::new_unchecked(0xb8000 as *mut _) } });
 
 impl Vga {
-    fn frame() -> &mut ScreenBuffer {
+    fn frame(&mut self) -> &mut ScreenBuffer {
         unsafe { self.frame.as_mut() }
     }
 
