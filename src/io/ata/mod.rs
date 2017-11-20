@@ -1,4 +1,4 @@
-use io::cpuio;
+use io::cpuio::Port;
 
 const DEVICE_COUNT: u8 = 4;
 const BYTES_PER_SECT: u16 = 512;
@@ -26,15 +26,15 @@ pub struct CachedSector {
 pub struct AtaDevice {
     master: u8,
     identify: [u8; 256],
-    data_port: cpuio::Port<u16>,
-    error_port: cpuio::Port<u16>,
-    sector_count_port: cpuio::Port<u16>,
-    lba_low_port: cpuio::Port<u16>,
-    lba_mid_port: cpuio::Port<u16>,
-    lba_hi_port: cpuio::Port<u16>,
-    device_port: cpuio::Port<u16>,
-    command_port: cpuio::Port<u16>,
-    control_port: cpuio::Port<u16>,
+    data_port: Port<u16>,
+    error_port: Port<u16>,
+    sector_count_port: Port<u16>,
+    lba_low_port: Port<u16>,
+    lba_mid_port: Port<u16>,
+    lba_hi_port: Port<u16>,
+    device_port: Port<u16>,
+    command_port: Port<u16>,
+    control_port: Port<u16>,
     exists: u8,
     sector_count: u64,
     bytes_per_sector: u16,
@@ -43,8 +43,10 @@ pub struct AtaDevice {
 
 impl AtaDevice {
     pub fn new(&self) -> AtaDevice {
-        AtaDevice {
-            
+        //Retrieve identity data.
+        let ata = AtaDevice {
+            master: 0,
+            identify: []
         }
     }
 }
