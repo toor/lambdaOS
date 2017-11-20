@@ -48,7 +48,7 @@ pub static mut BOOT_INFO: Option<&BootInformation> = None;
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
     // ATTENTION: we have a very small stack and no guard page
-    vga::clear_screen();
+    io::vga::buffer::clear_screen();
     println!("Hello World{}", "!");
 
     let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
@@ -75,7 +75,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     
     //Test kalloc
     kalloc(128);
-    vga::clear_screen();
+    io::vga::buffer::clear_screen();
     loop {}
 }
 

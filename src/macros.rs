@@ -1,6 +1,6 @@
 macro_rules! print {
    ($($arg:tt)*) => ({
-       $crate::vga::print(format_args!($($arg)*));
+       $crate::io::vga::buffer::print(format_args!($($arg)*));
    });
 }
 
