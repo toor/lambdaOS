@@ -1,5 +1,5 @@
 use io::cpuio;
-use vga::SCREEN;
+use io::vga::buffer::SCREEN;
 use spin::Mutex;
 
 struct KeyPair {
@@ -135,6 +135,12 @@ fn find_ascii(scancode: u8) -> Option<u8> {
         0x1c => {
             //Enter key.
             SCREEN.lock().new_line();
+            return None;
+        },
+
+        0x0E => {
+            //Backspace
+            SCREEN.lock().delete_byte();
             return None;
         },
         _ => return None,
