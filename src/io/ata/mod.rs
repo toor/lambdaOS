@@ -26,7 +26,7 @@ pub struct CachedSector {
 pub struct AtaDevice {
     //http://wiki.osdev.org/ATA_PIO_Mode#Registers
     pub master: u8,
-    pub identify: [u8; 256],
+    pub identify: [u16; 256],
     pub data_port: Port<u16>,
     pub error_port: Port<u16>,
     pub sector_count_port: Port<u16>,
@@ -65,6 +65,7 @@ impl AtaDevice {
         if dev.master == 1 {
             dev.device_port.write(0xa0);
         } else {
+            //Slave device.
             dev.device_port.write(0xb0);
         }
         
@@ -74,6 +75,10 @@ impl AtaDevice {
         dev.lba_mid_port.write(0);
         dev.lba_hi_port.write(0);
 
+        //IDENTIFY command.
+        dev.command_port.write(0xEC);
+
+        //Read boolean off the commnand port.
         if dev.command_port.read() == 0 {
             dev.exists = 0;
             println!("No device found");
@@ -81,8 +86,40 @@ impl AtaDevice {
         } else {
             let timeout: u32 = 0;
             while (dev.command_port.read() & 0b10000000) {
-                
+                if (timeout += 1) == 100000 {
+                    
+                }
             }
         }
+
+        //Check for non-standard ATAPI.
+        if (dev.lba_mid_port.read() == 1) || (dev.lba_hi_port.read() == 1) {
+            dev.exists = 0;
+            println!("Non-standard ATAPI, ignoring.");
+        }
+
+        for timeout in 0..100000 {
+            let status: u8 = dev.command_port.read();
+            
+            if status & 0b00000001 {
+                dev.exists = 0;
+                println!("Error occured.");
+                return dev;
+            } else if status & 0b00001000 {
+                println!("Storing IDENTITY info.");
+                for i in 0..255 {
+                    dev.identify[i] = dev.data_port.read();
+                }
+                
+                dev.sector_count = dev.identity[100] as *mut u64;
+                println!("Device successfully identified.");
+                dev
+            }
+        }
+
+        //No device.
+        dev.exists = 0;
+        println!("ATA error: Device detection timed out");
+        println!("Skipping drive!");
     }
 }
