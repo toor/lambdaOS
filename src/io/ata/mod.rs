@@ -26,7 +26,7 @@ pub struct CachedSector {
 pub struct AtaDevice {
     //http://wiki.osdev.org/ATA_PIO_Mode#Registers
     pub master: u8,
-    pub identify: [u16; 256],
+    pub identity: [u16; 256],
     pub data_port: Port<u16>,
     pub error_port: Port<u16>,
     pub sector_count_port: Port<u16>,
@@ -47,7 +47,7 @@ impl AtaDevice {
         //Retrieve identity data.
         let mut dev = AtaDevice {
             master: master,
-            identify: [0],
+            identity: [0],
             data_port: port_base,
             error_port: Port::new(port_base + 0x01),
             sector_count_port: Port::new(port_base + 0x02),
@@ -108,7 +108,7 @@ impl AtaDevice {
             } else if status & 0b00001000 {
                 println!("Storing IDENTITY info.");
                 for i in 0..255 {
-                    dev.identify[i] = dev.data_port.read();
+                    dev.identity[i] = dev.data_port.read();
                 }
                 
                 dev.sector_count = dev.identity[100] as *mut u64;
