@@ -1,5 +1,5 @@
-QEMU = qemu-
-GRUB = grub-
+QEMU = qemu
+GRUB = grub
 NASM = nasm
 LD = ld
 
@@ -24,7 +24,7 @@ clean:
 	@cargo clean
 
 run: $(iso)
-	@$(QEMU)system-x86_64 -cdrom $(iso)
+	@$(QEMU)-system-x86_64 -cdrom $(iso)
 
 iso: $(iso)
 
@@ -32,7 +32,7 @@ $(iso): $(kernel) $(grub_cfg)
 	@mkdir -p build/isofiles/boot/grub
 	@cp $(kernel) build/isofiles/boot/kernel.bin
 	@cp $(grub_cfg) build/isofiles/boot/grub
-	@$(GRUB)mkrescue -o $(iso) build/isofiles 2> /dev/null
+	@$(GRUB)-mkrescue -o $(iso) build/isofiles 2> /dev/null
 	@rm -r build/isofiles
 
 $(kernel): kernel $(rust_os) $(assembly_object_files) $(linker_script)
