@@ -10,15 +10,15 @@ const SUCCESS: u8 = 0;
 const EOF: i8 = -1;
 const FAILURE: i8 = -2;
 
-const DEV_NAMES = ["hda", "hdb", 
-"hdc", "hdd", "hde", "hdf", "hdg"
+const DEV_NAMES: [&str; 26] = ["hda", "hdb", 
+"hdc", "hdd", "hde", "hdf", "hdg",
 "hdh", "hdi", "hdj", "hdk", "hdl",
 "hdm", "hdn", "hdo", "hdp", "hdq", 
 "hdr", "hds", "hdt", "hdu", "hdv",
 "hdw", "hdx", "hdy", "hdz"];
 
 pub struct CachedSector {
-    cache: &u8,
+    cache: u8,
     sector: u64,
     status: u32,
 }
@@ -39,15 +39,15 @@ pub struct AtaDevice {
     pub exists: u8,
     pub sector_count: u64,
     pub bytes_per_sector: u16,
-    pub cache: &CachedSector,
+    pub cache: CachedSector,
 }
 
 impl AtaDevice {
-    pub fn new(&self, port_base: u16, master: u8) -> AtaDevice {
+    pub fn new(&self, port_base: u16, master: u8) ->  Option<AtaDevice> {
         //Retrieve identity data.
         let mut dev = AtaDevice {
             master: master,
-            identity: [0],
+            identity: [0; 256],
             data_port: port_base,
             error_port: Port::new(port_base + 0x01),
             sector_count_port: Port::new(port_base + 0x02),
@@ -56,7 +56,7 @@ impl AtaDevice {
             lba_hi_port: Port::new(port_base + 0x05),
             device_port: Port::new(port_base + 0x06),
             command_port: Port::new(port_base + 0x07),
-            dev.control_port: Port::new(port_base + 0x206),
+            control_port: Port::new(port_base + 0x206),
             exists: 0,
             bytes_per_sector: 512,
             //TODO: Use kalloc to create some cache for the disk.
@@ -82,7 +82,7 @@ impl AtaDevice {
         if dev.command_port.read() == 0 {
             dev.exists = 0;
             println!("No device found");
-            return dev;
+            return None;
         } else {
             let timeout: u32 = 0;
             while (dev.command_port.read() & 0b10000000) {
@@ -96,30 +96,31 @@ impl AtaDevice {
         if (dev.lba_mid_port.read() == 1) || (dev.lba_hi_port.read() == 1) {
             dev.exists = 0;
             println!("Non-standard ATAPI, ignoring.");
+            return None;
         }
 
         for timeout in 0..100000 {
             let status: u8 = dev.command_port.read();
             
             if status & 0b00000001 {
-                dev.exists = 0;
                 println!("Error occured.");
-                return dev;
+                return None;
             } else if status & 0b00001000 {
                 println!("Storing IDENTITY info.");
                 for i in 0..255 {
                     dev.identity[i] = dev.data_port.read();
                 }
                 
-                dev.sector_count = dev.identity[100] as *mut u64;
+                dev.sector_count = dev.identity[100] as u64;
                 println!("Device successfully identified.");
-                dev
+                return Some(dev);
             }
         }
 
         //No device.
-        dev.exists = 0;
         println!("ATA error: Device detection timed out");
         println!("Skipping drive!");
+
+        None
     }
 }
