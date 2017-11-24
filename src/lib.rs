@@ -50,9 +50,14 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     // ATTENTION: we have a very small stack and no guard page
     io::vga::buffer::clear_screen();
     println!("Hello World{}", "!");
-
+    
+    //Load a multiboot BootInfo structure using the address passed in ebx.
     let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
+    
+    //Set up BOOT_INFO static so it can be used for printing debug info.
     unsafe { BOOT_INFO = Some(boot_info) };
+    
+    //Safety stuff.
     enable_nxe_bit();
     enable_write_protect_bit();
 
@@ -74,7 +79,6 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     println!("It did not crash!");
     
     //Test kalloc
-    kalloc(128);
     io::vga::buffer::clear_screen();
     loop {}
 }
