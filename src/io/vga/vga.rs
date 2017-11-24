@@ -76,19 +76,17 @@ impl Vga {
 
     #[allow(exceeding_bitshifts)]
     pub fn update_cursor(&self, row: usize, col: usize) {
-        let position: u16 = (row as u16 * (BUFFER_WIDTH as u16)) + col as u16;
+        let pos = ((BUFFER_WIDTH as u16) * (row as u16)) + col as u16;
         use io::Port;
 
         unsafe {
             let mut control_port: Port<u8> = Port::new(0x3D4);
             let mut value_port: Port<u8> = Port::new(0x3D5);
-            
-            //Cursor HIGH port to VGA index register.
+
+            control_port.write(0x0F);
+            value_port.write((pos & 0xFF) as u8);
             control_port.write(0x0E);
-            control_port.write(((position >> 8) & 0xFF) as u8);
-            //Cursor LOW port to VGA index register.
-            value_port.write(0x0F);
-            value_port.write((position & 0xFF) as u8);
+            value_port.write(((pos >> 8) & 0xFF) as u8);
         }
     }
 }
