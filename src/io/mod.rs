@@ -14,6 +14,7 @@ pub mod cpuio;
 pub mod serial;
 pub mod keyboard;
 pub mod vga;
+pub mod ata;
 use self::cpuio::Port;
 
 ///A single interrupt controller.
