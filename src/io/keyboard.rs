@@ -1,6 +1,16 @@
 use io::cpuio;
 use io::vga::buffer::SCREEN;
 use spin::Mutex;
+use alloc::vec::Vec;
+use alloc::string::String;
+use BOOT_INFO;
+
+lazy_static! {
+    pub static ref CHAR_BUFFER: Mutex<Vec<u8>> = {
+        let mutex = Mutex::new(Vec::new());
+        mutex
+    };
+}
 
 struct KeyPair {
     left: bool,
@@ -134,6 +144,12 @@ fn find_ascii(scancode: u8) -> Option<u8> {
         0x4e => '+', // Keypad
         0x1c => {
             //Enter key.
+            let buffer = CHAR_BUFFER.lock().to_vec();
+            
+            let string = String::from_utf8(buffer).unwrap();
+
+            handle_string_input(string);
+
             SCREEN.lock().new_line();
             return None;
         },
@@ -165,5 +181,18 @@ pub fn read_char() -> Option<char> {
     } else {
         //We have no clue how to handle this scancode. Pretend it didn't happen.
         None
+    }
+}
+
+pub fn handle_string_input(s: String) {
+    let buffer_str = s.as_str();
+    
+    match buffer_str {
+        "debug" => {
+            if let Some(b) = unsafe { BOOT_INFO } {
+                ::debug::debug(b);
+            }
+        },
+        _ => {},
     }
 }
