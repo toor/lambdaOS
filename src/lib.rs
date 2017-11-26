@@ -27,7 +27,6 @@ extern crate alloc;
 
 #[macro_use]
 mod macros;
-mod vga;
 mod memory;
 mod io;
 mod interrupts;
