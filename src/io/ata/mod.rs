@@ -54,7 +54,7 @@ pub struct AtaDevice {
 impl AtaDevice {
     ///Returns a fully initialized ATA device if succesful, or None if some data could not be
     ///retrieved.
-    pub fn new(&self, port_base: u16, master: u8) ->  Option<AtaDevice> {
+    pub fn init_dev(&self, port_base: u16, master: u8) ->  Option<AtaDevice> {
         //Retrieve identity data.
         let mut dev = unsafe {
             AtaDevice {
@@ -140,5 +140,22 @@ impl AtaDevice {
         println!("Skipping drive!");
 
         None
+    }
+    
+    pub fn initialise(&self) {
+        let mut ii = 0;
+        let mut master = 1;
+
+        for i in 0..device_count {
+            if let Some(dev) = self.init_dev(ata_ports[ii], master) {
+                ii += 1;
+
+                if ii >= max_ports { return; }
+
+                if (master % 2) == 1 {
+                    master
+                }
+            }
+        }
     }
 }
