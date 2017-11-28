@@ -1,21 +1,30 @@
-use io::cpuio::Port;
+#[allow(non_uppercase_globals)]
 
-const DEVICE_COUNT: u8 = 4;
-const BYTES_PER_SECT: u16 = 512;
+use io::cpuio::Port;
+use alloc::Vec;
+
+const device_count: u8 = 4;
+const bytes_per_sect: u16 = 512;
 
 //Maximum number of sectors we can cache.
-const MAX_CACHED_SECTORS: u16 = 2048;
+const max_cached_sectors: u16 = 2048;
 
-const SUCCESS: u8 = 0;
-const EOF: i8 = -1;
-const FAILURE: i8 = -2;
+const success: u8 = 0;
+const eof: i8 = -1;
+const failure: i8 = -2;
 
-const DEV_NAMES: [&str; 26] = ["hda", "hdb", 
+const dev_names: [&str; 26] = ["hda", "hdb", 
 "hdc", "hdd", "hde", "hdf", "hdg",
 "hdh", "hdi", "hdj", "hdk", "hdl",
 "hdm", "hdn", "hdo", "hdp", "hdq", 
 "hdr", "hds", "hdt", "hdu", "hdv",
 "hdw", "hdx", "hdy", "hdz"];
+
+const ata_ports: [u16; 4] = [0x1f0, 0x1f0, 0x170, 0x170];
+
+lazy_static! {
+    pub static ref devices: Vec<AtaDevice> = Vec::new();
+}
 
 pub struct CachedSector {
     cache: u8,
@@ -23,6 +32,7 @@ pub struct CachedSector {
     status: u32,
 }
 
+///Represents an ATA PIO Mode disk, including registers used for controlling the disk across MMIO.
 pub struct AtaDevice {
     //http://wiki.osdev.org/ATA_PIO_Mode#Registers
     pub master: u8,
@@ -42,6 +52,8 @@ pub struct AtaDevice {
 }
 
 impl AtaDevice {
+    ///Returns a fully initialized ATA device if succesful, or None if some data could not be
+    ///retrieved.
     pub fn new(&self, port_base: u16, master: u8) ->  Option<AtaDevice> {
         //Retrieve identity data.
         let mut dev = unsafe {
