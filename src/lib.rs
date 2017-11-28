@@ -32,6 +32,7 @@ mod io;
 mod interrupts;
 mod debug;
 mod libkernel;
+mod task;
 
 use io::ChainedPics;
 use spin::Mutex;
