@@ -32,13 +32,69 @@ impl Process {
     }
 }
 
-#[derive()]
 pub struct Scheduler {
     //Currently running processes.
     procs: Mutex<BTreeMap<usize, Process>>,
     //Current processes.
     pub current: usize,
     //Number of processes.
-    proc_count: usize,
+    pid_counter: usize,
     skip: usize,
+}
+
+impl Scheduler {
+    pub fn new() -> Self {
+        let mut scheduler = Scheduler {
+            procs: Mutex::new(BTreeMap::new()),
+            current: 0,
+            pid_counter: 0,
+            skip: 0,
+        }
+    }
+
+    fn init(&mut self) {
+        //Kernel thread - 0th proc, no stack to jump to.
+        let pid = self.create_process(0, 0);
+        self.current = 0;
+        self.set_started(pid);
+
+        {
+            let procs = self.procs.lock();
+            let process= procs.get(&pid);
+            println!("Initialised proc 0 to {:?}", process);
+        }
+    }
+
+    pub fn start_new_process(&mut self, fn_ptr: usize) {
+        //TODO.
+    }
+
+    pub fn create_process(&mut self, start_fn: usize, stack_pointer: usize) -> usize {
+        let mut pid;
+        //Disable interrupts.
+        {
+            //Initialise process 0 for the kernel thread.
+            let p = Process::new(self.pid_counter, start_fn, stack_pointer);
+            //Insert this procees into the process list.
+            self.procs.lock().insert(self.pid_counter, p);
+            println!("Inserted proc {}, there are {} procs", self.pid_counter, self.procs.lock().len());
+            pid = self.pid_counter;
+            self.pid_counter += 1;
+        }
+        
+        //Return the PID of this new proc.
+        pid
+    }
+
+    pub fn set_started() {
+        
+    }
+
+    pub fn update_trap_frame() {
+    
+    }
+
+    pub fn switch() {
+        
+    }
 }
