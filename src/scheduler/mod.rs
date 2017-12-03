@@ -49,7 +49,10 @@ impl Scheduler {
             current: 0,
             pid_counter: 0,
             skip: 0,
-        }
+        };
+
+        scheduler.init();
+        scheduler
     }
 
     fn init(&mut self) {
@@ -71,7 +74,7 @@ impl Scheduler {
 
     pub fn create_process(&mut self, start_fn: usize, stack_pointer: usize) -> usize {
         let mut pid;
-        //Disable interrupts.
+        self.disable_interrupts();
         {
             //Initialise process 0 for the kernel thread.
             let p = Process::new(self.pid_counter, start_fn, stack_pointer);
@@ -86,15 +89,32 @@ impl Scheduler {
         pid
     }
 
-    pub fn set_started() {
-        
+    pub fn set_started(&mut self, pid: usize) {
+       self.disable_interrupts();
+       {
+            //Lookup the process in the proc table.
+            let mut procs = self.procs.lock();
+            let p = procs.get_mut(&pid);
+            match p {
+                None => panic!("Unable to get process {}", pid),
+                Some(process) => (*process).started = true,
+            }
+       }
     }
 
-    pub fn update_trap_frame() {
-    
+    pub fn update_trap_frame(&mut self, trap_frame: usize) {
+        //TODO: Jump to the specified trap frame.
     }
 
-    pub fn switch() {
-        
+    pub fn switch(&mut self) {
+        //TODO: Add context switching.
+    }
+
+    pub fn disable_interrupts(&self) {
+        unsafe { asm!("cli") };
+    }
+
+    pub fn enable_interrupts(&self) {
+        unsafe { asm!("cli") };
     }
 }
