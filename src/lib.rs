@@ -38,6 +38,8 @@ use io::ChainedPics;
 use spin::Mutex;
 use multiboot2::BootInformation;
 use libkernel::*;
+use core::cell::RefCell;
+use alloc::rc::Rc;
 
 //Constants and statics.
 pub const HEAP_START: usize = 0o_000_001_000_000_0000;
@@ -63,12 +65,13 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     // set up guard page and map the heap pages
     let mut memory_controller = memory::init(boot_info);
+    let mut memc_lock: Rc<RefCell<memory::MemoryController>> = Rc::new(RefCell::new(memory_controller));
 
     //Clear interrupts
     unsafe { asm!("cli") };
     // initialize our IDT
     println!("Loading IDT.");
-    interrupts::init(&mut memory_controller);
+    interrupts::init(&mut memc_lock.borrow_mut());
 
     //Init PICS.
     unsafe { PICS.lock().init() };

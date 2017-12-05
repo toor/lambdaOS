@@ -32,7 +32,7 @@ impl Process {
     }
 }
 
-pub struct Scheduler {
+pub struct Scheduler<'a> {
     //Currently running processes.
     procs: Mutex<BTreeMap<usize, Process>>,
     //Current processes.
@@ -40,15 +40,17 @@ pub struct Scheduler {
     //Number of processes.
     pid_counter: usize,
     skip: usize,
+    memory_controller: &'a mut memory::MemoryController,
 }
 
-impl Scheduler {
-    pub fn new() -> Self {
+impl <'a > Scheduler<'a> {
+    pub fn new(mem_cont: &'a mut memory::MemoryController) -> Self {
         let mut scheduler = Scheduler {
             procs: Mutex::new(BTreeMap::new()),
             current: 0,
             pid_counter: 0,
             skip: 0,
+            memory_controller: mem_cont,
         };
 
         scheduler.init();
@@ -69,7 +71,8 @@ impl Scheduler {
     }
 
     pub fn start_new_process(&mut self, fn_ptr: usize) {
-        //TODO.
+        //TODO create stack, enlarge range of stack allocator in memory module.
+        //let mut stack = memory::<some sort of static method?>().alloc_stack(256);
     }
 
     pub fn create_process(&mut self, start_fn: usize, stack_pointer: usize) -> usize {
