@@ -139,8 +139,65 @@ impl <'a> Scheduler<'a> {
         pid
     }
 
-    pub fn switch(&mut self) {
-        //TODO: Add context switching.
+    fn switch(&mut self) {
+        //Find a new process that is not currently running.
+        let mut process;
+
+        self.disable_interrupts();
+        {
+            let next = get_pid();
+
+            match next {
+                Some(p) => {
+                    let mut proc_table = self.procs.lock();
+                    match proc_table.get_mut(&p) {
+                        Some(prc) => {
+                            process = prc.clone();
+                            if !process.started {
+                                (*prc).started = true;
+                            }
+                        },
+                        None => panic!("Unable to find process {}", p),
+                    }
+                },
+
+                None => return,
+            }
+        }
+
+        self.current = process.pid;
+
+        if process.started {
+            if process.pid == 1 {
+                //TODO.
+            }
+            
+            //Jump to the trap frame of the process.
+            unsafe {
+                asm!("movq $0, %rsp
+                      pop    %rax
+                      pop    %rbx
+                      pop    %rcx
+                      pop    %rdx
+                      pop    %rsi
+                      pop    %rdi
+                      pop    %r8
+                      pop    %r9
+                      pop    %r10
+                      pop    %r11
+                      pop    %rbp
+                      sti
+                      iretq" : /* no outputs */ : "r"(process.trap_frame) : );
+            }
+        } else {
+            unsafe {
+                asm!("movq $0, %rsp
+                      sti
+                      jmpq *$1" :: "r"(process.stack), "r"(test_fn as usize) : );
+            }
+            
+            //TODO: Cleanup stack, find a way to exit the process.
+        }
     }
 
     pub fn disable_interrupts(&self) {
@@ -150,4 +207,23 @@ impl <'a> Scheduler<'a> {
     pub fn enable_interrupts(&self) {
         unsafe { asm!("cli") };
     }
+
+    //pub fn schedule
+    
+    pub fn idle(&self) -> ! {
+        loop {
+            self.halt();
+        }
+    }
+
+    fn halt(&self) {
+        unsafe {
+            asm!("hlt");
+            asm!("pause");
+        }
+    }
 }
+
+
+
+//TODO add test function.
