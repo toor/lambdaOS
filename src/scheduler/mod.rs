@@ -43,7 +43,7 @@ pub struct Scheduler<'a> {
     memory_controller: &'a mut memory::MemoryController,
 }
 
-impl <'a > Scheduler<'a> {
+impl <'a> Scheduler<'a> {
     pub fn new(mem_cont: &'a mut memory::MemoryController) -> Self {
         let mut scheduler = Scheduler {
             procs: Mutex::new(BTreeMap::new()),
@@ -71,8 +71,9 @@ impl <'a > Scheduler<'a> {
     }
 
     pub fn start_new_process(&mut self, fn_ptr: usize) {
-        //TODO create stack, enlarge range of stack allocator in memory module.
-        //let mut stack = memory::<some sort of static method?>().alloc_stack(256);
+        let proc_stack = self.memory_controller.alloc_stack(256).expect("Could not allocate process stack");
+        println!("Top of new process stack: {:x}", proc_stack.top());
+        self.create_process(fn_ptr, proc_stack.top());
     }
 
     pub fn create_process(&mut self, start_fn: usize, stack_pointer: usize) -> usize {
@@ -106,7 +107,36 @@ impl <'a > Scheduler<'a> {
     }
 
     pub fn update_trap_frame(&mut self, trap_frame: usize) {
-        //TODO: Jump to the specified trap frame.
+        self.disable_interrupts();
+        {
+            let mut procs = self.procs.lock();
+            let p = procs.get_mut(&self.current);
+
+            match p {
+                None => panic!("Unable to find process {}", self.current),
+                //Set the trap frame of the current process to be the address passed as an arg.
+                Some(process) => (*process).trap_frame = trap_frame,
+            }
+        }
+    }
+
+    pub fn get_pid(&self) -> Option<usize> {
+        let mut pid;
+        self.disable_interrupts();
+        {
+            let procs = self.procs.lock();
+            
+            if procs.len() == 1 {
+                return None;
+            }
+
+            pid = match self.current {
+                //Max 4 processes for now, we loop round to proc 0 as the next PID.
+                4 => Some(0),
+                _ => Some(self.current + 1),
+            };
+        }
+        pid
     }
 
     pub fn switch(&mut self) {
