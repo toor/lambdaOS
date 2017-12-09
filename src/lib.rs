@@ -27,12 +27,12 @@ extern crate alloc;
 
 #[macro_use]
 mod macros;
-mod memory;
-mod io;
-mod interrupts;
+pub mod memory;
+pub mod io;
+pub mod interrupts;
 mod debug;
 mod libkernel;
-mod scheduler;
+pub mod scheduler;
 
 use io::ChainedPics;
 use spin::Mutex;

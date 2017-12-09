@@ -69,13 +69,16 @@ impl <'a> Scheduler<'a> {
             println!("Initialised proc 0 to {:?}", process);
         }
     }
-
+    
+    ///Allocates a stack for the process and creates a new process using a pointer to the top of
+    ///the new stack.
     pub fn start_new_process(&mut self, fn_ptr: usize) {
         let proc_stack = self.memory_controller.alloc_stack(256).expect("Could not allocate process stack");
         println!("Top of new process stack: {:x}", proc_stack.top());
         self.create_process(fn_ptr, proc_stack.top());
     }
-
+    
+    ///Call Process::new() with the specified parameters. Adds the process to the process table, and returns the PID of this new process.
     pub fn create_process(&mut self, start_fn: usize, stack_pointer: usize) -> usize {
         let mut pid;
         self.disable_interrupts();
@@ -92,7 +95,8 @@ impl <'a> Scheduler<'a> {
         //Return the PID of this new proc.
         pid
     }
-
+    
+    ///Set the specified process as started.
     pub fn set_started(&mut self, pid: usize) {
        self.disable_interrupts();
        {
@@ -105,7 +109,8 @@ impl <'a> Scheduler<'a> {
             }
        }
     }
-
+    
+    ///Update the trap frame of the process to point to the passed address.
     pub fn update_trap_frame(&mut self, trap_frame: usize) {
         self.disable_interrupts();
         {
@@ -119,7 +124,9 @@ impl <'a> Scheduler<'a> {
             }
         }
     }
-
+    
+    ///Lookup the process by its PID. There are a maximum of 5 procs, so if PID == 4, then the PID
+    ///of the next process in the table is 0, because we loop round.
     pub fn get_pid(&self) -> Option<usize> {
         let mut pid;
         self.disable_interrupts();
@@ -145,7 +152,7 @@ impl <'a> Scheduler<'a> {
 
         self.disable_interrupts();
         {
-            let next = get_pid();
+            let next = self.get_pid();
 
             match next {
                 Some(p) => {
@@ -207,9 +214,8 @@ impl <'a> Scheduler<'a> {
     pub fn enable_interrupts(&self) {
         unsafe { asm!("cli") };
     }
-
-    //pub fn schedule
     
+    ///"Pause" the CPU indefinitely. This is a divergent function.
     pub fn idle(&self) -> ! {
         loop {
             self.halt();
@@ -222,8 +228,14 @@ impl <'a> Scheduler<'a> {
             asm!("pause");
         }
     }
+    
+
+    ///Find a process to switch to.
+    pub fn schedule(&mut self) -> usize{
+        self.switch();
+
+        0
+    }
 }
 
-
-
-//TODO add test function.
+fn test_fn() {}
