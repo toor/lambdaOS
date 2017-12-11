@@ -1,2 +1,2 @@
-[target.x86_64-os.dependencies]
+[target.x86_64-lambda.dependencies]
 alloc = {}

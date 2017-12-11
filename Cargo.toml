@@ -1,5 +1,5 @@
 [package]
-name = "os"
+name = "lambdaOS"
 version = "0.1.0"
 authors = ["William Huddie <william@huddie.net>"]
 

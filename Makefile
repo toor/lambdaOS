@@ -6,8 +6,8 @@ LD = ld
 arch ?= x86_64
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
-target ?= $(arch)-os
-rust_os := target/$(target)/debug/libos.a
+target ?= $(arch)-lambda
+rust_os := target/$(target)/debug/liblambdaOS.a
 
 linker_script := src/arch/$(arch)/linker.ld
 grub_cfg := src/arch/$(arch)/grub.cfg
