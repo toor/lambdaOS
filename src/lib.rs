@@ -34,7 +34,7 @@ mod debug;
 mod libkernel;
 pub mod scheduler;
 
-use io::ChainedPics;
+use io::pic::ChainedPics;
 use spin::Mutex;
 use multiboot2::BootInformation;
 use libkernel::*;
