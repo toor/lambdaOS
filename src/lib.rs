@@ -32,7 +32,6 @@ pub mod io;
 pub mod interrupts;
 mod debug;
 mod libkernel;
-pub mod scheduler;
 
 use io::pic::ChainedPics;
 use spin::Mutex;

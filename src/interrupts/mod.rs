@@ -49,6 +49,7 @@ pub fn init(memory_controller: &mut MemoryController) {
         let mut tss = TaskStateSegment::new();
         tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] =
             VirtualAddress(double_fault_stack.top());
+        //TODO allocate privelege stacks.
         tss
     });
 
