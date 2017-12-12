@@ -1,9 +1,10 @@
 use alloc::String;
 use alloc::boxed::Box;
 use task::context::Context;
-//use scheduler::Scheduler
+use task::scheduler::Scheduler;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
+///Current state of the process.
 pub enum State {
     Free,
     Current,
@@ -16,6 +17,7 @@ pub enum State {
 pub struct Priority(pub u64);
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+///Tuple type for PID.
 pub struct ProcessId(pub usize);
 
 impl ProcessId {
@@ -59,4 +61,19 @@ impl Process {
     pub fn set_stack(&mut self, addr: usize) {
         self.ctx.set_stack(addr);
     }
+}
+
+//A returned process pops an instruction pointer off the stack then jumps to it.
+//The IP from the stack will point to this function.
+#[naked]
+pub unsafe extern "C" fn process_return() {
+    use task::Scheduling;
+
+    let scheduler: &mut Scheduler;
+
+    asm!("pop $0" : "=r"(scheduler) : : "memory" : "intel", "volatile");
+
+    let current: ProcessId = scheduler.get_id();
+    //Process returned, we kill it
+    scheduler.kill(current)
 }

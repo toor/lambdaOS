@@ -6,7 +6,7 @@ use multiboot2::BootInformation;
 use allocator;
 
 mod area_frame_allocator;
-mod paging;
+pub mod paging;
 mod stack_allocator;
 
 pub const PAGE_SIZE: usize = 4096;
