@@ -102,8 +102,13 @@ impl DerefMut for ActivePageTable {
 }
 
 impl ActivePageTable {
-    unsafe fn new() -> ActivePageTable {
+    pub unsafe fn new() -> ActivePageTable {
         ActivePageTable { mapper: Mapper::new() }
+    }
+
+    pub unsafe fn address(&self) -> usize {
+        use x86_64::registers::control_regs;
+        control_regs::cr3().0 as usize
     }
 
     pub fn with<F>(
