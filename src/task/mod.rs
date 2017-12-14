@@ -10,10 +10,11 @@ use self::coop_sched as scheduler;
 pub use self::process::{Process, ProcessId, State};
 pub use self::proc_list::ProcessList;
 use core::result::Result;
+use alloc::string::String;
 
 ///Methods a scheduler should impl.
 pub trait Scheduling {
-    fn create(&self, func: extern "C" fn()) -> Result<ProcessId, i16>;
+    fn create(&self, func: extern "C" fn(), name: String) -> Result<ProcessId, i16>;
     fn get_id(&self) -> ProcessId;
     fn kill(&self, id: ProcessId);
     fn ready(&self, id: ProcessId);
@@ -23,4 +24,5 @@ pub trait Scheduling {
 //Max processes we can handle.
 pub const MAX_PROCS: usize = usize::max_value() - 1;
 
-pub const INITIAL_STACK: usize = 65536;
+//TODO use max value of u16 as initial stack size.
+pub const INITIAL_STACK: usize = 1000;

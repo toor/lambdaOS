@@ -1,5 +1,5 @@
-use alloc::String;
-use alloc::boxed::Box;
+use alloc::string::String;
+use alloc::vec::Vec;
 use task::context::Context;
 use task::scheduler::Scheduler;
 
@@ -35,7 +35,7 @@ pub struct Process {
     pub state: State,
     pub priority: Priority,
     pub ctx: Context,
-    pub stack: Option<Box<[u8]>>,
+    pub stack: Option<Vec<usize>>,
 }
 
 impl Process {

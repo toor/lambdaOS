@@ -1,5 +1,6 @@
 use alloc::VecDeque;
-use alloc::boxed::Box;
+use alloc::vec::Vec;
+use alloc::String;
 use core::mem;
 use core::ops::DerefMut;
 use core::sync::atomic::{AtomicUsize, Ordering};
@@ -16,39 +17,38 @@ pub struct CoopScheduler {
 }
 
 impl Scheduling for CoopScheduler {
-    fn create(&self, func: extern "C" fn()) -> Result<ProcessId, i16> {
+    fn create(&self, func: extern "C" fn(), name: String) -> Result<ProcessId, i16> {
         use memory::paging;
 
-        let mut stack: Box<[usize]> = vec![0; INITIAL_STACK].into_boxed_slice();
 
-        let index: usize = stack.len() - 3;
-        let stack_offset: usize = index * mem::size_of::<usize>();
+        let mut stack: Vec<usize> = vec![0; INITIAL_STACK];
 
-        unsafe {
-            let self_idx = stack.as_mut_ptr().offset((stack.len() -1) as isize);
-            let self_ptr: *const Scheduler = &*self as *const Scheduler;
-            *(self_idx as *mut usize) = self_ptr as usize;
+        let proc_top: usize = stack.len() - 3;
 
-            let ret_ptr = stack.as_mut_ptr().offset((stack.len() - 1) as isize);
-            *(ret_ptr as *mut usize) = process::process_return as usize;
+        let proc_sp = stack.as_ptr() as usize + (proc_top * mem::size_of::<usize>());
 
-            let func_ptr = stack.as_mut_ptr().offset((stack.len() - 1) as isize);
-            *(func_ptr as *mut usize) = func as usize;
+        let stack_vals: Vec<usize> = vec![
+            func as usize,
+            process::process_return as usize,
+            self as *const Scheduler as usize,
+        ];
+
+        for (i, val) in stack_vals.iter().enumerate() {
+            stack[proc_top + i] = *val;
         }
 
-        let mut task_table_lock = self.task_t.write();
+        let mut proc_t_lock = self.task_t.write();
 
-        let process_lock = task_table_lock.add()?;
+        let proc_lock = proc_t_lock.add()?;
         {
-            let mut process = process_lock.write();
+            let mut process = proc_lock.write();
 
-            process
-                .ctx
-                .set_page_table(unsafe {paging::ActivePageTable::new().address() });
+            process.stack = Some(stack);
+            process.name = name;
 
-            process
-                .ctx
-                .set_stack((stack.as_ptr() as usize) + stack_offset);
+            process.ctx.set_page_table(unsafe { paging::ActivePageTable::new().address() });
+
+            process.ctx.set_stack(proc_sp);
 
             Ok(process.pid)
         }
