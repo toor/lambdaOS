@@ -20,7 +20,6 @@ impl Scheduling for CoopScheduler {
     fn create(&self, func: extern "C" fn(), name: String) -> Result<ProcessId, i16> {
         use memory::paging;
 
-
         let mut stack: Vec<usize> = vec![0; INITIAL_STACK];
 
         let proc_top: usize = stack.len() - 3;
@@ -65,11 +64,11 @@ impl Scheduling for CoopScheduler {
             let proc_lock = task_table_lock
                 .get(id)
                 .expect("Cannot kill a non-existent process");
+                .write();
 
-            let mut killed_process = proc_lock.write();
-            
-            //Just mark the state as free.
-            killed_process.set_state(State::Free);
+            proc_lock.set_state(State::Free);
+            proc_lock.stack = None;
+            drop(&mut proc_lock.name);
         }
 
         unsafe {
@@ -82,6 +81,10 @@ impl Scheduling for CoopScheduler {
     }
 
     unsafe fn resched(&self) {
+        if self.ready_list.read().is_empty() {
+            return;
+        }
+        
         let mut old_ptr = 0 as *mut Process;
         let mut next_ptr = 0 as *mut Process;
 
@@ -91,13 +94,14 @@ impl Scheduling for CoopScheduler {
             let mut ready_list_lock = self.ready_list.write();
 
             let curr_id: ProcessId = self.get_id();
-            let mut old = task_table_lock
+
+            let mut prev = task_table_lock
                 .get(curr_id)
                 .expect("Could not find old process")
                 .write();
 
-            if old.state == State::Current {
-                old.set_state(State::Ready);
+            if prev.state == State::Current {
+                prev.set_state(State::Ready);
                 ready_list_lock.push_back(curr_id);
             }
 
@@ -107,13 +111,14 @@ impl Scheduling for CoopScheduler {
                         .get(next_id)
                         .expect("Could not find new process")
                         .write();
+
                     next.set_state(State::Current);
 
                     self.current_pid
                         .store(next.pid.inner(), Ordering::SeqCst);
 
                     // Save process pointers for out of scope context switch
-                    old_ptr = old.deref_mut() as *mut Process;
+                    prev_ptr = old.deref_mut() as *mut Process;
                     next_ptr = next.deref_mut() as *mut Process;
                 }
             }
@@ -125,9 +130,10 @@ impl Scheduling for CoopScheduler {
                 "Pointer to new proc has not been set!"
             );
 
-            (&mut *old_ptr)
-                .ctx
-                .switch_to(&mut (&mut *next_ptr).ctx);
+            let prev: &mut Process = &mut *prev_ptr;
+            let next: &mut Process = &mut *next_ptr;
+
+            prev.ctx.switch_to(&mut next.ctx);
         }
     }
 }
