@@ -60,10 +60,10 @@ impl Scheduling for CoopScheduler {
     fn kill(&self, id: ProcessId) {
         //We should free the stack here.
         {
-            let task_table_lock = self.task_t.read();
-            let proc_lock = task_table_lock
+            let mut task_table_lock = self.task_t.read();
+            let mut proc_lock = task_table_lock
                 .get(id)
-                .expect("Cannot kill a non-existent process");
+                .expect("Cannot kill a non-existent process")
                 .write();
 
             proc_lock.set_state(State::Free);
@@ -85,7 +85,7 @@ impl Scheduling for CoopScheduler {
             return;
         }
         
-        let mut old_ptr = 0 as *mut Process;
+        let mut prev_ptr = 0 as *mut Process;
         let mut next_ptr = 0 as *mut Process;
 
         // Separate the locks from the context switch through scoping
@@ -118,7 +118,7 @@ impl Scheduling for CoopScheduler {
                         .store(next.pid.inner(), Ordering::SeqCst);
 
                     // Save process pointers for out of scope context switch
-                    prev_ptr = old.deref_mut() as *mut Process;
+                    prev_ptr = prev.deref_mut() as *mut Process;
                     next_ptr = next.deref_mut() as *mut Process;
                 }
             }
@@ -126,7 +126,7 @@ impl Scheduling for CoopScheduler {
 
         if next_ptr as usize != 0 {
             assert!(
-                old_ptr as usize != 0,
+                prev_ptr as usize != 0,
                 "Pointer to new proc has not been set!"
             );
 
