@@ -1,4 +1,8 @@
 use core::marker::PhantomData;
+use spin::Mutex;
+
+//Global interface to the PIC.
+pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
 
 ///Command to begin init of the PIC chip.
 const CMD_INIT: u8 = 0x11;

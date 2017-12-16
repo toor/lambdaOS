@@ -9,6 +9,9 @@ mod area_frame_allocator;
 pub mod paging;
 mod stack_allocator;
 
+pub const HEAP_START: usize = 0o_000_001_000_000_0000;
+pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
+
 pub const PAGE_SIZE: usize = 4096;
 
 pub fn init(boot_info: &BootInformation) -> MemoryController {
@@ -33,12 +36,12 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         .unwrap();
 
     println!(
-        "kernel start: {:#x}, kernel end: {:#x}",
+        "Kernel start: {:#x}, kernel end: {:#x}",
         kernel_start,
         kernel_end
     );
     println!(
-        "multiboot start: {:#x}, multiboot end: {:#x}",
+        "Multiboot data structure start: {:#x}, end: {:#x}",
         boot_info.start_address(),
         boot_info.end_address()
     );
@@ -54,7 +57,6 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     let mut active_table = paging::remap_the_kernel(&mut frame_allocator, boot_info);
 
     use self::paging::Page;
-    use super::{HEAP_START, HEAP_SIZE};
 
     let heap_start_page = Page::containing_address(HEAP_START);
     let heap_end_page = Page::containing_address(HEAP_START + HEAP_SIZE - 1);

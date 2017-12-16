@@ -2,7 +2,7 @@ use memory::MemoryController;
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
 use spin::Once;
-use PICS;
+use io::pic::PICS;
 use io::keyboard::{read_char, CHAR_BUFFER};
 
 mod gdt;
