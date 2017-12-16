@@ -4,7 +4,6 @@ use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
 use spin::Once;
 use PICS;
 use io::keyboard::{read_char, CHAR_BUFFER};
-use debug::debug;
 
 mod gdt;
 
@@ -83,7 +82,6 @@ pub extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackF
 
     if let Some(c) = read_char() {
         print!("{}", c);
-        CHAR_BUFFER.lock().push(c as u8);
     }
 
     unsafe { PICS.lock().notify_end_of_interrupt(0x21) };
