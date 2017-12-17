@@ -20,7 +20,7 @@ An OS written in Rust and Assembly. It currently supports x86, however most of t
 ## Building
 ```bash
 # Install Rust - follow on-screen instructions. Note - you may have to reload your shell to be able to use Rust
-commands.
+# commands.
 curl https://sh.rustup.rs -sSf | sh
 # Clone repo.
 git clone https://github.com/too-r/lambdaOS.git && cd ~/lambdaOS #Or wherever you put it.
