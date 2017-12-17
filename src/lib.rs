@@ -33,10 +33,17 @@ pub mod interrupts;
 mod libkernel;
 mod task;
 mod syscall;
+mod utils;
+mod runtime_glue;
 
 use io::pic::PICS;
+use task::Scheduling;
+use utils::{enable_nxe_bit, enable_write_protect_bit};
+pub use runtime_glue::*;
 use spin::Mutex;
 use multiboot2::BootInformation;
+use alloc::String;
+
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
@@ -55,8 +62,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     //Clear interrupts
     unsafe { asm!("cli") };
-    // initialize our IDT
-    println!("Loading IDT.");
+
     interrupts::init(&mut memory_controller);
 
     //Init PICS.
@@ -67,15 +73,11 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     println!("It did not crash!");
     
-    use alloc::String;
-        
     syscall::create(real_main, String::from("real_main"));
     
     let mut i = 0;
 
     loop {
-        use task::Scheduling;
-
         syscall::create(process_test, format!("test_process_{}", i));
         println!("Running test process {}", i);
 
@@ -92,40 +94,7 @@ pub extern "C" fn real_main() {
 }
 
 pub extern "C" fn process_test() {
+    println!("Inside test process.");
 }
 
-fn enable_nxe_bit() {
-    use x86_64::registers::msr::{IA32_EFER, rdmsr, wrmsr};
 
-    let nxe_bit = 1 << 11;
-    unsafe {
-        let efer = rdmsr(IA32_EFER);
-        wrmsr(IA32_EFER, efer | nxe_bit);
-    }
-}
-
-fn enable_write_protect_bit() {
-    use x86_64::registers::control_regs::{cr0, cr0_write, Cr0};
-
-    unsafe { cr0_write(cr0() | Cr0::WRITE_PROTECT) };
-}
-
-#[cfg(not(test))]
-#[lang = "eh_personality"]
-#[no_mangle]
-pub extern "C" fn eh_personality() {}
-
-#[cfg(not(test))]
-#[lang = "panic_fmt"]
-#[no_mangle]
-pub extern "C" fn panic_fmt(fmt: core::fmt::Arguments, file: &'static str, line: u32) -> ! {
-    println!("\n\nPANIC in {} at line {}:", file, line);
-    println!("    {}", fmt);
-    loop {}
-}
-
-#[allow(non_snake_case)]
-#[no_mangle]
-pub extern "C" fn _Unwind_Resume() -> ! {
-    loop {}
-}
