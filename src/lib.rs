@@ -30,9 +30,9 @@ mod macros;
 pub mod memory;
 pub mod io;
 pub mod interrupts;
-mod libkernel;
-mod task;
-mod syscall;
+pub mod klib;
+pub mod task;
+pub mod syscall;
 mod utils;
 mod runtime_glue;
 
@@ -43,7 +43,6 @@ pub use runtime_glue::*;
 use spin::Mutex;
 use multiboot2::BootInformation;
 use alloc::String;
-
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
@@ -79,9 +78,9 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     loop {
         syscall::create(process_test, format!("test_process_{}", i));
-        println!("Running test process {}", i);
 
         unsafe {
+            println!("Running a test process.");
             task::SCHEDULER.resched();
             i += 1;
         }
@@ -94,7 +93,5 @@ pub extern "C" fn real_main() {
 }
 
 pub extern "C" fn process_test() {
-    println!("Inside test process.");
+    println!("Inside test process."); 
 }
-
-

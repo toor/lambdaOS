@@ -31,4 +31,5 @@ rustup component add rust-src && cargo install xargo
 # Install dependencies from package manager.
 sudo pacman -S make qemu xorriso grub nasm
 # Build and run lambdaOS
+make run
 ```

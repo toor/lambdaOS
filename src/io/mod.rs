@@ -14,3 +14,5 @@ pub mod vga;
 ///The 8259 PIC - Programmable Interrupt Controller. Contains data structures that we can use to
 ///control the behaviour of this device.
 pub mod pic;
+
+pub use self::cpuio::{Port, UnsafePort};
