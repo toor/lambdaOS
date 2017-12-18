@@ -67,6 +67,8 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     //Init PICS.
     unsafe { PICS.lock().init() };
     
+    unsafe { io::init_devices() };
+
     //Start real interrupts.
     unsafe { asm!("sti") };
 
