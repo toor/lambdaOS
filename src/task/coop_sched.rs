@@ -25,11 +25,14 @@ impl Scheduling for CoopScheduler {
         let proc_top: usize = stack.len() - 3;
 
         let proc_sp = stack.as_ptr() as usize + (proc_top * mem::size_of::<usize>());
+        
+        use alloc::boxed::Box;
+        let self_ptr: Box<&Scheduling> = Box::new(self);
 
         let stack_vals: Vec<usize> = vec![
             func as usize,
             process::process_return as usize,
-            self as *const Scheduler as usize,
+            Box::into_raw(self_ptr) as usize,
         ];
 
         for (i, val) in stack_vals.iter().enumerate() {
