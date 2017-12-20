@@ -1,10 +1,6 @@
 use io::Port;
 use spin::Mutex;
 
-const SELECT_CHAN_0: u8 = 0;
-const LOHI: u8 = 0x30;
-const DIVISOR: u16 = 2685;
-
 const PIT_A: u16 = 0x43;
 const PIT_CONTROL: u16 = 0x40;
 const PIT_MASK: u8 = 0xFF;
@@ -28,7 +24,7 @@ impl Pit {
     }
 }
 
-pub static PIT: Mutex<Pit> = Mutex::new(unsafe { Pit::new(0x43, 0x40) });
+pub static PIT: Mutex<Pit> = Mutex::new(unsafe { Pit::new(PIT_CONTROL, PIT_A) });
 
 pub fn init() {
     let mut divisor: u32 = PIT_SCALE / SUBTICKS as u32;
