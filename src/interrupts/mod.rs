@@ -61,6 +61,7 @@ pub fn init(memory_controller: &mut MemoryController) {
         gdt
     });
     gdt.load();
+    println!("[ OK ] GDT.");
 
     unsafe {
         // reload code segment register
@@ -70,6 +71,7 @@ pub fn init(memory_controller: &mut MemoryController) {
     }
 
     IDT.load();
+    println!("[ OK ] IDT.")
 }
 
 //IRQs.

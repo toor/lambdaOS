@@ -36,12 +36,12 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         .unwrap();
 
     println!(
-        "Kernel start: {:#x}, kernel end: {:#x}",
+        "[ DEBUG ] Kernel start: {:#x}, kernel end: {:#x}",
         kernel_start,
         kernel_end
     );
     println!(
-        "Multiboot data structure start: {:#x}, end: {:#x}",
+        "[ DEBUG ] Multiboot data structure start: {:#x}, end: {:#x}",
         boot_info.start_address(),
         boot_info.end_address()
     );

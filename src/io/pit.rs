@@ -39,5 +39,5 @@ pub fn init() {
     PIT.lock().chan0.write(config_1);
     PIT.lock().chan0.write(config_2);
 
-    println!("Using PIT controller");
+    println!("[ OK ] Programmable Interval Timer.");
 }

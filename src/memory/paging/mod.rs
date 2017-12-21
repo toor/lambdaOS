@@ -207,7 +207,7 @@ where
                 "sections need to be page aligned"
             );
             println!(
-                "Mapping kernel section at addr: {:#x}, size: {:#x}",
+                "[ DEBUG ] Mapping kernel section at addr: {:#x}, size: {:#x}",
                 section.addr,
                 section.size
             );
@@ -234,11 +234,11 @@ where
     });
 
     let old_table = active_table.switch(new_table);
-    println!("Switched to new page table.");
+    println!("[ OK ]Switched to new page table.");
 
     let old_p4_page = Page::containing_address(old_table.p4_frame.start_address());
     active_table.unmap(old_p4_page, allocator);
-    println!("Guard page at {:#x}.", old_p4_page.start_address());
+    println!("[ OK ] Guard page at {:#x}.", old_p4_page.start_address());
 
     active_table
 }

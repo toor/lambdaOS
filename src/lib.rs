@@ -47,7 +47,7 @@ use alloc::String;
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
     io::vga::buffer::clear_screen();
-    println!("Hello World{}", "!");
+    println!("[ INFO ] lambdaOS: Begin init.");
     
     //Load a multiboot BootInfo structure using the address passed in ebx.
     let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
@@ -72,7 +72,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     //Start real interrupts.
     unsafe { asm!("sti") };
 
-    println!("It did not crash!");
+    println!("[ OK ] Initialized lambdaOS");
     
     syscall::create(real_main, String::from("real_main"));
     

@@ -94,6 +94,8 @@ impl ChainedPics {
         self.pics[0].data.write(MODE_8086);
         wait();
         self.pics[1].data.write(MODE_8086);
+
+        println!("[ OK ] 8259 PIC.")
     }
 
     ///Cycle through the PICS until we find one that can handle this interrupt.
