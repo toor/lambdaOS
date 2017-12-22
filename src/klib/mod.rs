@@ -8,7 +8,7 @@ use alloc::heap::Alloc;
 //Size must be 2-aligned.
 pub fn kalloc(size: usize) {
     //Manually create layout.
-    let mut layout = Layout::from_size_align(2, size);
+    let layout = Layout::from_size_align(2, size);
 
     if let Some(l) = layout {
         //Layout created successfully, allocate some memory on the heap with it.

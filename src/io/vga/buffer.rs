@@ -21,7 +21,7 @@ pub struct TextBuffer {
 
 //Move this out of the TextBuffer impl just because it seems to work that way.
 pub fn clear_screen() {
-    for row in 0..BUFFER_HEIGHT {
+    for _row in 0..BUFFER_HEIGHT {
         SCREEN.lock().new_line();
     }
 }

@@ -69,9 +69,9 @@ impl Mapper {
     where
         A: FrameAllocator,
     {
-        let mut p3 = self.p4_mut().next_table_create(page.p4_index(), allocator);
-        let mut p2 = p3.next_table_create(page.p3_index(), allocator);
-        let mut p1 = p2.next_table_create(page.p2_index(), allocator);
+        let p3 = self.p4_mut().next_table_create(page.p4_index(), allocator);
+        let p2 = p3.next_table_create(page.p3_index(), allocator);
+        let p1 = p2.next_table_create(page.p2_index(), allocator);
 
         assert!(p1[page.p1_index()].is_unused());
         p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
@@ -93,7 +93,7 @@ impl Mapper {
         self.map_to(page, frame, flags, allocator)
     }
 
-    pub fn unmap<A>(&mut self, page: Page, allocator: &mut A)
+    pub fn unmap<A>(&mut self, page: Page, _allocator: &mut A)
     where
         A: FrameAllocator,
     {
@@ -107,7 +107,7 @@ impl Mapper {
             .and_then(|p3| p3.next_table_mut(page.p3_index()))
             .and_then(|p2| p2.next_table_mut(page.p2_index()))
             .expect("mapping code does not support huge pages");
-        let frame = p1[page.p1_index()].pointed_frame().unwrap();
+        let _frame = p1[page.p1_index()].pointed_frame().unwrap();
         p1[page.p1_index()].set_unused();
         tlb::flush(VirtualAddress(page.start_address()));
         // TODO free p(1,2,3) table if empty

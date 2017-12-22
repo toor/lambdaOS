@@ -63,7 +63,7 @@ impl Scheduling for CoopScheduler {
     fn kill(&self, id: ProcessId) {
         //We should free the stack here.
         {
-            let mut task_table_lock = self.task_t.read();
+            let task_table_lock = self.task_t.read();
             let mut proc_lock = task_table_lock
                 .get(id)
                 .expect("Cannot kill a non-existent process")

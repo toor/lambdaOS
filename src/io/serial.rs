@@ -5,8 +5,7 @@ use io::cpuio;
 use self::Register::*;
 
 #[allow(dead_code)]
-#[repr(C, u8)]
-
+#[repr(u8)]
 enum Register {
     DataOrBaudLsb = 0,
     InterruptEnableOrBaudMsb = 1,

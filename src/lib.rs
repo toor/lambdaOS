@@ -40,8 +40,6 @@ use io::pic::PICS;
 use task::Scheduling;
 use utils::{enable_nxe_bit, enable_write_protect_bit};
 pub use runtime_glue::*;
-use spin::Mutex;
-use multiboot2::BootInformation;
 use alloc::String;
 
 #[no_mangle]

@@ -1,15 +1,6 @@
 use io::cpuio;
 use io::vga::buffer::SCREEN;
 use spin::Mutex;
-use alloc::vec::Vec;
-use alloc::string::String;
-
-lazy_static! {
-    pub static ref CHAR_BUFFER: Mutex<Vec<u8>> = {
-        let mutex = Mutex::new(Vec::new());
-        mutex
-    };
-}
 
 struct KeyPair {
     left: bool,

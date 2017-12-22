@@ -234,7 +234,7 @@ where
     });
 
     let old_table = active_table.switch(new_table);
-    println!("[ OK ]Switched to new page table.");
+    println!("[ OK ] Switched to new page table.");
 
     let old_p4_page = Page::containing_address(old_table.p4_frame.start_address());
     active_table.unmap(old_p4_page, allocator);

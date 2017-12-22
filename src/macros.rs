@@ -14,7 +14,7 @@ macro_rules! format {
     use alloc::string::String;
     use core::fmt;
     let mut output = String::new();
-    fmt::write(&mut output, format_args!($($arg)*));
+    fmt::write(&mut output, format_args!($($arg)*)).unwrap();
     output
   });
 }

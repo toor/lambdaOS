@@ -1,5 +1,5 @@
-use core::marker::PhantomData;
 use spin::Mutex;
+use io::cpuio::Port;
 
 //Global interface to the PIC.
 pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
@@ -12,7 +12,6 @@ const CMD_END_OF_INTERRUPT: u8 = 0x20;
 
 ///The PIC lives in ancient 8086 land.
 const MODE_8086: u8 = 0x01;
-use io::cpuio::Port;
 
 ///A single interrupt controller.
 ///The `offset` is set to the value from which the handled IRQs begin.

@@ -1,7 +1,6 @@
 use alloc::string::String;
 use alloc::vec::Vec;
 use task::context::Context;
-use task::scheduler::Scheduler;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 ///Current state of the process.

@@ -3,7 +3,7 @@ use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
 use spin::Once;
 use io::pic::PICS;
-use io::keyboard::{read_char, CHAR_BUFFER};
+use io::keyboard::read_char;
 
 mod gdt;
 
@@ -75,13 +75,11 @@ pub fn init(memory_controller: &mut MemoryController) {
 }
 
 //IRQs.
-pub extern "x86-interrupt" fn timer_handler(stack_frame: &mut ExceptionStackFrame) {
+pub extern "x86-interrupt" fn timer_handler(_stack_frame: &mut ExceptionStackFrame) {
     unsafe { PICS.lock().notify_end_of_interrupt(0x20) };
 }
 
-pub extern "x86-interrupt" fn keyboard_handler(stack_frame: &mut ExceptionStackFrame) {
-    use super::io;
-
+pub extern "x86-interrupt" fn keyboard_handler(_stack_frame: &mut ExceptionStackFrame) {
     if let Some(c) = read_char() {
         print!("{}", c);
     }

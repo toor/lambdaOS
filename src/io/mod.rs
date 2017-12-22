@@ -1,5 +1,3 @@
-use core::marker::PhantomData;
-
 #[macro_use]
 ///Primary interface to I/O ports - special memory addresses on a different bus that we can use to
 ///access I/O devices.
