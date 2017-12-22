@@ -76,7 +76,17 @@ pub fn init(memory_controller: &mut MemoryController) {
 
 //IRQs.
 pub extern "x86-interrupt" fn timer_handler(_stack_frame: &mut ExceptionStackFrame) {
+    use core::sync::atomic::Ordering;
+    use io::pit::PIT_TICKS;
+    use task::{SCHEDULER, Scheduling};
+
     unsafe { PICS.lock().notify_end_of_interrupt(0x20) };
+
+    /*if PIT_TICKS.fetch_add(1, Ordering::SeqCst) >= 10 {
+        unsafe {
+            SCHEDULER.resched();
+        }
+    }*/
 }
 
 pub extern "x86-interrupt" fn keyboard_handler(_stack_frame: &mut ExceptionStackFrame) {

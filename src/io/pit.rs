@@ -1,5 +1,6 @@
 use io::Port;
 use spin::Mutex;
+use core::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT};
 
 /// Configuration data. Use channel 0 and mode 3, square wave generator. Use lohi operation.
 const PIT_SET: u8 = 0x36;
@@ -18,3 +19,5 @@ pub fn init() {
 
     println!("[ OK ] Programmable Interval Timer.");
 }
+
+pub static PIT_TICKS: AtomicUsize = ATOMIC_USIZE_INIT;

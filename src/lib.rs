@@ -72,19 +72,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     println!("[ OK ] Initialized lambdaOS");
     
-    syscall::create(real_main, String::from("real_main"));
-    
-    let mut i = 0;
-
-    loop {
-        syscall::create(process_test, format!("test_process_{}", i));
-
-        unsafe {
-            println!("Running a test process.");
-            task::SCHEDULER.resched();
-            i += 1;
-        }
-    }
+    loop {}
 }
 
 #[no_mangle]
