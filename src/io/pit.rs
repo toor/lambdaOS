@@ -1,43 +1,20 @@
 use io::Port;
 use spin::Mutex;
 
-const PIT_A: u16 = 0x43;
-const PIT_CONTROL: u16 = 0x40;
-const PIT_MASK: u8 = 0xFF;
-const PIT_SCALE: u32 = 1193180;
-/// Select Mode 0, lobyte/hibyte operation, mode 3: square wave generator.
-/// Set BCD as 0 - 16-bit binary.
+/// Configuration data. Use channel 0 and mode 3, square wave generator. Use lohi operation.
 const PIT_SET: u8 = 0x36;
-const SUBTICKS: u16 = 1000;
+static DIVISOR: u16 = 2685;
 
-pub struct Pit {
-    pub control: Port<u8>,
-    pub chan0: Port<u8>,
-}
-
-impl Pit {
-    pub const unsafe fn new(control: u16, chan0: u16) -> Self {
-        Pit {
-            control: Port::new(control),
-            chan0: Port::new(chan0),
-        }
-    }
-}
-
-pub static PIT: Mutex<Pit> = Mutex::new(unsafe { Pit::new(PIT_CONTROL, PIT_A) });
+/// Simple interface to the PIT.
+pub static PIT: Mutex<[Port<u8>; 2]> = Mutex::new(unsafe { [
+    Port::new(0x43),
+    Port::new(0x40),
+]});
 
 pub fn init() {
-    let mut divisor: u32 = PIT_SCALE / SUBTICKS as u32;
-    
-    let config_1: u8 = (divisor & (PIT_MASK as u32)) as u8;
-    let config_2: u8 = ((divisor >> 8) & (PIT_MASK as u32)) as u8;
-    
-    // Setup using mode data.
-    PIT.lock().control.write(PIT_SET);
-    
-    // We are now free to configure the divisor via the Channel 0 port.
-    PIT.lock().chan0.write(config_1);
-    PIT.lock().chan0.write(config_2);
+    PIT.lock()[0].write(PIT_SET);
+    PIT.lock()[1].write((DIVISOR & 0xFF) as u8);
+    PIT.lock()[1].write((DIVISOR >> 8) as u8);
 
     println!("[ OK ] Programmable Interval Timer.");
 }
