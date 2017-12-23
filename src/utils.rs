@@ -21,3 +21,18 @@ pub unsafe fn disable_interrupts() {
 pub unsafe fn enable_interrupts() {
     asm!("sti");
 }
+
+// Stolen from Robert Gries.
+// This function disables interrupts, allows a function to run without them enabled, and then
+// reenables interrupts.
+pub fn disable_interrupts_and_then<F>(f: F)
+    where F: FnOnce()
+{
+    unsafe {
+        disable_interrupts();
+
+        f();
+
+        enable_interrupts();
+    }
+}
