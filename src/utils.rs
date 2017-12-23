@@ -14,4 +14,10 @@ pub fn enable_write_protect_bit() {
     unsafe { cr0_write(cr0() | Cr0::WRITE_PROTECT) };
 }
 
+pub unsafe fn disable_interrupts() {
+    asm!("cli");
+}
 
+pub unsafe fn enable_interrupts() {
+    asm!("sti");
+}

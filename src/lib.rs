@@ -57,20 +57,21 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     // set up guard page and map the heap pages
     let mut memory_controller = memory::init(boot_info);
 
-    //Clear interrupts
-    unsafe { asm!("cli") };
+    // Interrupts.
+    unsafe {
+        // Clear all current hardware interrupts.
+        utils::disable_interrupts();
+        // Load an IDT.
+        interrupts::init(&mut memory_controller);
+        // Initialise the 8259 PIC.
+        PICS.lock().init();
+        //Initalise all other hardware devices.
+        io::init_devices();
+        // Turn on real interrupts.
+        utils::enable_interrupts();
+    }
 
-    interrupts::init(&mut memory_controller);
-
-    //Init PICS.
-    unsafe { PICS.lock().init() };
-    
-    unsafe { io::init_devices() };
-
-    //Start real interrupts.
-    unsafe { asm!("sti") };
-
-    println!("[ OK ] Initialized lambdaOS");
+    println!("[ OK ] Initialized lambdaOS.");
     
     loop {}
 }
