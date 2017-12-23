@@ -84,6 +84,8 @@ impl TextBuffer {
         self.clear_row(BUFFER_HEIGHT - 1);
         //Set position to start of row.
         self.column_position = 0;
+
+        self.sync();
     }
 
     pub fn clear_row(&mut self, row: usize) {
