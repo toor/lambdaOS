@@ -10,7 +10,7 @@ pub mod paging;
 mod stack_allocator;
 
 pub const HEAP_START: usize = 0o_000_001_000_000_0000;
-pub const HEAP_SIZE: usize = 100 * 1024; // 100 KiB
+pub const HEAP_SIZE: usize = 500 * 1024;
 
 pub const PAGE_SIZE: usize = 4096;
 

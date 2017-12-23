@@ -26,7 +26,7 @@ pub trait Scheduling {
 pub const MAX_PROCS: usize = usize::max_value() - 1;
 
 //TODO use max value of u16 as initial stack size.
-pub const INITIAL_STACK: usize = 1000;
+pub const INITIAL_STACK: usize = 1024;
 
 lazy_static! {
     pub static ref SCHEDULER: Scheduler = Scheduler::new();
