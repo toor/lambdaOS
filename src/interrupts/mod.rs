@@ -4,6 +4,7 @@ use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
 use spin::Once;
 use io::pic::PICS;
 use io::keyboard::read_char;
+use utils::disable_interrupts_and_then;
 
 mod gdt;
 
@@ -82,11 +83,15 @@ pub extern "x86-interrupt" fn timer_handler(_stack_frame: &mut ExceptionStackFra
 
     unsafe { PICS.lock().notify_end_of_interrupt(0x20) };
 
-    /*if PIT_TICKS.fetch_add(1, Ordering::SeqCst) >= 10 {
+    if PIT_TICKS.fetch_add(1, Ordering::SeqCst) >= 10 {
         unsafe {
-            SCHEDULER.resched();
+            disable_interrupts_and_then(|| {
+                unsafe {
+                    SCHEDULER.resched();
+                }
+            });
         }
-    }*/
+    }
 }
 
 pub extern "x86-interrupt" fn keyboard_handler(_stack_frame: &mut ExceptionStackFrame) {

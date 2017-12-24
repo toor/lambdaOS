@@ -38,7 +38,7 @@ mod runtime_glue;
 
 use io::pic::PICS;
 use task::Scheduling;
-use utils::{enable_nxe_bit, enable_write_protect_bit};
+use utils::*;
 pub use runtime_glue::*;
 use alloc::String;
 
@@ -60,7 +60,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     // Interrupts.
     unsafe {
         // Clear all current hardware interrupts.
-        utils::disable_interrupts();
+        disable_interrupts();
         // Load an IDT.
         interrupts::init(&mut memory_controller);
         // Initialise the 8259 PIC.
@@ -68,7 +68,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
         //Initalise all other hardware devices.
         io::init_devices();
         // Turn on real interrupts.
-        utils::enable_interrupts();
+        enable_interrupts();
     }
     
     let proc_closure = || {
@@ -76,14 +76,19 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
         for i in 0..max_procs {
             syscall::create(process_test, format!("test_process_{}", i));
-
-            println!("Created test process {}", i);
         }
     };
 
-    utils::disable_interrupts_and_then(proc_closure);
+    disable_interrupts_and_then(proc_closure);
 
-    println!("[ OK ] Initialized lambdaOS.");
+ 
+    //loop {
+        //disable_interrupts_and_then(|| {
+            //unsafe {
+                //task::SCHEDULER.resched();
+            //} 
+        //});
+    //}
     
     loop {}
 }
