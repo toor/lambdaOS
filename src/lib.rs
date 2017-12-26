@@ -30,7 +30,6 @@ mod macros;
 pub mod memory;
 pub mod io;
 pub mod interrupts;
-pub mod klib;
 pub mod task;
 pub mod syscall;
 mod utils;

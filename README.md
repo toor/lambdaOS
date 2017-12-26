@@ -8,14 +8,11 @@ An OS written in Rust and Assembly. It currently supports x86, however most of t
 - Kernel remapping
 - Heap allocation
 - Keyboard input.
-- Task scheduling.
+- Task scheduling (using timer).
 
 **Planned**
 - System calls.
 - FS support.
-
-**TODO (QoL)**
-- Add timer functionality to allow for proper scheduling.
 
 ## Building
 ```bash
