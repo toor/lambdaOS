@@ -37,10 +37,8 @@ mod utils;
 mod runtime_glue;
 
 use io::pic::PICS;
-use task::Scheduling;
 use utils::*;
 pub use runtime_glue::*;
-use alloc::String;
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
@@ -80,15 +78,6 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     };
 
     disable_interrupts_and_then(proc_closure);
-
- 
-    //loop {
-        //disable_interrupts_and_then(|| {
-            //unsafe {
-                //task::SCHEDULER.resched();
-            //} 
-        //});
-    //}
     
     loop {}
 }

@@ -86,9 +86,7 @@ pub extern "x86-interrupt" fn timer_handler(_stack_frame: &mut ExceptionStackFra
     if PIT_TICKS.fetch_add(1, Ordering::SeqCst) >= 10 {
         unsafe {
             disable_interrupts_and_then(|| {
-                unsafe {
                     SCHEDULER.resched();
-                }
             });
         }
     }
