@@ -84,8 +84,10 @@ impl Scheduling for CoopScheduler {
     }
 
     unsafe fn resched(&self) {
-        if self.ready_list.read().is_empty() {
-            return;
+        {
+            if self.ready_list.read().is_empty() {
+                return;
+            }
         }
         
         let mut prev_ptr = 0 as *mut Process;
