@@ -25,14 +25,16 @@ pub unsafe fn enable_interrupts() {
 // Stolen from Robert Gries.
 // This function disables interrupts, allows a function to run without them enabled, and then
 // reenables interrupts.
-pub fn disable_interrupts_and_then<F>(f: F)
-    where F: FnOnce()
+pub fn disable_interrupts_and_then<F, T>(f: F) -> T
+    where F: FnOnce() -> T
 {
     unsafe {
         disable_interrupts();
 
-        f();
+        let result: T = f();
 
         enable_interrupts();
+
+        result
     }
 }
