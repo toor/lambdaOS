@@ -56,18 +56,16 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     let mut memory_controller = memory::init(boot_info);
 
     // Interrupts.
-    unsafe {
-        // Clear all current hardware interrupts.
-        disable_interrupts();
-        // Load an IDT.
-        interrupts::init(&mut memory_controller);
-        // Initialise the 8259 PIC.
-        PICS.lock().init();
-        //Initalise all other hardware devices.
-        device::init_devices();
-        // Turn on real interrupts.
-        enable_interrupts();
-    }
+    disable_interrupts_and_then(|| {
+        unsafe {
+            // Load IDT.
+            interrupts::init(&mut memory_controller);
+            // Initialise 8259 PIC.
+            PICS.lock().init();
+            // Initalise all other hardware devices.
+            device::init();
+        }
+    });
     
     /*let proc_closure = || {
         let max_procs = 50;

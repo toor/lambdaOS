@@ -18,6 +18,6 @@ pub mod ahci;
 pub use self::io::cpuio::{Port, UnsafePort};
 pub use self::io::mmio;
 
-pub unsafe fn init_devices() {
+pub unsafe fn init() {
     pit::init();
 }
