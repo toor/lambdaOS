@@ -1,3 +1,6 @@
+// TODO: Figure out why moving the exception handlers to another module causes the keyboard to
+// seemingly break.
+
 use memory::MemoryController;
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
