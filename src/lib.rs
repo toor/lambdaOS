@@ -8,6 +8,7 @@
 #![feature(const_unique_new)]
 #![feature(const_max_value)]
 #![feature(core_intrinsics)]
+#![feature(global_allocator)]
 #![no_std]
 
 extern crate rlibc;
@@ -22,9 +23,9 @@ extern crate once;
 extern crate bit_field;
 #[macro_use]
 extern crate lazy_static;
-extern crate hole_list_allocator as allocator;
 #[macro_use]
 extern crate alloc;
+extern crate linked_list_allocator;
 
 #[macro_use]
 mod macros;
@@ -94,3 +95,9 @@ pub extern "C" fn real_main() {
 pub extern "C" fn process_test() {
     println!("Inside test process."); 
 }
+
+use memory::heap_allocator::HeapAllocator;
+
+//Attribute tells Rust to use this as the default heap allocator.
+#[global_allocator]
+static GLOBAL_ALLOC: HeapAllocator = HeapAllocator::new();
