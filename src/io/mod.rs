@@ -14,6 +14,8 @@ pub mod vga;
 pub mod pic;
 /// PIT controller.
 pub mod pit;
+/// MMIO operations.
+pub mod mmio;
 
 pub use self::cpuio::{Port, UnsafePort};
 

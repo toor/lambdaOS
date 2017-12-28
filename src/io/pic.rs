@@ -21,7 +21,6 @@ pub struct Pic {
     data: Port<u8>,
 }
 
-
 impl Pic {
     ///The offset is less than or equal to the interrupt id and the interrupt id is less than the
     ///offset + 8. This is done because the master PIC handles IRQs 0-7, where the vector number of

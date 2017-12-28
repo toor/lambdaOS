@@ -7,6 +7,7 @@
 #![feature(abi_x86_interrupt)]
 #![feature(const_unique_new)]
 #![feature(const_max_value)]
+#![feature(core_intrinsics)]
 #![no_std]
 
 extern crate rlibc;
