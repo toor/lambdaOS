@@ -42,21 +42,22 @@ pub use runtime_glue::*;
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
-    device::vga::buffer::clear_screen();
-    println!("[ INFO ] lambdaOS: Begin init.");
-    
-    //Load a multiboot BootInfo structure using the address passed in ebx.
-    let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
-    
-    //Safety stuff.
-    enable_nxe_bit();
-    enable_write_protect_bit();
+    // Ensure all interrupt masks are set to prevent issues during setup
+    disable_interrupts();
+    {
+        device::vga::buffer::clear_screen();
+        println!("[ INFO ] lambdaOS: Begin init.");
 
-    // set up guard page and map the heap pages
-    let mut memory_controller = memory::init(boot_info);
+        //Load a multiboot BootInfo structure using the address passed in ebx.
+        let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
 
-    // Interrupts.
-    disable_interrupts_and_then(|| {
+        //Safety stuff.
+        enable_nxe_bit();
+        enable_write_protect_bit();
+
+        // set up guard page and map the heap pages
+        let mut memory_controller = memory::init(boot_info);
+
         unsafe {
             // Load IDT.
             interrupts::init(&mut memory_controller);
@@ -65,9 +66,10 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
             // Initalise all other hardware devices.
             device::init();
         }
-    });
-    
-    /*let proc_closure = || {
+    }
+    enable_interrupts();
+
+    let proc_closure = || {
         let max_procs = 50;
 
         for i in 0..max_procs {
@@ -75,7 +77,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
         }
     };
 
-    disable_interrupts_and_then(proc_closure);*/
+    proc_closure();
     
     use alloc::String;
 

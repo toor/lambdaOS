@@ -18,7 +18,7 @@ const MODE_8086: u8 = 0x01;
 pub struct Pic {
     offset: u8,
     command: Port<u8>,
-    data: Port<u8>,
+    pub data: Port<u8>,
 }
 
 impl Pic {
@@ -37,7 +37,7 @@ impl Pic {
 
 ///A master and slave PIC.
 pub struct ChainedPics {
-    pics: [Pic; 2],
+    pub pics: [Pic; 2],
 }
 
 impl ChainedPics {
@@ -93,7 +93,10 @@ impl ChainedPics {
         wait();
         self.pics[1].data.write(MODE_8086);
 
-        println!("[ OK ] 8259 PIC.")
+        // Uncommenting this line results in deadlock
+        // Printing disables interrupt and tries to lock PICS
+        // Since we got here by calling `PICS.lock().init()`, we will always deadlock
+        //println!("[ OK ] 8259 PIC.")
     }
 
     ///Cycle through the PICS until we find one that can handle this interrupt.
