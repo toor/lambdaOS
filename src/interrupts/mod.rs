@@ -5,8 +5,8 @@ use memory::MemoryController;
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
 use spin::Once;
-use io::pic::PICS;
-use io::keyboard::read_char;
+use device::pic::PICS;
+use device::keyboard::read_char;
 use utils::disable_interrupts_and_then;
 
 mod gdt;
@@ -81,7 +81,7 @@ pub fn init(memory_controller: &mut MemoryController) {
 //IRQs.
 pub extern "x86-interrupt" fn timer_handler(_stack_frame: &mut ExceptionStackFrame) {
     use core::sync::atomic::Ordering;
-    use io::pit::PIT_TICKS;
+    use device::pit::PIT_TICKS;
     use task::{SCHEDULER, Scheduling};
 
     unsafe { PICS.lock().notify_end_of_interrupt(0x20) };
