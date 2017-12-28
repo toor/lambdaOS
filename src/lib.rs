@@ -29,20 +29,20 @@ extern crate alloc;
 #[macro_use]
 mod macros;
 pub mod memory;
-pub mod io;
+pub mod device;
 pub mod interrupts;
 pub mod task;
 pub mod syscall;
 mod utils;
 mod runtime_glue;
 
-use io::pic::PICS;
+use device::pic::PICS;
 use utils::*;
 pub use runtime_glue::*;
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
-    io::vga::buffer::clear_screen();
+    device::vga::buffer::clear_screen();
     println!("[ INFO ] lambdaOS: Begin init.");
     
     //Load a multiboot BootInfo structure using the address passed in ebx.
@@ -64,7 +64,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
         // Initialise the 8259 PIC.
         PICS.lock().init();
         //Initalise all other hardware devices.
-        io::init_devices();
+        device::init_devices();
         // Turn on real interrupts.
         enable_interrupts();
     }
