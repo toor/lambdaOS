@@ -1,4 +1,4 @@
-use device::cpuio;
+use device::io::cpuio;
 use device::vga::buffer::SCREEN;
 use spin::Mutex;
 

@@ -1,9 +1,7 @@
 #[macro_use]
 ///Primary interface to I/O ports - special memory addresses on a different bus that we can use to
 ///access I/O devices.
-pub mod cpuio;
-///Serial driver.
-pub mod serial;
+pub mod io;
 ///Simple driver for the PS/2 keyboard.
 pub mod keyboard;
 ///Advanced split interface to VGA buffer split between text management and actual buffer
@@ -14,12 +12,11 @@ pub mod vga;
 pub mod pic;
 /// PIT controller.
 pub mod pit;
-/// MMIO operations.
-pub mod mmio;
 /// AHCI driver.
 pub mod ahci;
 
-pub use self::cpuio::{Port, UnsafePort};
+pub use self::io::cpuio::{Port, UnsafePort};
+pub use self::io::mmio;
 
 pub unsafe fn init_devices() {
     pit::init();

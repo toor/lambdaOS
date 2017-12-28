@@ -69,7 +69,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
         enable_interrupts();
     }
     
-    let proc_closure = || {
+    /*let proc_closure = || {
         let max_procs = 50;
 
         for i in 0..max_procs {
@@ -77,7 +77,11 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
         }
     };
 
-    disable_interrupts_and_then(proc_closure);
+    disable_interrupts_and_then(proc_closure);*/
+    
+    use alloc::String;
+
+    syscall::create(real_main, String::from("real_main"));
     
     loop {}
 }

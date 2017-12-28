@@ -1,5 +1,5 @@
 use spin::Mutex;
-use device::cpuio::Port;
+use device::Port;
 
 //Global interface to the PIC.
 pub static PICS: Mutex<ChainedPics> = Mutex::new(unsafe { ChainedPics::new(0x20, 0x28) });
