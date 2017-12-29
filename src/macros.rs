@@ -1,9 +1,7 @@
 macro_rules! print {
     ($($arg:tt)*) => ({
-        ::utils::disable_interrupts_and_then(|| {
-            $crate::device::vga::buffer::print(format_args!($($arg)*));
-        });
-   });
+        $crate::device::vga::buffer::print(format_args!($($arg)*));
+    });
 }
 
 macro_rules! println {
