@@ -8,6 +8,7 @@ mod area_frame_allocator;
 pub mod heap_allocator;
 pub mod paging;
 mod stack_allocator;
+//pub mod phys;
 
 pub const PAGE_SIZE: usize = 4096;
 
@@ -65,7 +66,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
 
     //Init the heap
     unsafe {
-        ::GLOBAL_ALLOC.init(HEAP_START, HEAP_SIZE);
+        ::HEAP_ALLOCATOR.init(HEAP_START, HEAP_SIZE);
     }
 
     let stack_allocator = {

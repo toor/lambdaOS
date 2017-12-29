@@ -100,4 +100,4 @@ use memory::heap_allocator::HeapAllocator;
 
 //Attribute tells Rust to use this as the default heap allocator.
 #[global_allocator]
-static GLOBAL_ALLOC: HeapAllocator = HeapAllocator::new();
+static HEAP_ALLOCATOR: HeapAllocator = HeapAllocator::new();

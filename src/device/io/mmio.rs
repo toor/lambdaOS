@@ -23,4 +23,17 @@ where T: Copy + PartialEq + BitAnd<Output=T> + BitOr<Output=T> + Not<Output=T>
     pub fn write(&mut self, value: T) {
         unsafe { volatile_store(&mut self.value, value) }
     }
+
+    pub fn readf(&self, flags: T) -> bool {
+        (self.value & flags) as T == flags
+    }
+
+    pub fn writef(&mut self, flags: T, value: bool) {
+        let tmp: T = match value {
+            true => self.read() | flags,
+            false => self.read() & !flags,
+        };
+
+        self.write(tmp);
+    }
 }
