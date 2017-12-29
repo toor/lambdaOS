@@ -3,14 +3,11 @@ pub use self::paging::remap_the_kernel;
 pub use self::stack_allocator::Stack;
 use self::paging::PhysicalAddress;
 use multiboot2::BootInformation;
-use allocator;
 
 mod area_frame_allocator;
+pub mod heap_allocator;
 pub mod paging;
 mod stack_allocator;
-
-pub const HEAP_START: usize = 0o_000_001_000_000_0000;
-pub const HEAP_SIZE: usize = 500 * 1024;
 
 pub const PAGE_SIZE: usize = 4096;
 
@@ -57,6 +54,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     let mut active_table = paging::remap_the_kernel(&mut frame_allocator, boot_info);
 
     use self::paging::Page;
+    use self::heap_allocator::{HEAP_SIZE, HEAP_START};
 
     let heap_start_page = Page::containing_address(HEAP_START);
     let heap_end_page = Page::containing_address(HEAP_START + HEAP_SIZE - 1);
@@ -67,7 +65,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
 
     //Init the heap
     unsafe {
-        allocator::init(HEAP_START, HEAP_SIZE);
+        ::GLOBAL_ALLOC.init(HEAP_START, HEAP_SIZE);
     }
 
     let stack_allocator = {

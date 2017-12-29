@@ -8,6 +8,7 @@
 #![feature(const_unique_new)]
 #![feature(const_max_value)]
 #![feature(core_intrinsics)]
+#![feature(global_allocator)]
 #![no_std]
 
 extern crate rlibc;
@@ -22,9 +23,9 @@ extern crate once;
 extern crate bit_field;
 #[macro_use]
 extern crate lazy_static;
-extern crate hole_list_allocator as allocator;
 #[macro_use]
 extern crate alloc;
+extern crate linked_list_allocator;
 
 #[macro_use]
 mod macros;
@@ -42,21 +43,22 @@ pub use runtime_glue::*;
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
-    device::vga::buffer::clear_screen();
-    println!("[ INFO ] lambdaOS: Begin init.");
-    
-    //Load a multiboot BootInfo structure using the address passed in ebx.
-    let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
-    
-    //Safety stuff.
-    enable_nxe_bit();
-    enable_write_protect_bit();
+    // Ensure all interrupt masks are set to prevent issues during setup
+    disable_interrupts();
+    {
+        device::vga::buffer::clear_screen();
+        println!("[ INFO ] lambdaOS: Begin init.");
 
-    // set up guard page and map the heap pages
-    let mut memory_controller = memory::init(boot_info);
+        //Load a multiboot BootInfo structure using the address passed in ebx.
+        let boot_info = unsafe { multiboot2::load(multiboot_information_address) };
 
-    // Interrupts.
-    disable_interrupts_and_then(|| {
+        //Safety stuff.
+        enable_nxe_bit();
+        enable_write_protect_bit();
+
+        // set up guard page and map the heap pages
+        let mut memory_controller = memory::init(boot_info);
+
         unsafe {
             // Load IDT.
             interrupts::init(&mut memory_controller);
@@ -65,9 +67,10 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
             // Initalise all other hardware devices.
             device::init();
         }
-    });
-    
-    /*let proc_closure = || {
+    }
+    enable_interrupts();
+
+    let proc_closure = || {
         let max_procs = 50;
 
         for i in 0..max_procs {
@@ -75,7 +78,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
         }
     };
 
-    disable_interrupts_and_then(proc_closure);*/
+    proc_closure();
     
     use alloc::String;
 
@@ -92,3 +95,9 @@ pub extern "C" fn real_main() {
 pub extern "C" fn process_test() {
     println!("Inside test process."); 
 }
+
+use memory::heap_allocator::HeapAllocator;
+
+//Attribute tells Rust to use this as the default heap allocator.
+#[global_allocator]
+static GLOBAL_ALLOC: HeapAllocator = HeapAllocator::new();

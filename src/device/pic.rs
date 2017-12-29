@@ -18,7 +18,7 @@ const MODE_8086: u8 = 0x01;
 pub struct Pic {
     offset: u8,
     command: Port<u8>,
-    data: Port<u8>,
+    pub data: Port<u8>,
 }
 
 impl Pic {
@@ -37,7 +37,7 @@ impl Pic {
 
 ///A master and slave PIC.
 pub struct ChainedPics {
-    pics: [Pic; 2],
+    pub pics: [Pic; 2],
 }
 
 impl ChainedPics {
