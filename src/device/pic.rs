@@ -93,10 +93,7 @@ impl ChainedPics {
         wait();
         self.pics[1].data.write(MODE_8086);
 
-        // Uncommenting this line results in deadlock
-        // Printing disables interrupt and tries to lock PICS
-        // Since we got here by calling `PICS.lock().init()`, we will always deadlock
-        //println!("[ OK ] 8259 PIC.")
+        println!("[ OK ] 8259 PIC.")
     }
 
     ///Cycle through the PICS until we find one that can handle this interrupt.
