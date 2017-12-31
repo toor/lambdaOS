@@ -4,6 +4,8 @@
 pub mod io;
 ///Simple driver for the PS/2 keyboard.
 pub mod keyboard;
+/// New interface to PS/2.
+pub mod ps2_8042;
 ///Advanced split interface to VGA buffer split between text management and actual buffer
 ///addressing. 
 pub mod vga;
@@ -20,4 +22,5 @@ pub use self::io::mmio;
 
 pub unsafe fn init() {
     pit::init();
+    ps2_8042::PS2.lock().init();
 }
