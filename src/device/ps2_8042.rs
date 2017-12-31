@@ -78,6 +78,14 @@ impl Ps2 {
 
         println!("[ OK ] PS/2 driver.");
     }
+
+    pub fn read_char(&mut self) -> u8 {
+        self.device.read()
+    }
 }
 
 pub static PS2: Mutex<Ps2> = Mutex::new(unsafe { Ps2::new(0x64, 0x60) });
+
+pub fn read_char() -> u8 {
+    PS2.lock().read_char()
+}
