@@ -26,7 +26,7 @@ rustup override set nightly
 # Install rust-src and xargo for cross-compilation.
 rustup component add rust-src && cargo install xargo
 # Install dependencies from package manager.
-sudo pacman -S make qemu xorriso grub nasm
+sudo pacman -S make qemu xorriso grub nasm mtools
 # Build and run lambdaOS
 make run
 ```
