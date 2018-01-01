@@ -34,6 +34,7 @@ pub mod device;
 pub mod interrupts;
 pub mod task;
 pub mod syscall;
+pub mod arch;
 mod utils;
 mod runtime_glue;
 
