@@ -9,10 +9,10 @@ iso := build/os-$(arch).iso
 target ?= $(arch)-lambda
 rust_os := target/$(target)/debug/liblambdaOS.a
 
-linker_script := src/arch/$(arch)/linker.ld
-grub_cfg := src/arch/$(arch)/grub.cfg
-assembly_source_files := $(wildcard src/arch/$(arch)/*.asm)
-assembly_object_files := $(patsubst src/arch/$(arch)/%.asm, \
+linker_script := src/arch/$(arch)/asm/linker.ld
+grub_cfg := src/arch/$(arch)/asm/grub.cfg
+assembly_source_files := $(wildcard src/arch/$(arch)/asm/*.asm)
+assembly_object_files := $(patsubst src/arch/$(arch)/asm/%.asm, \
 	build/arch/$(arch)/%.o, $(assembly_source_files))
 
 .PHONY: all clean run iso kernel
@@ -43,6 +43,6 @@ kernel:
 	@xargo build --target $(target)
 
 # compile assembly files
-build/arch/$(arch)/%.o: src/arch/$(arch)/%.asm
+build/arch/$(arch)/%.o: src/arch/$(arch)/asm/%.asm
 	@mkdir -p $(shell dirname $@)
 	@$(NASM) -felf64 $< -o $@
