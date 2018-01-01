@@ -35,7 +35,6 @@ pub mod syscall;
 pub mod arch;
 mod runtime_glue;
 
-use device::pic::PICS;
 pub use runtime_glue::*;
 
 #[no_mangle]

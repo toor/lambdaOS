@@ -1,10 +1,7 @@
 use arch::memory::MemoryController;
 use x86_64::structures::tss::TaskStateSegment;
-use x86_64::structures::idt::{Idt, ExceptionStackFrame};
+use x86_64::structures::idt::Idt;
 use spin::Once;
-use device::pic::PICS;
-use device::keyboard::read_char;
-
 
 mod gdt;
 mod exceptions;
