@@ -1,7 +1,7 @@
 use device::pic::PICS;
 use device::keyboard::read_char;
 use x86_64::structures::idt::ExceptionStackFrame;
-use utils::disable_interrupts_and_then;
+use super::disable_interrupts_and_then;
 
 // IRQs.
 pub extern "x86-interrupt" fn timer_handler(_stack_frame: &mut ExceptionStackFrame) {

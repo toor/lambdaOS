@@ -33,11 +33,9 @@ pub mod device;
 pub mod task;
 pub mod syscall;
 pub mod arch;
-mod utils;
 mod runtime_glue;
 
 use device::pic::PICS;
-use utils::*;
 pub use runtime_glue::*;
 
 #[no_mangle]
@@ -72,6 +70,6 @@ pub extern "C" fn process_test() {
 
 use arch::memory::heap_allocator::HeapAllocator;
 
-//Attribute tells Rust to use this as the default heap allocator.
+// Attribute tells Rust to use this as the default heap allocator.
 #[global_allocator]
 static HEAP_ALLOCATOR: HeapAllocator = HeapAllocator::new();
