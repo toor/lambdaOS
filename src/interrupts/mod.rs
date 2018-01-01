@@ -1,15 +1,14 @@
-// TODO: Figure out why moving the exception handlers to another module causes the keyboard to
-// seemingly break.
-
 use memory::MemoryController;
 use x86_64::structures::tss::TaskStateSegment;
-use x86_64::structures::idt::{Idt, ExceptionStackFrame, PageFaultErrorCode};
+use x86_64::structures::idt::{Idt, ExceptionStackFrame};
 use spin::Once;
 use device::pic::PICS;
 use device::keyboard::read_char;
 use utils::disable_interrupts_and_then;
 
 mod gdt;
+mod exceptions;
+mod irq;
 
 const DOUBLE_FAULT_IST_INDEX: usize = 0;
 
@@ -17,19 +16,19 @@ lazy_static! {
     static ref IDT: Idt = {
         let mut idt = Idt::new();
 
-        idt.divide_by_zero.set_handler_fn(divide_by_zero_handler);
-        idt.breakpoint.set_handler_fn(breakpoint_handler);
-        idt.invalid_opcode.set_handler_fn(invalid_opcode_handler);
-        idt.page_fault.set_handler_fn(page_fault_handler);
-        idt.general_protection_fault.set_handler_fn(gpf_handler);
+        idt.divide_by_zero.set_handler_fn(exceptions::divide_by_zero_handler);
+        idt.breakpoint.set_handler_fn(exceptions::breakpoint_handler);
+        idt.invalid_opcode.set_handler_fn(exceptions::invalid_opcode_handler);
+        idt.page_fault.set_handler_fn(exceptions::page_fault_handler);
+        idt.general_protection_fault.set_handler_fn(exceptions::gpf_handler);
 
         unsafe {
-            idt.double_fault.set_handler_fn(double_fault_handler)
+            idt.double_fault.set_handler_fn(exceptions::double_fault_handler)
                 .set_stack_index(DOUBLE_FAULT_IST_INDEX as u16);
         }
 
-        idt.interrupts[0].set_handler_fn(timer_handler);
-        idt.interrupts[1].set_handler_fn(keyboard_handler);
+        idt.interrupts[0].set_handler_fn(irq::timer_handler);
+        idt.interrupts[1].set_handler_fn(irq::keyboard_handler);
 
         idt
     };
@@ -52,7 +51,7 @@ pub fn init(memory_controller: &mut MemoryController) {
         let mut tss = TaskStateSegment::new();
         tss.interrupt_stack_table[DOUBLE_FAULT_IST_INDEX] =
             VirtualAddress(double_fault_stack.top());
-        //TODO allocate privelege stacks.
+        //TODO allocate privilege stacks.
         tss
     });
 
@@ -73,100 +72,8 @@ pub fn init(memory_controller: &mut MemoryController) {
         // load TSS
         load_tss(tss_selector);
     }
-
+    
+    // Load the IDT.
     IDT.load();
     println!("[ OK ] IDT.")
-}
-
-//IRQs.
-pub extern "x86-interrupt" fn timer_handler(_stack_frame: &mut ExceptionStackFrame) {
-    use core::sync::atomic::Ordering;
-    use device::pit::PIT_TICKS;
-    use task::{SCHEDULER, Scheduling};
-
-    unsafe { PICS.lock().notify_end_of_interrupt(0x20) };
-
-    if PIT_TICKS.fetch_add(1, Ordering::SeqCst) >= 10 {
-        PIT_TICKS.store(0, Ordering::SeqCst);
-
-        unsafe {
-            disable_interrupts_and_then(|| {
-                    SCHEDULER.resched();
-            });
-        }
-    }
-}
-
-pub extern "x86-interrupt" fn keyboard_handler(_stack_frame: &mut ExceptionStackFrame) {
-    disable_interrupts_and_then(|| {
-        if let Some(c) = read_char() {
-            print!("{}", c);
-        }
-        unsafe { PICS.lock().notify_end_of_interrupt(0x21) };
-    });
-}
-
-
-pub extern "x86-interrupt" fn divide_by_zero_handler(stack_frame: &mut ExceptionStackFrame) {
-    disable_interrupts_and_then(|| {
-        println!("\nEXCEPTION: DIVIDE BY ZERO\n{:#?}", stack_frame);
-        loop {}
-    });
-}
-
-pub extern "x86-interrupt" fn breakpoint_handler(stack_frame: &mut ExceptionStackFrame) {
-    println!(
-        "\nEXCEPTION: BREAKPOINT at {:#x}\n{:#?}",
-        stack_frame.instruction_pointer,
-        stack_frame
-    );
-}
-
-pub extern "x86-interrupt" fn invalid_opcode_handler(stack_frame: &mut ExceptionStackFrame) {
-    disable_interrupts_and_then(|| {
-        println!(
-            "\nEXCEPTION: INVALID OPCODE at {:#x}\n{:#?}",
-            stack_frame.instruction_pointer,
-            stack_frame
-        );
-        loop {}
-    });
-}
-
-pub extern "x86-interrupt" fn page_fault_handler(
-    stack_frame: &mut ExceptionStackFrame,
-    error_code: PageFaultErrorCode,
-) {
-    disable_interrupts_and_then(|| {
-        use x86_64::registers::control_regs;
-        println!(
-            "\nEXCEPTION: PAGE FAULT while accessing {:#x}\nerror code: \
-             {:?}\n{:#?}",
-            control_regs::cr2(),
-            error_code,
-            stack_frame
-        );
-        loop {}
-    });
-}
-
-pub extern "x86-interrupt" fn double_fault_handler(
-    stack_frame: &mut ExceptionStackFrame,
-    _error_code: u64,
-) {
-    disable_interrupts_and_then(|| {
-        println!("\nEXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
-        loop {}
-    });
-}
-
-pub extern "x86-interrupt" fn gpf_handler(
-    stack_frame: &mut ExceptionStackFrame,
-    _error_code: u64,
-)
-{
-    disable_interrupts_and_then(|| {
-        println!("\nEXCEPTION: GPF\n{:#?}", stack_frame);
-        loop {}
-    });
 }
