@@ -1,4 +1,4 @@
-use memory::MemoryController;
+use arch::memory::MemoryController;
 use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::idt::{Idt, ExceptionStackFrame};
 use spin::Once;

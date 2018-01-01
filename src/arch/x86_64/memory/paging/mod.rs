@@ -1,5 +1,5 @@
 pub use self::entry::EntryFlags;
-use memory::{PAGE_SIZE, Frame, FrameAllocator};
+use arch::memory::{PAGE_SIZE, Frame, FrameAllocator};
 use self::temporary_page::TemporaryPage;
 pub use self::mapper::Mapper;
 use core::ops::{Add, Deref, DerefMut};

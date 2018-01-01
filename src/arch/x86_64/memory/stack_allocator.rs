@@ -1,6 +1,6 @@
-use memory::paging::{Page, PageIter, ActivePageTable};
-use memory::{PAGE_SIZE, FrameAllocator};
-use memory::paging::EntryFlags;
+use arch::memory::paging::{Page, PageIter, ActivePageTable};
+use arch::memory::{PAGE_SIZE, FrameAllocator};
+use arch::memory::paging::EntryFlags;
 
 pub struct StackAllocator {
     range: PageIter,
