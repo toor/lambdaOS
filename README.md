@@ -1,6 +1,5 @@
 # lambdaOS
-An OS written in Rust and Assembly. It currently supports x86, however most of the "features" will be unusable on a 32-bit computer as the Rust code requires that the CPU supports x64 long mode.
-
+An OS written in Rust and Assembly. It currently only supports the x86_64 arch.
 ## Features
 **Completed**
 - Basic VGA Driver

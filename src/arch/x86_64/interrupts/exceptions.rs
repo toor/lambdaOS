@@ -1,5 +1,5 @@
 use x86_64::structures::idt::{ExceptionStackFrame, PageFaultErrorCode};
-use utils::disable_interrupts_and_then;
+use super::disable_interrupts_and_then;
 
 pub extern "x86-interrupt" fn divide_by_zero_handler(stack_frame: &mut ExceptionStackFrame) {
     disable_interrupts_and_then(|| {

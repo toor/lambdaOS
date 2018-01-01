@@ -18,7 +18,7 @@ pub struct CoopScheduler {
 
 impl Scheduling for CoopScheduler {
     fn create(&self, func: extern "C" fn(), name: String) -> Result<ProcessId, i16> {
-        use memory::paging;
+        use arch::memory::paging;
 
         let mut stack: Vec<usize> = vec![0; INITIAL_STACK];
 

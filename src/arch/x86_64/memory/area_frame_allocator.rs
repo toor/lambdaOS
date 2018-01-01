@@ -1,4 +1,4 @@
-use memory::{Frame, FrameAllocator};
+use arch::memory::{Frame, FrameAllocator};
 use multiboot2::{MemoryAreaIter, MemoryArea};
 
 /// A frame allocator that uses the memory areas from the multiboot information structure as

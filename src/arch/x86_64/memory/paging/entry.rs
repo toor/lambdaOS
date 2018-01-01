@@ -1,4 +1,4 @@
-use memory::Frame;
+use arch::memory::Frame;
 use multiboot2::ElfSection;
 
 pub struct Entry(u64);

@@ -1,6 +1,6 @@
 use super::{Page, ActivePageTable, VirtualAddress};
 use super::table::{Table, Level1};
-use memory::{Frame, FrameAllocator};
+use arch::memory::{Frame, FrameAllocator};
 
 pub struct TemporaryPage {
     page: Page,

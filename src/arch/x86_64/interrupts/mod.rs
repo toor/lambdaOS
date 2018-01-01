@@ -1,14 +1,14 @@
-use memory::MemoryController;
+use arch::memory::MemoryController;
 use x86_64::structures::tss::TaskStateSegment;
-use x86_64::structures::idt::{Idt, ExceptionStackFrame};
+use x86_64::structures::idt::Idt;
 use spin::Once;
-use device::pic::PICS;
-use device::keyboard::read_char;
-use utils::disable_interrupts_and_then;
 
 mod gdt;
 mod exceptions;
 mod irq;
+pub mod utils;
+
+pub use self::utils::*;
 
 const DOUBLE_FAULT_IST_INDEX: usize = 0;
 

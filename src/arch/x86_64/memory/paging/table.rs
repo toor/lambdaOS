@@ -1,7 +1,7 @@
-use memory::paging::entry::EntryFlags;
-use memory::paging::entry::*;
-use memory::paging::ENTRY_COUNT;
-use memory::FrameAllocator;
+use arch::memory::paging::entry::EntryFlags;
+use arch::memory::paging::entry::*;
+use arch::memory::paging::ENTRY_COUNT;
+use arch::memory::FrameAllocator;
 use core::ops::{Index, IndexMut};
 use core::marker::PhantomData;
 
