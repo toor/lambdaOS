@@ -96,7 +96,7 @@ pub enum KeyEvent {
     Released(Key),
 }
 
-pub static STATE: Mutex<ModifierState> = Mutex::new(ModifierState::new());
+static STATE: Mutex<ModifierState> = Mutex::new(ModifierState::new());
 
 pub fn parse_key(scancode: u8) {
     let sequence: u64 = retrieve_bytes(scancode);
