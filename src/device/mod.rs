@@ -6,6 +6,7 @@ pub mod io;
 pub mod keyboard;
 /// New interface to PS/2.
 pub mod ps2_8042;
+pub mod ps2_keyboard;
 ///Advanced split interface to VGA buffer split between text management and actual buffer
 ///addressing. 
 pub mod vga;

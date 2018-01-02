@@ -1,4 +1,7 @@
 use device::ps2_8042;
+use device::keyboard;
+use alloc::Vec;
+use alloc::string::{String, ToString};
 
 #[derive(Debug)]
 struct KeyPair {
@@ -45,7 +48,7 @@ impl ModifierState {
             alt: KeyPair::new(),
             caps_lock: false,
             num_lock: false,
-            scroll_lock: bool,
+            scroll_lock: false,
         }
     }
 
@@ -54,14 +57,12 @@ impl ModifierState {
     }
     
     /// Apply modifiers to ascii and return updated ascii.
-    fn apply_to(&self, ascii: u8) -> u8 {
-        if b'a' <= ascii && ascii <= b'z' {
-            if self.use_uppercase_letters() {
-                return ascii - b'a' + b'A';
-            }
+    fn apply_to(&self, ascii: char) -> String {
+        if self.use_uppercase_letters() {
+            ascii.to_uppercase().collect()
+        } else {
+            ascii.to_string()
         }
-
-        ascii
     }
     
     /// Update modifier state.
@@ -94,6 +95,16 @@ pub enum KeyEvent {
     Released(Key),
 }
 
+pub fn parse_key(scancode: u8) {
+    let sequence: u64 = retrieve_bytes(scancode);
+
+    if let Some(key) = keyboard::get_key(sequence) {
+        match key {
+            //TODO.
+        }
+    }
+}
+
 /// Read bytes until end of sequence and combine into a number.
 fn retrieve_bytes(scancode: u8) -> u64 {
     let mut byte_sequence: Vec<u8> = vec![scancode];
@@ -102,9 +113,11 @@ fn retrieve_bytes(scancode: u8) -> u64 {
     // some keys are pressed. If they are the byte we receive, read until the end of the sequence.
     if scancode == 0xE0 || scancode == 0xE1 {
         // Read another byte from the keyboard.
-        let check: u8 = ps2_8042::read_char(scancode);
+        let check: u8 = ps2_8042::read_char();
 
-        //TODO: Check if this is a special key, i.e 0xE0 + 0x1C = keypad enter.
+        if let Some(byte) = keyboard::is_special_key(check) {
+            byte_sequence.push(byte);
+        }
     }
 
 
