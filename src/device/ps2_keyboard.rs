@@ -2,6 +2,7 @@ use device::ps2_8042;
 use device::keyboard;
 use alloc::Vec;
 use alloc::string::{String, ToString};
+use spin::Mutex;
 
 #[derive(Debug)]
 struct KeyPair {
@@ -95,12 +96,16 @@ pub enum KeyEvent {
     Released(Key),
 }
 
+pub static STATE: Mutex<ModifierState> = Mutex::new(ModifierState::new());
+
 pub fn parse_key(scancode: u8) {
     let sequence: u64 = retrieve_bytes(scancode);
 
     if let Some(key) = keyboard::get_key(sequence) {
         match key {
-            //TODO.
+            Key::Ascii(k) => print_char(k as char),
+            Key::Meta(modifier) => STATE.lock().update(modifier),
+            Key::LowerAscii(byte) => print_str(STATE.lock().apply_to(byte as char)),
         }
     }
 }
@@ -125,4 +130,15 @@ fn retrieve_bytes(scancode: u8) -> u64 {
         .iter()
         .rev()
         .fold(0, |acc, &b| (acc << 1) + b as u64)
+}
+
+pub fn print_char(character: char) {
+    match character {
+        '\n' | ' ' | '\t' => print!("{}", character),
+        _ => (),
+    }
+}
+
+pub fn print_str(string: String) {
+    print!("{}", string);
 }
