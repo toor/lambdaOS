@@ -19,7 +19,7 @@ pub struct TextBuffer {
     color_code: ColorCode,
 }
 
-//Move this out of the TextBuffer impl just because it seems to work that way.
+/// Clear the VGA buffer.
 pub fn clear_screen() {
     for _row in 0..BUFFER_HEIGHT {
         SCREEN.lock().new_line();
@@ -27,27 +27,37 @@ pub fn clear_screen() {
 }
 
 impl TextBuffer {
+    /// Sync this virtual text buffer with the actual VGA buffer at 0xb8000.
     fn sync(&self) {
-        //TODO: Update cursor.
         VGA.lock().sync_buffer(&self);
         VGA.lock().update_cursor(BUFFER_HEIGHT -1, self.column_position);
     }
-
+    
+    /// Return the current character array.
     pub fn chars(&self) -> &[[u8; BUFFER_WIDTH]; BUFFER_HEIGHT] {
         &self.chars
     }
-
+    
+    /// Return the current colour code.
     pub fn color_code(&self) -> ColorCode {
         self.color_code
     }
     
-    //Same as usual.
+    /// Write a byte to the VGA buffer.
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
+            // Newline character.
             b'\n' => self.new_line(),
+            0x8 => self.delete_byte(),
+            // Tab escape.
+            b'\t' => {
+                for _ in 0..4 {
+                    self.write_byte(b' ');
+                }
+            }
             byte => {
                 if self.column_position >= BUFFER_WIDTH {
-                    //At end of row.
+                    // At end of row.
                     self.new_line();
                 }
 
@@ -60,7 +70,8 @@ impl TextBuffer {
 
         self.sync();
     }
-
+    
+    /// Delete a single byte from the buffer.
     pub fn delete_byte(&mut self) {
         if self.column_position == 0 {
             //At start of row, no bytes to delete.
@@ -73,7 +84,8 @@ impl TextBuffer {
         self.column_position -= 1;
         self.sync();
     }
-
+    
+    /// Newline.
     pub fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
@@ -87,7 +99,9 @@ impl TextBuffer {
 
         self.sync();
     }
-
+    
+    /// Clear a single row by stepping across the entire width of the current row, and writing a
+    /// blank character to each position.
     pub fn clear_row(&mut self, row: usize) {
         for col in 0..BUFFER_WIDTH {
             self.chars[row][col] = b' ';

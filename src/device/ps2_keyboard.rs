@@ -133,8 +133,11 @@ fn retrieve_bytes(scancode: u8) -> u64 {
 }
 
 pub fn print_char(character: char) {
+    const BACKSPACE: char = 0x8u8 as char;
+    
     match character {
         '\n' | ' ' | '\t' => print!("{}", character),
+        BACKSPACE => print!("{}", character),
         _ => (),
     }
 }
