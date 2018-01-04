@@ -23,6 +23,6 @@ version = "0.2.4"
 features = ["spin_no_std"]
 
 [features]
-default = ["uk_std"]
-us_std = []
-uk_std = []
+default = ["uk"]
+us = []
+uk = []

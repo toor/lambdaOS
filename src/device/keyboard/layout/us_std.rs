@@ -5,10 +5,10 @@ pub fn map_to_upper(lower: char) -> Vec<char> {
         lower.to_uppercase().collect()
     } else {
         let upper = match lower {
-            '`' => '¬',
+            '`' => '~',
             '1' => '!',
-            '2' => '"',
-            '3' => '£',
+            '2' => '@',
+            '3' => '#',
             '4' => '$',
             '5' => '%',
             '6' => '^',
@@ -22,12 +22,11 @@ pub fn map_to_upper(lower: char) -> Vec<char> {
             ']' => '}',
             '\\' => '|',
             ';' => ':',
-            '\'' => '@',
-            '#' => '~',
+            '\'' => '"',
             ',' => '<',
             '.' => '>',
             '/' => '?',
-            _ => 0x0 as char,
+            _ => 0x0 as char
         };
 
         vec![upper]
