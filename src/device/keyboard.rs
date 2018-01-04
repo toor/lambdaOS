@@ -10,7 +10,7 @@ macro_rules! key_release {
     ($x:expr) => (Some(KeyEvent::Released($x)))
 }
 
-
+/// Gets a key from a given keyboard event.
 pub fn get_key(scancode: u64) -> Option<Key> {
     match get_key_event(scancode) {
         Some(KeyEvent::Pressed(key)) => Some(key),
@@ -19,11 +19,13 @@ pub fn get_key(scancode: u64) -> Option<Key> {
     }
 }
 
+/// Calls `match_scancode` and is then matched on itself to retrieve a `Key` based on the returned
+/// `KeyEvent`.
 pub fn get_key_event(scancode: u64) -> Option<KeyEvent> {
     match_scancode(scancode)
 } 
 
-
+/// Special keys that are part of a byte sequence.
 pub fn is_special_key(byte: u8) -> Option<u8> {
     match byte {
         0x5B | 0xDB => Some(byte),
@@ -47,6 +49,9 @@ pub fn is_special_key(byte: u8) -> Option<u8> {
     }
 }
 
+/// Use range matching to convert our passed scancode to some type of ASCII or to update modifiers,
+/// and return a key-event based on whether this was a key press/release (only relevant for
+/// modifiers).
 fn match_scancode(scancode: u64) -> Option<KeyEvent> {
     let idx = scancode as usize;
     match scancode {

@@ -4,6 +4,7 @@ use alloc::Vec;
 use alloc::string::{String, ToString};
 use spin::Mutex;
 
+/// A pair of keys on the left and the right of the keyboard.
 #[derive(Debug)]
 struct KeyPair {
     left: bool,
@@ -20,6 +21,7 @@ impl KeyPair {
     }
 }
 
+/// Possible modifications to state we could have.
 pub enum Modifiers {
     AltLeft(bool),
     AltRight(bool),
@@ -52,7 +54,8 @@ impl ModifierState {
             scroll_lock: false,
         }
     }
-
+    
+    /// Should we use uppercase letters?
     fn use_uppercase_letters(&self) -> bool {
         self.shift.is_pressed() ^ self.caps_lock
     }
@@ -84,13 +87,14 @@ impl ModifierState {
     }
 }
 
-/// Possible types of keyboard input we might receive,
+/// Possible types of keyboard input we might receive.
 pub enum Key {
     Ascii(u8),
     Meta(Modifiers),
     LowerAscii(u8),
 }
 
+/// A key can be pressed or released and there are different scancodes as such.
 pub enum KeyEvent {
     Pressed(Key),
     Released(Key),
@@ -98,6 +102,8 @@ pub enum KeyEvent {
 
 static STATE: Mutex<ModifierState> = Mutex::new(ModifierState::new());
 
+/// Parse the retrieved key and print the output or update modifier state dependant on the type of
+/// key received. This is called by our keyboard IRQ handler.
 pub fn parse_key(scancode: u8) {
     let sequence: u64 = retrieve_bytes(scancode);
 
@@ -133,11 +139,8 @@ fn retrieve_bytes(scancode: u8) -> u64 {
 }
 
 pub fn print_char(character: char) {
-    const BACKSPACE: char = 0x8u8 as char;
-    
     match character {
-        '\n' | ' ' | '\t' => print!("{}", character),
-        BACKSPACE => print!("{}", character),
+        '\n' | ' ' | '\t' | '\x08' => print!("{}", character),
         _ => (),
     }
 }
