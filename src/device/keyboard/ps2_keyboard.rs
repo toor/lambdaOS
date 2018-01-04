@@ -63,7 +63,10 @@ impl ModifierState {
     /// Apply modifiers to ascii and return updated ascii.
     fn apply_to(&self, ascii: char) -> String {
         if self.use_uppercase_letters() {
-            ascii.to_uppercase().collect()
+            use device::keyboard::layout::map_to_upper;
+
+            map_to_upper(ascii).iter().collect()
+
         } else {
             ascii.to_string()
         }

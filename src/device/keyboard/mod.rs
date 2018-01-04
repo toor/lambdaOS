@@ -1,4 +1,5 @@
 pub mod keyboard;
+pub mod layout;
 pub mod ps2_keyboard;
 
 pub use self::keyboard::*;
