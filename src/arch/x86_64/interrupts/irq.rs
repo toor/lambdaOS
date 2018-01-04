@@ -1,9 +1,11 @@
 use device::pic::PICS;
-use device::keyboard::read_char;
+use device::keyboard::ps2_keyboard::parse_key;
+use device::ps2_8042::read_char;
 use x86_64::structures::idt::ExceptionStackFrame;
 use super::disable_interrupts_and_then;
 
-// IRQs.
+/// Timer handler checks the tick counter and if it exceeds 10, performs a round-robin context
+/// switch to the next process.
 pub extern "x86-interrupt" fn timer_handler(_stack_frame: &mut ExceptionStackFrame) {
     use core::sync::atomic::Ordering;
     use device::pit::PIT_TICKS;
@@ -24,9 +26,10 @@ pub extern "x86-interrupt" fn timer_handler(_stack_frame: &mut ExceptionStackFra
 
 pub extern "x86-interrupt" fn keyboard_handler(_stack_frame: &mut ExceptionStackFrame) {
     disable_interrupts_and_then(|| {
-        if let Some(c) = read_char() {
-            print!("{}", c);
-        }
+        let code = read_char();
+
+        parse_key(code);
+
         unsafe { PICS.lock().notify_end_of_interrupt(0x21) };
     });
 }
