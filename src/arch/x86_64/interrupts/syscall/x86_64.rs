@@ -1,69 +1,74 @@
-pub unsafe fn syscall0(mut a: usize) -> usize {
-    asm!("int 0x80"
-         : "={rax}"(a)
-         : "{rax}"(a)
-         : "memory"
-         : "intel", "volatile");
-    a
+#[inline(always)]
+#[allow(unused_mut)]
+pub unsafe fn syscall0(arg0: u64) -> u64 {
+    let mut ret: u64;
+    asm!("int 0x80" : "={rax}" (ret) : "{rax}" (arg0) : "rcx", "r11", "memory" : "intel", "volatile");
+    ret
 }
 
-pub unsafe fn syscall1(mut a: usize, b: usize) -> usize {
-    asm!("int 0x80"
-        : "={rax}"(a)
-        : "{rax}"(a), "{rbx}"(b)
-        : "memory"
-        : "intel", "volatile");
-
-    a
+#[inline(always)]
+#[allow(unused_mut)]
+pub unsafe fn syscall1(arg0: u64, arg1: u64) -> u64 {
+    let mut ret: u64;
+    asm!("int 0x80" : "={rax}" (ret) : "{rax}" (arg0), "{rdi}" (arg1)
+                   : "rcx", "r11", "memory" : "intel", "volatile");
+    ret
 }
 
-pub unsafe fn syscall1_clobber(mut a: usize, b: usize) -> usize {
-    asm!("int 0x80"
-        : "={rax}"(a)
-        : "{rax}"(a), "{rbx}"(b)
-        : "memory", "rbx", "rcx", "rdx", "rsi", "rdi", "r8",
-          "r9", "r10", "r11", "r12", "r13", "r14", "r15"
-        : "intel", "volatile");
-
-    a
+#[inline(always)]
+#[allow(unused_mut)]
+pub unsafe fn syscall2(arg0: u64, arg1: u64, arg2: u64) -> u64 {
+    let mut ret: u64;
+    asm!("int 0x80" : "={rax}" (ret) : "{rax}" (arg0), "{rdi}" (arg1), "{rsi}" (arg2)
+                   : "rcx", "r11", "memory" : "intel", "volatile");
+    ret
 }
 
-pub unsafe fn syscall2(mut a: usize, b: usize, c: usize) -> usize {
-    asm!("int 0x80"
-        : "={rax}"(a)
-        : "{rax}"(a), "{rbx}"(b), "{rcx}"(c)
-        : "memory"
-        : "intel", "volatile");
-
-    a
+#[inline(always)]
+#[allow(unused_mut)]
+pub unsafe fn syscall3(arg0: u64, arg1: u64, arg2: u64, arg3: u64) -> u64 {
+    let mut ret: u64;
+    asm!("int 0x80" : "={rax}" (ret) : "{rax}" (arg0), "{rdi}" (arg1), "{rsi}" (arg2), "{rdx}" (arg3)
+                   : "rcx", "r11", "memory" : "intel", "volatile");
+    ret
 }
 
-pub unsafe fn syscall3(mut a: usize, b: usize, c: usize, d: usize) -> usize {
-    asm!("int 0x80"
-        : "={rax}"(a)
-        : "{rax}"(a), "{rbx}"(b), "{rcx}"(c), "{rdx}"(d)
-        : "memory"
-        : "intel", "volatile");
-    a
+#[inline(always)]
+#[allow(unused_mut)]
+pub unsafe fn syscall4(arg0: u64, arg1: u64, arg2: u64, arg3: u64, arg4: u64) -> u64 {
+    let mut ret: u64;
+    asm!("int 0x80" : "={rax}" (ret)
+                   : "{rax}"  (arg0), "{rdi}"  (arg1), "{rsi}"  (arg2), "{rdx}"  (arg3), "{r10}"  (arg4)
+                   : "rcx", "r11", "memory" : "intel", "volatile");
+    ret
 }
 
-pub unsafe fn syscall4(mut a: usize, b: usize, c: usize, d: usize, e: usize) -> usize {
-    asm!("int 0x80"
-        : "={rax}"(a)
-        : "{rax}"(a), "{rbx}"(b), "{rcx}"(c), "{rdx}"(d), "{rsi}"(e)
-        : "memory"
-        : "intel", "volatile");
-
-    a
+#[inline(always)]
+#[allow(unused_mut)]
+pub unsafe fn syscall5(arg0: u64, arg1: u64, arg2: u64, arg3: u64, arg4: u64, arg5: u64) -> u64 {
+    let mut ret: u64;
+    asm!("int 0x80" : "={rax}" (ret)
+                   : "{rax}" (arg0), "{rdi}" (arg1), "{rsi}" (arg2), "{rdx}" (arg3), "{r10}" (arg4), "{r8}" (arg5)
+                   : "rcx", "r11", "memory"
+                   : "intel", "volatile");
+    ret
 }
 
-pub unsafe fn syscall5(mut a: usize, b: usize, c: usize, d: usize, e: usize, f: usize)
-                       -> usize {
-    asm!("int 0x80"
-        : "={rax}"(a)
-        : "{rax}"(a), "{rbx}"(b), "{rcx}"(c), "{rdx}"(d), "{rsi}"(e), "{rdi}"(f)
-        : "memory"
-        : "intel", "volatile");
-
-    a
+#[inline(always)]
+#[allow(unused_mut)]
+pub unsafe fn syscall6(arg0: u64,
+                       arg1: u64,
+                       arg2: u64,
+                       arg3: u64,
+                       arg4: u64,
+                       arg5: u64,
+                       arg6: u64)
+                       -> u64 {
+    let mut ret: u64;
+    asm!("int 0x80" : "={rax}" (ret)
+                   : "{rax}" (arg0), "{rdi}" (arg1), "{rsi}" (arg2), "{rdx}" (arg3),
+                     "{r10}" (arg4), "{r8}" (arg5), "{r9}" (arg6)
+                   : "rcx", "r11", "memory"
+                   : "intel", "volatile");
+    ret
 }
