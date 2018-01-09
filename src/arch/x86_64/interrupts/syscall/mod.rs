@@ -2,7 +2,7 @@ pub mod x86_64;
 
 use x86_64::structures::idt::ExceptionStackFrame;
 use syscall;
-use interrupts::disable_interrupts_and_then;
+use arch::interrupts::disable_interrupts_and_then;
 
 #[repr(C, packed)]
 pub struct SyscallContext {
@@ -23,20 +23,23 @@ pub struct SyscallContext {
 }
 
 pub extern "x86-interrupt" fn syscall_handler(_stack_frame: &mut ExceptionStackFrame) {
-    disable_interrupts_and_then(|| {
+    unsafe {
+        asm!("cli");
+        
         let mut my_sp: usize;
-
+        
+        // Assigns the value of the register stack-base pointer to my_sp.
         asm!("" : "={rbp}"(my_sp));
 
         // Get reference to RAX, the 14th register that the x86-interrupt calling conv pushes to
         // the stack.
-        my_sp -= 8 * 13;
+        my_sp -= (8 * 13);
     
         // Get reference to stack pointer.
         let sp = my_sp + 0x18;
         
         // Get reference to stack variables.
-        let ref ctx: SyscallContext =*(sp as *const SyscallContext);
+        let ref ctx: SyscallContext = *(sp as *const SyscallContext);
 
         let num = ctx.rax;
         let a = ctx.rdi;
@@ -46,8 +49,8 @@ pub extern "x86-interrupt" fn syscall_handler(_stack_frame: &mut ExceptionStackF
         let e = ctx.r8;
         let f = ctx.r9;
 
-        //TODO: Handle system call.
-        // let res = syscall::match_syscall(num, a, b, c, d, e, f);
+        // Match against the syscall number.
+        let res = syscall::match_syscall(num, a, b, c, d, e, f);
         
         asm!("mov rsp, $0
              mov rax, $1
@@ -58,14 +61,19 @@ pub extern "x86-interrupt" fn syscall_handler(_stack_frame: &mut ExceptionStackF
              pop rdi
              pop r8
              pop r9
-             pop 10
-             pop r11
              pop r10
+             pop r11
              pop r12
              pop r13
              pop r14
              pop r15
              pop rbp
-             iretq" : /* No outputs */ : "r"(my_sp), "r"(res) : "intel");
-    });
+             sti
+             iretq" : /* No outputs */ : "r"(my_sp), "r"(res) : "memory" : "intel", "volatile");
+    };
+}
+
+#[no_mangle]
+pub fn syscall_test() -> u64 {
+    unsafe { x86_64::syscall6(16, 32, 128, 64, 256, 512, 1024) } 
 }
