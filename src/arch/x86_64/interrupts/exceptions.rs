@@ -64,3 +64,14 @@ pub extern "x86-interrupt" fn gpf_handler(
         loop {}
     });
 }
+
+pub extern "x86-interrupt" fn segment_not_present_handler(
+    stack_frame: &mut ExceptionStackFrame,
+    _error_code: u64,
+)
+{
+    disable_interrupts_and_then(|| {
+        println!("\nEXCEPTION: SEGMENT NOT PRESENT\n{:#?}", stack_frame);
+        loop {}
+    });
+}
