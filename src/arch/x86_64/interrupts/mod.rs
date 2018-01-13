@@ -7,6 +7,7 @@ mod gdt;
 mod exceptions;
 mod irq;
 pub mod utils;
+pub mod syscall;
 
 pub use self::utils::*;
 
@@ -21,6 +22,7 @@ lazy_static! {
         idt.invalid_opcode.set_handler_fn(exceptions::invalid_opcode_handler);
         idt.page_fault.set_handler_fn(exceptions::page_fault_handler);
         idt.general_protection_fault.set_handler_fn(exceptions::gpf_handler);
+        idt.segment_not_present.set_handler_fn(exceptions::segment_not_present_handler);
 
         unsafe {
             idt.double_fault.set_handler_fn(exceptions::double_fault_handler)
@@ -29,6 +31,10 @@ lazy_static! {
 
         idt.interrupts[0].set_handler_fn(irq::timer_handler);
         idt.interrupts[1].set_handler_fn(irq::keyboard_handler);
+        
+        // Syscall handler.
+        // TODO: set privilege level.
+        idt.interrupts[0x80 - 32].set_handler_fn(syscall::syscall_handler);
 
         idt
     };
