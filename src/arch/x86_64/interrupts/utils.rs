@@ -70,7 +70,8 @@ pub fn restore_interrupts(saved_masks: (u8, u8)) {
 // This function disables interrupts, allows a function to run without them enabled, and then
 // reenables interrupts.
 pub fn disable_interrupts_and_then<F, T>(f: F) -> T
-    where F: FnOnce() -> T
+where
+    F: FnOnce() -> T,
 {
     let saved_masks = disable_interrupts();
 

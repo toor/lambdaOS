@@ -13,13 +13,13 @@ impl Ps2 {
             device: Port::new(device),
         }
     }
-    
+
     /// Poll bit 0 of status register: "Output buffer empty/full"
     pub fn wait_then_read(&mut self) -> u8 {
         while self.controller.read() & 0x1 == 0 {}
         self.device.read()
     }
-    
+
     /// Poll bit 1 of status register: "Input buffer empty/full"
     pub fn wait_then_write(&mut self, data: u8) {
         while self.controller.read() & 0x2 == 1 {}
@@ -48,25 +48,19 @@ impl Ps2 {
 
         // Controller self test.
         self.controller.write(0xAA);
-        assert!(
-            self.wait_then_read() == 0x55,
-            "PS/2 self test failed"
-        );
+        assert!(self.wait_then_read() == 0x55, "PS/2 self test failed");
 
         // Interface tests.
         self.controller.write(0xAB);
-        assert!(
-            self.wait_then_read() == 0x0,
-            "Interface tests failed",
-        );
+        assert!(self.wait_then_read() == 0x0, "Interface tests failed",);
 
         // Enable devices.
         self.controller.write(0xAE);
-        
+
         // Config byte.
         self.controller.write(0x20);
         let mut enable: u8 = self.wait_then_read();
-        
+
         // Re-enable IRQs.
         enable |= 1 << 0;
 

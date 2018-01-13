@@ -26,7 +26,7 @@ pub fn map_to_upper(lower: char) -> Vec<char> {
             ',' => '<',
             '.' => '>',
             '/' => '?',
-            _ => 0x0 as char
+            _ => 0x0 as char,
         };
 
         vec![upper]

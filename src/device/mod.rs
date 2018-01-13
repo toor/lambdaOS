@@ -7,7 +7,7 @@ pub mod keyboard;
 /// New interface to PS/2.
 pub mod ps2_8042;
 ///Advanced split interface to VGA buffer split between text management and actual buffer
-///addressing. 
+///addressing.
 pub mod vga;
 ///The 8259 PIC - Programmable Interrupt Controller. Contains data structures that we can use to
 ///control the behaviour of this device.

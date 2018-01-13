@@ -1,7 +1,6 @@
 //VGA - Interface to the magical VGA text buffer at physical address 0xb8000.
 
-
-use device::vga::buffer::{BUFFER_WIDTH, BUFFER_HEIGHT, TextBuffer};
+use device::vga::buffer::{TextBuffer, BUFFER_HEIGHT, BUFFER_WIDTH};
 use core::ptr::Unique;
 use spin::Mutex;
 use volatile::Volatile;
@@ -51,7 +50,9 @@ pub struct Vga {
     frame: Unique<ScreenBuffer>,
 }
 
-pub static VGA: Mutex<Vga> = Mutex::new( Vga { frame: unsafe { Unique::new_unchecked(0xb8000 as *mut _) } });
+pub static VGA: Mutex<Vga> = Mutex::new(Vga {
+    frame: unsafe { Unique::new_unchecked(0xb8000 as *mut _) },
+});
 
 impl Vga {
     fn frame(&mut self) -> &mut ScreenBuffer {

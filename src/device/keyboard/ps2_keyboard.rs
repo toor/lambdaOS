@@ -13,7 +13,10 @@ struct KeyPair {
 
 impl KeyPair {
     const fn new() -> Self {
-        KeyPair { left: false, right: false}
+        KeyPair {
+            left: false,
+            right: false,
+        }
     }
 
     fn is_pressed(&self) -> bool {
@@ -54,24 +57,23 @@ impl ModifierState {
             scroll_lock: false,
         }
     }
-    
+
     /// Should we use uppercase letters?
     fn use_uppercase_letters(&self) -> bool {
         self.shift.is_pressed() ^ self.caps_lock
     }
-    
+
     /// Apply modifiers to ascii and return updated ascii.
     fn apply_to(&self, ascii: char) -> String {
         if self.use_uppercase_letters() {
             use device::keyboard::layout::map_to_upper;
 
             map_to_upper(ascii).iter().collect()
-
         } else {
             ascii.to_string()
         }
     }
-    
+
     /// Update modifier state.
     fn update(&mut self, modifier: Modifiers) {
         use self::Modifiers::*;
@@ -133,7 +135,6 @@ fn retrieve_bytes(scancode: u8) -> u64 {
             byte_sequence.push(byte);
         }
     }
-
 
     byte_sequence
         .iter()

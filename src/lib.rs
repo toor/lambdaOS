@@ -11,21 +11,21 @@
 #![feature(global_allocator)]
 #![no_std]
 
-extern crate rlibc;
-extern crate volatile;
-extern crate spin;
-extern crate multiboot2;
-#[macro_use]
-extern crate bitflags;
-extern crate x86_64;
-#[macro_use]
-extern crate once;
-extern crate bit_field;
-#[macro_use]
-extern crate lazy_static;
 #[macro_use]
 extern crate alloc;
+extern crate bit_field;
+#[macro_use]
+extern crate bitflags;
+#[macro_use]
+extern crate lazy_static;
 extern crate linked_list_allocator;
+extern crate multiboot2;
+#[macro_use]
+extern crate once;
+extern crate rlibc;
+extern crate spin;
+extern crate volatile;
+extern crate x86_64;
 
 #[macro_use]
 mod macros;
@@ -50,11 +50,11 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     };
 
     proc_closure();
-    
+
     use alloc::String;
 
     syscall::create(real_main, String::from("real_main"));
-    
+
     loop {}
 }
 
@@ -64,7 +64,7 @@ pub extern "C" fn real_main() {
 }
 
 pub extern "C" fn process_test() {
-    println!("Inside test process."); 
+    println!("Inside test process.");
 }
 
 use arch::memory::heap_allocator::HeapAllocator;

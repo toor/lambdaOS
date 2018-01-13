@@ -25,7 +25,7 @@ pub unsafe fn kinit(multiboot_info: usize) {
 }
 
 pub fn enable_nxe_bit() {
-    use x86_64::registers::msr::{IA32_EFER, rdmsr, wrmsr};
+    use x86_64::registers::msr::{rdmsr, wrmsr, IA32_EFER};
 
     let nxe_bit = 1 << 11;
     unsafe {
@@ -35,9 +35,7 @@ pub fn enable_nxe_bit() {
 }
 
 pub fn enable_write_protect_bit() {
-    use x86_64::registers::control_regs::{cr0, cr0_write, Cr0};
+    use x86_64::registers::control_regs::{Cr0, cr0, cr0_write};
 
     unsafe { cr0_write(cr0() | Cr0::WRITE_PROTECT) };
 }
-
-

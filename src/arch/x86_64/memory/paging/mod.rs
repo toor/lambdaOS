@@ -1,5 +1,5 @@
 pub use self::entry::EntryFlags;
-use arch::memory::{PAGE_SIZE, Frame, FrameAllocator};
+use arch::memory::{Frame, FrameAllocator, PAGE_SIZE};
 use self::temporary_page::TemporaryPage;
 pub use self::mapper::Mapper;
 use core::ops::{Add, Deref, DerefMut};
@@ -27,7 +27,9 @@ impl Page {
             "invalid address: 0x{:x}",
             address
         );
-        Page { number: address / PAGE_SIZE }
+        Page {
+            number: address / PAGE_SIZE,
+        }
     }
 
     pub fn start_address(&self) -> usize {
@@ -59,7 +61,9 @@ impl Add<usize> for Page {
     type Output = Page;
 
     fn add(self, rhs: usize) -> Page {
-        Page { number: self.number + rhs }
+        Page {
+            number: self.number + rhs,
+        }
     }
 }
 
@@ -103,7 +107,9 @@ impl DerefMut for ActivePageTable {
 
 impl ActivePageTable {
     pub unsafe fn new() -> ActivePageTable {
-        ActivePageTable { mapper: Mapper::new() }
+        ActivePageTable {
+            mapper: Mapper::new(),
+        }
     }
 
     pub unsafe fn address(&self) -> usize {
@@ -129,7 +135,10 @@ impl ActivePageTable {
             let p4_table = temporary_page.map_table_frame(backup.clone(), self);
 
             // overwrite recursive mapping
-            self.p4_mut()[511].set(table.p4_frame.clone(), EntryFlags::PRESENT | EntryFlags::WRITABLE);
+            self.p4_mut()[511].set(
+                table.p4_frame.clone(),
+                EntryFlags::PRESENT | EntryFlags::WRITABLE,
+            );
             tlb::flush_all();
 
             // execute f in the new context
@@ -208,8 +217,7 @@ where
             );
             println!(
                 "[ DEBUG ] Mapping kernel section at addr: {:#x}, size: {:#x}",
-                section.addr,
-                section.size
+                section.addr, section.size
             );
 
             let flags = EntryFlags::from_elf_section_flags(section);

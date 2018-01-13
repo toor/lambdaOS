@@ -60,7 +60,7 @@ impl Context {
     pub fn set_page_table(&mut self, address: usize) {
         self.cr3 = address;
     }
-    
+
     ///Set stack pointer.
     pub fn set_stack(&mut self, address: usize) {
         self.rsp = address;

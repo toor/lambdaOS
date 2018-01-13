@@ -93,7 +93,7 @@ impl<T: InOut> Port<T> {
             phantom: PhantomData,
         }
     }
-    
+
     ///Read a value from the port.
     pub fn read(&mut self) -> T {
         unsafe { T::port_in(self.port) }

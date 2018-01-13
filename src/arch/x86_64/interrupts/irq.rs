@@ -9,7 +9,7 @@ use super::disable_interrupts_and_then;
 pub extern "x86-interrupt" fn timer_handler(_stack_frame: &mut ExceptionStackFrame) {
     use core::sync::atomic::Ordering;
     use device::pit::PIT_TICKS;
-    use task::{SCHEDULER, Scheduling};
+    use task::{Scheduling, SCHEDULER};
 
     unsafe { PICS.lock().notify_end_of_interrupt(0x20) };
 
@@ -18,7 +18,7 @@ pub extern "x86-interrupt" fn timer_handler(_stack_frame: &mut ExceptionStackFra
 
         unsafe {
             disable_interrupts_and_then(|| {
-                    SCHEDULER.resched();
+                SCHEDULER.resched();
             });
         }
     }

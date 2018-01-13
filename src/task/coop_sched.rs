@@ -4,7 +4,7 @@ use alloc::String;
 use core::mem;
 use core::ops::DerefMut;
 use core::sync::atomic::{AtomicUsize, Ordering};
-use task::{Scheduling, Process, ProcessId, ProcessList, State, INITIAL_STACK};
+use task::{Process, ProcessId, ProcessList, Scheduling, State, INITIAL_STACK};
 use task::process;
 use spin::RwLock;
 
@@ -25,7 +25,7 @@ impl Scheduling for CoopScheduler {
         let proc_top: usize = stack.len() - 3;
 
         let proc_sp = stack.as_ptr() as usize + (proc_top * mem::size_of::<usize>());
-        
+
         use alloc::boxed::Box;
         let self_ptr: Box<&Scheduling> = Box::new(self);
 
@@ -48,7 +48,9 @@ impl Scheduling for CoopScheduler {
             process.stack = Some(stack);
             process.name = name;
 
-            process.ctx.set_page_table(unsafe { paging::ActivePageTable::new().address() });
+            process
+                .ctx
+                .set_page_table(unsafe { paging::ActivePageTable::new().address() });
 
             process.ctx.set_stack(proc_sp);
 
@@ -89,7 +91,7 @@ impl Scheduling for CoopScheduler {
                 return;
             }
         }
-        
+
         let mut prev_ptr = 0 as *mut Process;
         let mut next_ptr = 0 as *mut Process;
 
@@ -119,8 +121,7 @@ impl Scheduling for CoopScheduler {
 
                     next.set_state(State::Current);
 
-                    self.current_pid
-                        .store(next.pid.inner(), Ordering::SeqCst);
+                    self.current_pid.store(next.pid.inner(), Ordering::SeqCst);
 
                     // Save process pointers for out of scope context switch
                     prev_ptr = prev.deref_mut() as *mut Process;
@@ -142,7 +143,6 @@ impl Scheduling for CoopScheduler {
         }
     }
 }
-
 
 impl CoopScheduler {
     pub fn new() -> Self {

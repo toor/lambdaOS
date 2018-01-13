@@ -72,7 +72,7 @@ pub fn init(memory_controller: &mut MemoryController) {
         // load TSS
         load_tss(tss_selector);
     }
-    
+
     // Load the IDT.
     IDT.load();
     println!("[ OK ] IDT.")

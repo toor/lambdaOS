@@ -35,8 +35,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
 
     println!(
         "[ DEBUG ] Kernel start: {:#x}, kernel end: {:#x}",
-        kernel_start,
-        kernel_end
+        kernel_start, kernel_end
     );
     println!(
         "[ DEBUG ] Multiboot data structure start: {:#x}, end: {:#x}",
@@ -107,7 +106,9 @@ pub struct Frame {
 
 impl Frame {
     fn containing_address(address: usize) -> Frame {
-        Frame { number: address / PAGE_SIZE }
+        Frame {
+            number: address / PAGE_SIZE,
+        }
     }
 
     fn start_address(&self) -> PhysicalAddress {
@@ -115,7 +116,9 @@ impl Frame {
     }
 
     fn clone(&self) -> Frame {
-        Frame { number: self.number }
+        Frame {
+            number: self.number,
+        }
     }
 
     fn range_inclusive(start: Frame, end: Frame) -> FrameIter {

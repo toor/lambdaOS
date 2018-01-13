@@ -1,5 +1,5 @@
 use spin::Mutex;
-use device::vga::vga::{VGA, Color, ColorCode};
+use device::vga::vga::{Color, ColorCode, VGA};
 use core::fmt;
 
 //Main print interface.
@@ -30,19 +30,20 @@ impl TextBuffer {
     /// Sync this virtual text buffer with the actual VGA buffer at 0xb8000.
     fn sync(&self) {
         VGA.lock().sync_buffer(&self);
-        VGA.lock().update_cursor(BUFFER_HEIGHT -1, self.column_position);
+        VGA.lock()
+            .update_cursor(BUFFER_HEIGHT - 1, self.column_position);
     }
-    
+
     /// Return the current character array.
     pub fn chars(&self) -> &[[u8; BUFFER_WIDTH]; BUFFER_HEIGHT] {
         &self.chars
     }
-    
+
     /// Return the current colour code.
     pub fn color_code(&self) -> ColorCode {
         self.color_code
     }
-    
+
     /// Write a byte to the VGA buffer.
     pub fn write_byte(&mut self, byte: u8) {
         match byte {
@@ -50,11 +51,9 @@ impl TextBuffer {
             b'\n' => self.new_line(),
             0x8 => self.delete_byte(),
             // Tab escape.
-            b'\t' => {
-                for _ in 0..4 {
-                    self.write_byte(b' ');
-                }
-            }
+            b'\t' => for _ in 0..4 {
+                self.write_byte(b' ');
+            },
             byte => {
                 if self.column_position >= BUFFER_WIDTH {
                     // At end of row.
@@ -70,7 +69,7 @@ impl TextBuffer {
 
         self.sync();
     }
-    
+
     /// Delete a single byte from the buffer.
     pub fn delete_byte(&mut self) {
         if self.column_position == 0 {
@@ -84,7 +83,7 @@ impl TextBuffer {
         self.column_position -= 1;
         self.sync();
     }
-    
+
     /// Newline.
     pub fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
@@ -99,7 +98,7 @@ impl TextBuffer {
 
         self.sync();
     }
-    
+
     /// Clear a single row by stepping across the entire width of the current row, and writing a
     /// blank character to each position.
     pub fn clear_row(&mut self, row: usize) {
@@ -109,7 +108,6 @@ impl TextBuffer {
     }
 }
 
-
 impl ::core::fmt::Write for TextBuffer {
     fn write_str(&mut self, s: &str) -> ::core::fmt::Result {
         for byte in s.bytes() {
@@ -118,7 +116,7 @@ impl ::core::fmt::Write for TextBuffer {
 
         Ok(())
     }
-} 
+}
 
 pub static SCREEN: Mutex<TextBuffer> = Mutex::new(TextBuffer {
     column_position: 0,

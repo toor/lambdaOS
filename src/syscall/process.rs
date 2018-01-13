@@ -1,5 +1,5 @@
 use alloc::String;
-use task::{Scheduling, ProcessId, SCHEDULER};
+use task::{ProcessId, Scheduling, SCHEDULER};
 use arch::interrupts::disable_interrupts_and_then;
 
 //Simple system call that wraps creating a process and marking it as ready.

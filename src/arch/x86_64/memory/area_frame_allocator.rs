@@ -1,5 +1,5 @@
 use arch::memory::{Frame, FrameAllocator};
-use multiboot2::{MemoryAreaIter, MemoryArea};
+use multiboot2::{MemoryArea, MemoryAreaIter};
 
 /// A frame allocator that uses the memory areas from the multiboot information structure as
 /// source. The {kernel, multiboot}_{start, end} fields are used to avoid returning memory that is
@@ -60,7 +60,9 @@ impl FrameAllocator for AreaFrameAllocator {
         if let Some(area) = self.current_area {
             // "clone" the frame to return it if it's free. Frame doesn't
             // implement Clone, but we can construct an identical frame.
-            let frame = Frame { number: self.next_free_frame.number };
+            let frame = Frame {
+                number: self.next_free_frame.number,
+            };
 
             // the last frame of the current area
             let current_area_last_frame = {
@@ -73,10 +75,14 @@ impl FrameAllocator for AreaFrameAllocator {
                 self.choose_next_area();
             } else if frame >= self.kernel_start && frame <= self.kernel_end {
                 // `frame` is used by the kernel
-                self.next_free_frame = Frame { number: self.kernel_end.number + 1 };
+                self.next_free_frame = Frame {
+                    number: self.kernel_end.number + 1,
+                };
             } else if frame >= self.multiboot_start && frame <= self.multiboot_end {
                 // `frame` is used by the multiboot information structure
-                self.next_free_frame = Frame { number: self.multiboot_end.number + 1 };
+                self.next_free_frame = Frame {
+                    number: self.multiboot_end.number + 1,
+                };
             } else {
                 // frame is unused, increment `next_free_frame` and return it
                 self.next_free_frame.number += 1;

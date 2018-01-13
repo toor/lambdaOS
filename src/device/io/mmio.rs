@@ -8,7 +8,8 @@ pub struct Mmio<T> {
 }
 
 impl<T> Mmio<T>
-where T: Copy + PartialEq + BitAnd<Output=T> + BitOr<Output=T> + Not<Output=T>
+where
+    T: Copy + PartialEq + BitAnd<Output = T> + BitOr<Output = T> + Not<Output = T>,
 {
     pub fn new() -> Self {
         Mmio {
@@ -17,7 +18,7 @@ where T: Copy + PartialEq + BitAnd<Output=T> + BitOr<Output=T> + Not<Output=T>
     }
 
     pub fn read(&self) -> T {
-        unsafe { volatile_load(&self.value) } 
+        unsafe { volatile_load(&self.value) }
     }
 
     pub fn write(&mut self, value: T) {

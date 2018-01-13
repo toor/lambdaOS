@@ -1,5 +1,5 @@
-use arch::memory::paging::{Page, PageIter, ActivePageTable};
-use arch::memory::{PAGE_SIZE, FrameAllocator};
+use arch::memory::paging::{ActivePageTable, Page, PageIter};
+use arch::memory::{FrameAllocator, PAGE_SIZE};
 use arch::memory::paging::EntryFlags;
 
 pub struct StackAllocator {

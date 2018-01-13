@@ -68,11 +68,11 @@ impl Process {
 pub unsafe extern "C" fn process_return() {
     use task::Scheduling;
     use alloc::boxed::Box;
-    
+
     // Pop a pointer to the self object off the stack.
     let scheduler_ptr: *mut &Scheduling;
     asm!("pop $0" : "=r"(scheduler_ptr) : : "memory" : "intel", "volatile");
-    
+
     let scheduler = Box::from_raw(scheduler_ptr);
 
     let current: ProcessId = scheduler.get_id();

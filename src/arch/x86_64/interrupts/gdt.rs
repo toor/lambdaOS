@@ -39,7 +39,7 @@ impl Gdt {
     }
 
     pub fn load(&'static self) {
-        use x86_64::instructions::tables::{DescriptorTablePointer, lgdt};
+        use x86_64::instructions::tables::{lgdt, DescriptorTablePointer};
         use core::mem::size_of;
 
         let ptr = DescriptorTablePointer {
@@ -58,7 +58,8 @@ pub enum Descriptor {
 
 impl Descriptor {
     pub fn kernel_code_segment() -> Descriptor {
-        let flags = DescriptorFlags::USER_SEGMENT | DescriptorFlags::PRESENT | DescriptorFlags::EXECUTABLE | DescriptorFlags::LONG_MODE;
+        let flags = DescriptorFlags::USER_SEGMENT | DescriptorFlags::PRESENT
+            | DescriptorFlags::EXECUTABLE | DescriptorFlags::LONG_MODE;
         Descriptor::UserSegment(flags.bits())
     }
 

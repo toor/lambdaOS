@@ -23,7 +23,7 @@ pub fn get_key(scancode: u64) -> Option<Key> {
 /// `KeyEvent`.
 pub fn get_key_event(scancode: u64) -> Option<KeyEvent> {
     match_scancode(scancode)
-} 
+}
 
 /// Special keys that are part of a byte sequence.
 pub fn is_special_key(byte: u8) -> Option<u8> {

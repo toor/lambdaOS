@@ -7,10 +7,7 @@ const PIT_SET: u8 = 0x36;
 static DIVISOR: u16 = 2685;
 
 /// Simple interface to the PIT.
-pub static PIT: Mutex<[Port<u8>; 2]> = Mutex::new(unsafe { [
-    Port::new(0x43),
-    Port::new(0x40),
-]});
+pub static PIT: Mutex<[Port<u8>; 2]> = Mutex::new(unsafe { [Port::new(0x43), Port::new(0x40)] });
 
 pub fn init() {
     PIT.lock()[0].write(PIT_SET);

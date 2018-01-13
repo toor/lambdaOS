@@ -1,7 +1,7 @@
-use super::{VirtualAddress, PhysicalAddress, Page, ENTRY_COUNT};
+use super::{Page, PhysicalAddress, VirtualAddress, ENTRY_COUNT};
 use super::entry::EntryFlags;
-use super::table::{self, Table, Level4};
-use arch::memory::{PAGE_SIZE, Frame, FrameAllocator};
+use super::table::{self, Level4, Table};
+use arch::memory::{Frame, FrameAllocator, PAGE_SIZE};
 use core::ptr::Unique;
 
 pub struct Mapper {
@@ -10,7 +10,9 @@ pub struct Mapper {
 
 impl Mapper {
     pub unsafe fn new() -> Mapper {
-        Mapper { p4: Unique::new_unchecked(table::P4) }
+        Mapper {
+            p4: Unique::new_unchecked(table::P4),
+        }
     }
 
     pub fn p4(&self) -> &Table<Level4> {
@@ -39,8 +41,8 @@ impl Mapper {
                         // address must be 1GiB aligned
                         assert!(start_frame.number % (ENTRY_COUNT * ENTRY_COUNT) == 0);
                         return Some(Frame {
-                            number: start_frame.number + page.p2_index() * ENTRY_COUNT +
-                                page.p1_index(),
+                            number: start_frame.number + page.p2_index() * ENTRY_COUNT
+                                + page.p1_index(),
                         });
                     }
                 }
@@ -51,7 +53,9 @@ impl Mapper {
                         if p2_entry.flags().contains(EntryFlags::HUGE_PAGE) {
                             // address must be 2MiB aligned
                             assert!(start_frame.number % ENTRY_COUNT == 0);
-                            return Some(Frame { number: start_frame.number + page.p1_index() });
+                            return Some(Frame {
+                                number: start_frame.number + page.p1_index(),
+                            });
                         }
                     }
                 }

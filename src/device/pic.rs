@@ -28,7 +28,7 @@ impl Pic {
     fn handles_interrupt(&self, interrupt_id: u8) -> bool {
         self.offset <= interrupt_id && interrupt_id < self.offset + 8
     }
-    
+
     ///Write the EOI command for a single PIC.
     unsafe fn end_of_interrupt(&mut self) {
         self.command.write(CMD_END_OF_INTERRUPT);
