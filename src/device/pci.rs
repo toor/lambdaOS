@@ -1,10 +1,15 @@
 use device::io::Port;
 use spin::Mutex;
+use alloc::Vec;
 
 static PCI: Mutex<Pci> = Mutex::new(Pci {
     cfg_address: unsafe { Port::new(0xCF8) },
     cfg_data: unsafe { Port::new(0xCFC) },
 });
+
+lazy_static! {
+    static ref DEVICES: Vec<Device> = Vec::new();
+}
 
 pub struct Pci {
     pub cfg_address: Port<u32>,
@@ -42,27 +47,11 @@ impl Pci {
             vendor_id: config_0 as u16,
             rev_id: config_4 as u8,
             subclass: (config_4 >> 16) as u8,
-            class: DeviceClass::from((config_4 >> 24)),
+            class: DeviceClass::from_u8((config_4 >> 24) as u8),
             multifunction: config_c & 0x800000 != 0,
             bars: [0; 6],
         })
     }
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct Device {
-    bus: u8,
-    function: u8,
-    device: u8,
-    pub device_id: u16,
-    pub vendor_id: u16,
-    pub rev_id: u8,
-    pub subclass: u8,
-    class: DeviceClass,
-    /// Whether this device is multifunction or not.
-    multifunction: bool,
-    /// Base addresses.
-    bars: [u32; 6],
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -100,6 +89,22 @@ impl DeviceClass {
     }
 }
 
+#[derive(Debug, Copy, Clone)]
+pub struct Device {
+    bus: u8,
+    function: u8,
+    device: u8,
+    pub device_id: u16,
+    pub vendor_id: u16,
+    pub rev_id: u8,
+    pub subclass: u8,
+    class: DeviceClass,
+    /// Whether this device is multifunction or not.
+    multifunction: bool,
+    /// Base addresses.
+    bars: [u32; 6],
+}
+
 impl Device {
     fn address(&self, offset: u32) -> u32 {
         return 1 << 31 | (self.bus as u32) << 16 | (self.device as u32) << 11 |
@@ -111,5 +116,43 @@ impl Device {
         let address = self.address(offset);
         PCI.lock().cfg_address.write(address);
         return PCI.lock().cfg_data.read();
+    }
+
+    /// Write.
+    pub unsafe fn write(&self, offset: u32, value: u32) {
+        let address = self.address(offset);
+        PCI.lock().cfg_address.write(address);
+        PCI.lock().cfg_data.write(value);
+    }
+
+    /// Set a certain flag
+    pub unsafe fn set_flag(&self, offset: u32, flag: u32, toggle: bool) {
+        let mut value = self.read(offset);
+
+        if toggle {
+            value |= flag
+        } else {
+            value &= 0xFFFFFFFF - flag;
+        }
+        self.write(offset, value);
+    }
+
+    unsafe fn load_bars(&mut self) {
+        for i in 0..6 {
+            let bar = self.read(i * 4 + 0x10);
+            if bar > 0 {
+                self.bars[i as usize] = bar;
+                self.write(i * 4 + 0x10, 0xFFFFFFFF);
+                let size = (0xFFFFFFFF - (self.read(i * 4 + 0x10) & 0xFFFFFFF0)) + 1;
+                self.write(i * 4 + 0x10, bar);
+                if size > 0 {
+                    self.bars[i as usize] = size;
+                }
+            }
+        }
+    }
+
+    pub fn bar(&self, index: usize) -> u32 {
+        self.bars[index]
     }
 }
