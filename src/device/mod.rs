@@ -16,6 +16,8 @@ pub mod pic;
 pub mod pit;
 /// AHCI driver.
 pub mod ahci;
+/// PCI functionality
+pub mod pci;
 
 pub use self::io::cpuio::{Port, UnsafePort};
 pub use self::io::mmio;
@@ -23,4 +25,5 @@ pub use self::io::mmio;
 pub unsafe fn init() {
     pit::init();
     ps2_8042::PS2.lock().init();
+    pci::init();
 }
