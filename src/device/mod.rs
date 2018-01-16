@@ -25,4 +25,5 @@ pub use self::io::mmio;
 pub unsafe fn init() {
     pit::init();
     ps2_8042::PS2.lock().init();
+    pci::init();
 }

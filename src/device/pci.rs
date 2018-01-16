@@ -2,13 +2,22 @@ use device::io::Port;
 use spin::Mutex;
 use alloc::Vec;
 
+#[allow(dead_code)]
+const MAX_BUS: u8 = 255;
+
+#[allow(dead_code)]
+const MAX_DEVICE: u8 = 31;
+
+#[allow(dead_code)]
+const MAX_FUNCTION: u8 = 7;
+
 static PCI: Mutex<Pci> = Mutex::new(Pci {
     cfg_address: unsafe { Port::new(0xCF8) },
     cfg_data: unsafe { Port::new(0xCFC) },
 });
 
 lazy_static! {
-    static ref DEVICES: Vec<Device> = Vec::new();
+    static ref DEVICES: Mutex<Vec<Device>> = Mutex::new(Vec::new());
 }
 
 pub struct Pci {
@@ -17,6 +26,7 @@ pub struct Pci {
 }
 
 impl Pci {
+    /// Read an aligned dword from the PCI configuration space.
     pub unsafe fn read_config(&mut self, bus: u8, slot: u8, func: u8, offset: u8) -> u32 {
         let address: u32 = 0x80000000 | (bus as u32) << 16 | (slot as u32) << 11 | 
             (func as u32) << 8 |
@@ -80,6 +90,7 @@ pub enum DeviceClass {
 }
 
 impl DeviceClass {
+    /// Convert a given device code to a possible `DeviceClass` variant.
     fn from_u8(c: u8) -> Self {
         if c <= DeviceClass::DataAndSignalProcessing as u8 {
             unsafe { ::core::mem::transmute(c) }
@@ -89,6 +100,7 @@ impl DeviceClass {
     }
 }
 
+/// A PCI device.
 #[derive(Debug, Copy, Clone)]
 pub struct Device {
     bus: u8,
@@ -155,4 +167,36 @@ impl Device {
     pub fn bar(&self, index: usize) -> u32 {
         self.bars[index]
     }
+}
+
+fn init_dev(bus: u8, dev: u8) {
+    for func in 0..MAX_FUNCTION {
+        unsafe {
+            let device = PCI.lock().probe(bus, dev, func);
+
+            match device {
+                // Device found, load bars.
+                Some(mut d) => {
+                    d.load_bars();
+                    DEVICES.lock().push(d);
+                },
+
+                None => {}
+            }
+        }
+    }
+}
+
+fn init_bus(bus: u8) {
+    for dev in 0..MAX_DEVICE {
+        init_dev(bus, dev);
+    }
+}
+
+pub fn init() {
+    for bus in 0..MAX_BUS {
+        init_bus(bus);
+    }
+
+    println!("Discovered {} PCI devices", DEVICES.lock().len());
 }
