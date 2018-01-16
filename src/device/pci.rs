@@ -1,6 +1,7 @@
 use device::io::Port;
 use spin::Mutex;
 use alloc::Vec;
+use core::fmt;
 
 #[allow(dead_code)]
 const MAX_BUS: u8 = 255;
@@ -64,6 +65,20 @@ impl Pci {
     }
 }
 
+impl fmt::Display for Device {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f,
+               "{}.{}.{}: 0x{:04x} 0x{:04x} {:?} {:02x}",
+               self.bus,
+               self.device,
+               self.function,
+               self.vendor_id,
+               self.device_id,
+               self.class,
+               self.subclass)
+    }
+}
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[repr(u8)]
 #[allow(dead_code)]
@@ -106,10 +121,10 @@ pub struct Device {
     bus: u8,
     function: u8,
     device: u8,
-    pub device_id: u16,
-    pub vendor_id: u16,
-    pub rev_id: u8,
-    pub subclass: u8,
+    device_id: u16,
+    vendor_id: u16,
+    rev_id: u8,
+    subclass: u8,
     class: DeviceClass,
     /// Whether this device is multifunction or not.
     multifunction: bool,
@@ -199,4 +214,45 @@ pub fn init() {
     }
 
     println!("Discovered {} PCI devices", DEVICES.lock().len());
+
+    for dev in DEVICES.lock().iter_mut() {
+        match dev.device_id {
+            0x7000 => {
+                println!("{}-{}-{} PIIX3 PCI-to-ISA Bridge (Triton II) {}",
+                         dev.bus,
+                         dev.device,
+                         dev.function,
+                         dev)
+            }
+            0x7010 => {
+                println!("{}-{}-{} PIIX3 IDE Interface (Triton II) {}",
+                         dev.bus,
+                         dev.device,
+                         dev.function,
+                         dev)
+            }
+            0x7113 => {
+                println!("{}-{}-{} PIIX4/4E/4M Power Management Controller {}",
+                         dev.bus,
+                         dev.device,
+                         dev.function,
+                         dev)
+            }
+            0x1111 => {
+                println!("{}-{}-{} VGA {}",
+                         dev.bus,
+                         dev.device,
+                         dev.function,
+                         dev)
+            }
+            0x1237 => {
+                println!("{}-{}-{} 82440LX/EX {}",
+                         dev.bus,
+                         dev.device,
+                         dev.function,
+                         dev)
+            }
+            _ => println!("{}", dev),
+        }
+    }
 }
