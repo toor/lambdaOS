@@ -8,15 +8,21 @@ use task::{Process, ProcessId, ProcessList, Scheduling, State, INITIAL_STACK};
 use task::process;
 use spin::RwLock;
 
+/// Global kernel scheduler type.
 pub type Scheduler = CoopScheduler;
 
+/// A simple cooperative scheduler. It uses round-robin scheduling, where the next available, ready
+/// process is the next process to be ran.
 pub struct CoopScheduler {
     current_pid: AtomicUsize,
+    
     task_t: RwLock<ProcessList>,
     ready_list: RwLock<VecDeque<ProcessId>>,
 }
 
 impl Scheduling for CoopScheduler {
+    /// Create a process using a C-declared function pointer as an argument. This function allocates a
+    /// stack which has an initial size of 1024.
     fn create(&self, func: extern "C" fn(), name: String) -> Result<ProcessId, i16> {
         use arch::memory::paging;
 
@@ -28,13 +34,19 @@ impl Scheduling for CoopScheduler {
 
         use alloc::boxed::Box;
         let self_ptr: Box<&Scheduling> = Box::new(self);
+        
+        // Reserve three elements on the stack.
+        // stack.len() - 3 -> pointer to the entry point of the address. This is what RSP is set to
+        // under Context::switch_to().
+        // stack.len() - 2 -> function that we jump to after
 
         let stack_vals: Vec<usize> = vec![
             func as usize,
             process::process_return as usize,
             Box::into_raw(self_ptr) as usize,
         ];
-
+        
+        // Properly reserve these blocks on the stack.
         for (i, val) in stack_vals.iter().enumerate() {
             stack[proc_top + i] = *val;
         }
@@ -47,23 +59,30 @@ impl Scheduling for CoopScheduler {
 
             process.stack = Some(stack);
             process.name = name;
-
+            
+            // Create a new page table. This saves the address placed in cr3 after page table
+            // creation for a context switch later on.
             process
                 .ctx
                 .set_page_table(unsafe { paging::ActivePageTable::new().address() });
-
+            
+            // Set the stack pointer.
             process.ctx.set_stack(proc_sp);
 
             Ok(process.pid)
         }
     }
-
+    
+    /// Returns the PID of the current process.
     fn get_id(&self) -> ProcessId {
         ProcessId(self.current_pid.load(Ordering::SeqCst))
     }
-
+    
+    /// Kill the process. We do this by marking it as free in the task table.
+    /// To free memory held by the process, we drop the String that holds the process name,
+    /// and mark the Option stack as None - this causes the memory held by the Some() to be
+    /// dropped.
     fn kill(&self, id: ProcessId) {
-        //We should free the stack here.
         {
             let task_table_lock = self.task_t.read();
             let mut proc_lock = task_table_lock
@@ -80,11 +99,15 @@ impl Scheduling for CoopScheduler {
             self.resched();
         }
     }
-
+    
+    /// Mark a process as ready which enables it to be ran under resched().
     fn ready(&self, id: ProcessId) {
         self.ready_list.write().push_back(id);
     }
-
+    
+    /// Perform a context switch to the new process. This method will deadlock if any software
+    /// locks are still held - it is therefore important to scope locking of data structures to
+    /// ensure that these locks will be dropped.
     unsafe fn resched(&self) {
         {
             if self.ready_list.read().is_empty() {
@@ -145,6 +168,8 @@ impl Scheduling for CoopScheduler {
 }
 
 impl CoopScheduler {
+    /// Initialise the cooperative scheduler. This sets the current PID as the null kernel process,
+    /// and creates an empty task table and ready list.
     pub fn new() -> Self {
         CoopScheduler {
             current_pid: AtomicUsize::new(ProcessId::NULL_PROC.inner()),

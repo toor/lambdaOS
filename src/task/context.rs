@@ -14,7 +14,7 @@ pub struct Context {
 impl Context {
     pub fn new() -> Self {
         Context {
-            //Init all fields as 0.
+            // Init all fields as 0.
             cr3: 0,
             rbp: 0,
             rflags: 0,
@@ -27,7 +27,7 @@ impl Context {
         }
     }
 
-    ///Switch to the new context.
+    /// Switch to the new context.
     #[naked]
     #[inline(never)]
     pub unsafe extern "C" fn switch_to(&mut self, next: &mut Context) {
@@ -56,12 +56,12 @@ impl Context {
         asm!("mov rbp, $0" : : "r"(next.rbp) : "memory" : "intel", "volatile");
     }
 
-    ///Set page table of this context.
+    /// Set the active page table of this context.
     pub fn set_page_table(&mut self, address: usize) {
         self.cr3 = address;
     }
 
-    ///Set stack pointer.
+    /// Set stack pointer.
     pub fn set_stack(&mut self, address: usize) {
         self.rsp = address;
     }

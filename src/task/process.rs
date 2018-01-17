@@ -3,23 +3,28 @@ use alloc::vec::Vec;
 use task::context::Context;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
-///Current state of the process.
+/// Current state of the process.
 pub enum State {
+    /// Process is free.
     Free,
+    /// Process is the current process.
     Current,
+    /// Process has been stopped.
     Suspended,
+    /// Process is ready to be ran by the scheduler.
     Ready,
 }
 
 #[derive(Clone, Debug)]
-///Process priority.
+/// Process priority.
 pub struct Priority(pub u64);
 
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-///Tuple type for PID.
+/// Tuple type for PID.
 pub struct ProcessId(pub usize);
 
 impl ProcessId {
+    /// Null kernel process.
     pub const NULL_PROC: ProcessId = ProcessId(0);
 
     pub fn inner(&self) -> usize {
@@ -28,6 +33,8 @@ impl ProcessId {
 }
 
 #[derive(Clone, Debug)]
+/// A single process on the system.
+/// It has register context, id, name and an Optional process stack.
 pub struct Process {
     pub pid: ProcessId,
     pub name: String,
@@ -48,22 +55,25 @@ impl Process {
             stack: None,
         }
     }
-
+    
+    /// Set the state of the process.
     pub fn set_state(&mut self, new: State) {
         self.state = new;
     }
-
+    
+    /// Set `cr3` to point to the address specified by `addr`.
     pub fn set_page_table(&mut self, addr: usize) {
         self.ctx.set_page_table(addr);
     }
-
+    
+    /// Set the stack pointer register.
     pub fn set_stack(&mut self, addr: usize) {
         self.ctx.set_stack(addr);
     }
 }
 
-//A returned process pops an instruction pointer off the stack then jumps to it.
-//The IP from the stack will point to this function.
+///A returned process pops an instruction pointer off the stack then jumps to it.
+/// The IP from the stack will point to this function.
 #[naked]
 pub unsafe extern "C" fn process_return() {
     use task::Scheduling;
@@ -76,6 +86,7 @@ pub unsafe extern "C" fn process_return() {
     let scheduler = Box::from_raw(scheduler_ptr);
 
     let current: ProcessId = scheduler.get_id();
-    //Process returned, we kill it
+    
+    // Process returned, we kill it
     scheduler.kill(current);
 }

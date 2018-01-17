@@ -5,13 +5,16 @@ use core::result::Result;
 use spin::RwLock;
 use task::{Process, ProcessId, State};
 
+/// System task table.
 pub struct ProcessList {
-    //Each entry is a PID attached to a locked process.
+    /// Each entry is a PID attached to a locked process.
     procs: BTreeMap<ProcessId, Arc<RwLock<Process>>>,
+    /// The next process in the list.
     next: usize,
 }
 
 impl ProcessList {
+    /// Create an initial `ProcessList`.
     pub fn new() -> Self {
         let mut list: BTreeMap<ProcessId, Arc<RwLock<Process>>> = BTreeMap::new();
 
@@ -20,7 +23,7 @@ impl ProcessList {
         null_proc.state = State::Current;
         null_proc.stack = Some(Vec::new());
 
-        //Insert this process into the list.
+        // Insert this process into the list.
         list.insert(ProcessId::NULL_PROC, Arc::new(RwLock::new(null_proc)));
 
         ProcessList {
@@ -29,19 +32,20 @@ impl ProcessList {
         }
     }
 
-    ///Retrieve the given process from the task table.
+    /// Retrieve the given process from the task table. Returns None if the passed PID does not
+    /// exist.
     pub fn get(&self, id: ProcessId) -> Option<&Arc<RwLock<Process>>> {
         self.procs.get(&id)
     }
 
-    ///Transform process collection into iterator.
+    /// Transform process collection into iterator.
     pub fn iter(&self) -> btree_map::Iter<ProcessId, Arc<RwLock<Process>>> {
         self.procs.iter()
     }
 
-    ///Add a process to the task table.
+    /// Add a process to the task table.
     pub fn add(&mut self) -> Result<&Arc<RwLock<Process>>, i16> {
-        //Reset search if we're at the end of the table.
+        // Reset search if we're at the end of the table.
         if self.next >= super::MAX_PROCS {
             self.next = 1;
         }
@@ -67,7 +71,7 @@ impl ProcessList {
         }
     }
 
-    ///Remove process from task table.
+    /// Remove a process from the task table.
     pub fn remove(&mut self, id: ProcessId) -> Option<Arc<RwLock<Process>>> {
         self.procs.remove(&id)
     }
