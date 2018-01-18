@@ -17,10 +17,19 @@ lazy_static! {
         let mut idt = Idt::new();
 
         idt.divide_by_zero.set_handler_fn(exceptions::divide_by_zero_handler);
+        idt.debug.set_handler_fn(exceptions::debug_handler);
+        idt.non_maskable_interrupt.set_handler_fn(exceptions::nmi_handler);
         idt.breakpoint.set_handler_fn(exceptions::breakpoint_handler);
+        idt.overflow.set_handler_fn(exceptions::overflow_handler);
+        idt.bound_range_exceeded.set_handler_fn(exceptions::bound_range_handler);
         idt.invalid_opcode.set_handler_fn(exceptions::invalid_opcode_handler);
-        idt.page_fault.set_handler_fn(exceptions::page_fault_handler);
+        idt.device_not_available.set_handler_fn(exceptions::device_not_available_handler);
+        // Double fault registered below.
+        idt.invalid_tss.set_handler_fn(exceptions::invalid_tss_handler);
+        idt.segment_not_present.set_handler_fn(exceptions::seg_not_present_handler);
+        idt.stack_segment_fault.set_handler_fn(exceptions::stack_seg_fault_handler);
         idt.general_protection_fault.set_handler_fn(exceptions::gpf_handler);
+        idt.page_fault.set_handler_fn(exceptions::page_fault_handler);
 
         unsafe {
             idt.double_fault.set_handler_fn(exceptions::double_fault_handler)
