@@ -60,6 +60,16 @@ pub extern "x86-interrupt" fn device_not_available_handler(stack_frame: &mut Exc
     });
 }
 
+pub extern "x86-interrupt" fn double_fault_handler(
+    stack_frame: &mut ExceptionStackFrame,
+    _error_code: u64,
+) {
+    disable_interrupts_and_then(|| {
+        println!("\nEXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
+        loop {}
+    });
+}
+
 pub extern "x86-interrupt" fn invalid_tss_handler(stack_frame: &mut ExceptionStackFrame, error_code: u64) {
     disable_interrupts_and_then(|| {
         println!("\nEXCEPTION: INVALID TSS with code: {:?}\n{:#?}", error_code, stack_frame);
@@ -89,6 +99,13 @@ pub extern "x86-interrupt" fn stack_seg_fault_handler(stack_frame: &mut Exceptio
     });
 }
 
+pub extern "x86-interrupt" fn gpf_handler(stack_frame: &mut ExceptionStackFrame, _error_code: u64) {
+    disable_interrupts_and_then(|| {
+        println!("\nEXCEPTION: GPF\n{:#?}", stack_frame);
+        loop {}
+    });
+}
+
 pub extern "x86-interrupt" fn page_fault_handler(
     stack_frame: &mut ExceptionStackFrame,
     error_code: PageFaultErrorCode,
@@ -106,19 +123,33 @@ pub extern "x86-interrupt" fn page_fault_handler(
     });
 }
 
-pub extern "x86-interrupt" fn double_fault_handler(
-    stack_frame: &mut ExceptionStackFrame,
-    _error_code: u64,
-) {
+pub extern "x86-interrupt" fn x87_fp_exception_handler(stack_frame: &mut ExceptionStackFrame) {
     disable_interrupts_and_then(|| {
-        println!("\nEXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
+        println!("\nX87 FLOATING POINT EXCEPTION\n{:#?}", stack_frame);
         loop {}
     });
 }
 
-pub extern "x86-interrupt" fn gpf_handler(stack_frame: &mut ExceptionStackFrame, _error_code: u64) {
+pub extern "x86-interrupt" fn alignment_check_handler(stack_frame: &mut ExceptionStackFrame, error_code: u64) {
     disable_interrupts_and_then(|| {
-        println!("\nEXCEPTION: GPF\n{:#?}", stack_frame);
+        println!("\nEXCEPTION: ALIGNMENT CHECK\n{:#?}", stack_frame);
         loop {}
     });
 }
+
+pub extern "x86-interrupt" fn machine_check_handler(stack_frame: &mut ExceptionStackFrame) {
+    disable_interrupts_and_then(|| {
+        // TODO: use the MSRs to get error information about the MC.
+        println!("\nEXCEPTION: MACHINE CHECK\n{:#?}", stack_frame);
+        loop {}
+    });
+}
+
+pub extern "x86-interrupt" fn simd_fp_exception_handler(stack_frame: &mut ExceptionStackFrame) {
+    disable_interrupts_and_then(|| {
+        println!("\nEXCEPTION: SIMD FLOATING POINT EXCEPTION\n{:#?}", stack_frame);
+        loop {}
+    });
+}
+
+
