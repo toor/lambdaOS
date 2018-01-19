@@ -39,7 +39,7 @@ lazy_static! {
         idt.x87_floating_point.set_handler_fn(exceptions::x87_fp_exception_handler);
         idt.alignment_check.set_handler_fn(exceptions::alignment_check_handler);
         idt.machine_check.set_handler_fn(exceptions::machine_check_handler);
-        idt.simd_floating_point.set_handler(exceptions::simd_fp_exception_handler);
+        idt.simd_floating_point.set_handler_fn(exceptions::simd_fp_exception_handler);
 
         idt.interrupts[0].set_handler_fn(irq::timer_handler);
         idt.interrupts[1].set_handler_fn(irq::keyboard_handler);
