@@ -3,9 +3,9 @@ use x86_64::structures::tss::TaskStateSegment;
 use x86_64::structures::idt::Idt;
 use spin::Once;
 
-mod gdt;
-mod exceptions;
-mod irq;
+pub mod gdt;
+pub mod exceptions;
+pub mod irq;
 pub mod utils;
 
 pub use self::utils::*;
