@@ -2,6 +2,17 @@ pub mod interrupts;
 pub mod memory;
 
 use device;
+use self::memory::MemoryController;
+use alloc::boxed::Box;
+
+pub static mut MEMORY_CONTROLLER: Option<&'static mut MemoryController> = None;
+
+pub unsafe fn memory_controller() -> &'static mut MemoryController {
+    match MEMORY_CONTROLLER {
+        Some(ref mut m) => m,
+        None => panic!("Memory controller called before init."),
+    }
+}
 
 pub unsafe fn kinit(multiboot_info: usize) {
     interrupts::disable_interrupts();
@@ -16,6 +27,8 @@ pub unsafe fn kinit(multiboot_info: usize) {
         let mut memory_controller = memory::init(&boot_info);
 
         interrupts::init(&mut memory_controller);
+
+        MEMORY_CONTROLLER = Some(&mut *Box::into_raw(Box::new(memory_controller)));
 
         device::pic::PICS.lock().init();
 
