@@ -190,7 +190,7 @@ pub extern "x86-interrupt" fn x87_fp_exception_handler(stack_frame: &mut Excepti
 /// The Alignment Check exception occurs when alignment checking is enabled and a instruction
 /// attempts to reference an unaligned memory address. Alignment checking is only performed if
 /// `CPL = 3`.
-pub extern "x86-interrupt" fn alignment_check_handler(stack_frame: &mut ExceptionStackFrame, error_code: u64) {
+pub extern "x86-interrupt" fn alignment_check_handler(stack_frame: &mut ExceptionStackFrame, _error_code: u64) {
     disable_interrupts_and_then(|| {
         println!("\nEXCEPTION: ALIGNMENT CHECK\n{:#?}", stack_frame);
         loop {}
