@@ -46,7 +46,7 @@ $(kernel): kernel $(rust_os) $(assembly_object_files) $(linker_script)
 		$(assembly_object_files) $(rust_os)
 
 kernel:
-	@xargo build --target $(target) $(CARGOFLAGS)
+	@RUST_TARGET_PATH="$(shell pwd)" xargo build --target $(target) $(CARGOFLAGS)
 
 # compile assembly files
 build/arch/$(arch)/%.o: src/arch/$(arch)/asm/%.asm
