@@ -1,4 +1,4 @@
-./.gdbinit
+/.gdbinit
 build
 target
 Cargo.lock
