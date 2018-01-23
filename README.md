@@ -1,17 +1,12 @@
 # lambdaOS
-An OS written in Rust and Assembly. It currently only supports the x86_64 arch.
+An OS written in Rust and Assembly. It currently only supports the amd64 architecture.
 ## Features
 **Completed**
-- Basic VGA Driver
-- Paging and frame allocator
-- Kernel remapping
-- Heap allocation
-- Keyboard input.
-- Task scheduling (using timer).
-
-**Planned**
-- System calls.
-- FS support.
+- VGA driver.
+- Paging.
+- Keyboard input / PS/2 driver.
+- Basic support for PCI devices.
+- Basic pre-emptive scheduling.
 
 ## Building
 ```bash
