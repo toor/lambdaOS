@@ -2,6 +2,7 @@ use arch::memory::paging::{ActivePageTable, Page, PageIter};
 use arch::memory::{FrameAllocator, PAGE_SIZE};
 use arch::memory::paging::EntryFlags;
 
+/// A stack allocator.
 pub struct StackAllocator {
     range: PageIter,
 }
@@ -13,6 +14,7 @@ impl StackAllocator {
 }
 
 impl StackAllocator {
+    /// Allocate a range of pages to use as a stack.
     pub fn alloc_stack<FA: FrameAllocator>(
         &mut self,
         active_table: &mut ActivePageTable,
@@ -56,6 +58,7 @@ impl StackAllocator {
     }
 }
 
+/// A stack that grows downwards.
 #[derive(Debug)]
 pub struct Stack {
     top: usize,

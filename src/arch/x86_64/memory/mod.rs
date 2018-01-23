@@ -4,10 +4,10 @@ pub use self::stack_allocator::Stack;
 use self::paging::PhysicalAddress;
 use multiboot2::BootInformation;
 
-mod area_frame_allocator;
+pub mod area_frame_allocator;
 pub mod heap_allocator;
 pub mod paging;
-mod stack_allocator;
+pub mod stack_allocator;
 //pub mod phys;
 
 pub const PAGE_SIZE: usize = 4096;

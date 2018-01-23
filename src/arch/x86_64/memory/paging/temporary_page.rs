@@ -61,6 +61,7 @@ impl TinyAllocator {
 }
 
 impl FrameAllocator for TinyAllocator {
+    /// Allocate the frames that have been borrowed from the main allocator.
     fn allocate_frame(&mut self) -> Option<Frame> {
         for frame_option in &mut self.0 {
             if frame_option.is_some() {
@@ -69,7 +70,8 @@ impl FrameAllocator for TinyAllocator {
         }
         None
     }
-
+    
+    /// Mark any `None` frames as `Some`, and return.
     fn deallocate_frame(&mut self, frame: Frame) {
         for frame_option in &mut self.0 {
             if frame_option.is_none() {

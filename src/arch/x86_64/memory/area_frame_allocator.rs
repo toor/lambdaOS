@@ -37,6 +37,7 @@ impl AreaFrameAllocator {
         allocator
     }
 
+    /// Choose the next available area.
     fn choose_next_area(&mut self) {
         self.current_area = self.areas
             .clone()
@@ -56,6 +57,7 @@ impl AreaFrameAllocator {
 }
 
 impl FrameAllocator for AreaFrameAllocator {
+    /// Allocate a single frame. Return `None` if we are OOM.
     fn allocate_frame(&mut self) -> Option<Frame> {
         if let Some(area) = self.current_area {
             // "clone" the frame to return it if it's free. Frame doesn't

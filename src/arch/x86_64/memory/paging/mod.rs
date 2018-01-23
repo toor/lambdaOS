@@ -10,17 +10,20 @@ mod table;
 mod temporary_page;
 mod mapper;
 
+/// Maximum number of entries a page table can hold.
 const ENTRY_COUNT: usize = 512;
 
 pub type PhysicalAddress = usize;
 pub type VirtualAddress = usize;
 
+/// Singular 4KiB page on the system.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Page {
     number: usize,
 }
 
 impl Page {
+    /// Return the number of the page which contains the given `VirtualAddress`.
     pub fn containing_address(address: VirtualAddress) -> Page {
         assert!(
             address < 0x0000_8000_0000_0000 || address >= 0xffff_8000_0000_0000,
@@ -32,6 +35,7 @@ impl Page {
         }
     }
 
+    /// Return the starting address of a page.
     pub fn start_address(&self) -> usize {
         self.number * PAGE_SIZE
     }
@@ -48,7 +52,8 @@ impl Page {
     fn p1_index(&self) -> usize {
         (self.number >> 0) & 0o777
     }
-
+    
+    /// Return an iterator between the given two pages.
     pub fn range_inclusive(start: Page, end: Page) -> PageIter {
         PageIter {
             start: start,
@@ -67,6 +72,7 @@ impl Add<usize> for Page {
     }
 }
 
+/// An iterator over pages between `start` and `end`.
 #[derive(Clone)]
 pub struct PageIter {
     start: Page,
@@ -87,6 +93,7 @@ impl Iterator for PageIter {
     }
 }
 
+/// The system's active page table.
 pub struct ActivePageTable {
     mapper: Mapper,
 }
@@ -111,16 +118,18 @@ impl ActivePageTable {
             mapper: Mapper::new(),
         }
     }
-
+    
+    /// Get the start address of the current P4 table as stored in `cr3`.
     pub unsafe fn address(&self) -> usize {
         use x86_64::registers::control_regs;
         control_regs::cr3().0 as usize
     }
-
+    
+    /// Execute a given mapping closure.
     pub fn with<F>(
         &mut self,
         table: &mut InactivePageTable,
-        temporary_page: &mut temporary_page::TemporaryPage, // new
+        temporary_page: &mut temporary_page::TemporaryPage,
         f: F,
     ) where
         F: FnOnce(&mut Mapper),
@@ -151,7 +160,8 @@ impl ActivePageTable {
 
         temporary_page.unmap(self);
     }
-
+    
+    /// Switch the active page table, and return the old page table.
     pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable {
         use x86_64::PhysicalAddress;
         use x86_64::registers::control_regs;
@@ -166,6 +176,7 @@ impl ActivePageTable {
     }
 }
 
+/// A page table which has a frame wherein the P4 table lives.
 pub struct InactivePageTable {
     p4_frame: Frame,
 }
@@ -187,6 +198,10 @@ impl InactivePageTable {
     }
 }
 
+/// Identity map important sections and switch the page table, remapping the kernel one page above
+/// and turn the previous kernel stack into a guard page - this prevents silent stack overflows, as
+/// given that the guard page is unmapped, any stack overflow into this page will instantly cause a
+/// page fault. Returns the currently active kernel page table.
 pub fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
 where
     A: FrameAllocator,

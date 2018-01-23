@@ -5,6 +5,7 @@ use arch::memory::FrameAllocator;
 use core::ops::{Index, IndexMut};
 use core::marker::PhantomData;
 
+/// This physical address will point to the highest-level P4 table.
 pub const P4: *mut Table<Level4> = 0xffffffff_fffff000 as *mut _;
 
 pub struct Table<L: TableLevel> {
@@ -16,6 +17,7 @@ impl<L> Table<L>
 where
     L: TableLevel,
 {
+    /// Set each entry of the page table as unused - leaves them free.
     pub fn zero(&mut self) {
         for entry in self.entries.iter_mut() {
             entry.set_unused();
@@ -27,6 +29,8 @@ impl<L> Table<L>
 where
     L: HierarchicalLevel,
 {
+    /// Get the address of the next-lowest page table, using the passed index which should be the
+    /// index of the next page table in the current-level page table.
     fn next_table_address(&self, index: usize) -> Option<usize> {
         let entry_flags = self[index].flags();
         if entry_flags.contains(EntryFlags::PRESENT) && !entry_flags.contains(EntryFlags::HUGE_PAGE)
@@ -37,17 +41,23 @@ where
             None
         }
     }
-
+    
+    /// Return a reference to the next table.
     pub fn next_table(&self, index: usize) -> Option<&Table<L::NextLevel>> {
         self.next_table_address(index)
             .map(|address| unsafe { &*(address as *const _) })
     }
-
+    
+    /// Return a mutable reference to the next table.
     pub fn next_table_mut(&mut self, index: usize) -> Option<&mut Table<L::NextLevel>> {
         self.next_table_address(index)
             .map(|address| unsafe { &mut *(address as *mut _) })
     }
-
+    
+    /// Allocate a single 4096-byte physical frame for the next level page table and set the given
+    /// index to point to the new frame. Set important flags on the table so we can modify it and
+    /// return a mutable reference. Note - this code will panic if the given index has flags set on
+    /// it to indicate a huge page.
     pub fn next_table_create<A>(
         &mut self,
         index: usize,
