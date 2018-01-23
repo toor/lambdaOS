@@ -2,6 +2,8 @@
 name = "lambdaOS"
 version = "0.1.0"
 authors = ["William Huddie <william@huddie.net>"]
+license = "GPLv3"
+description = "A simple operating system written in Rust"
 
 [lib]
 crate-type = ["staticlib"]
