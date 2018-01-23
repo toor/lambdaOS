@@ -2,7 +2,7 @@
 name = "lambdaOS"
 version = "0.1.0"
 authors = ["William Huddie <william@huddie.net>"]
-license = "GPL-3.0-only"
+license = "GPL-3.0"
 description = "A simple operating system written in Rust"
 
 [lib]
@@ -18,7 +18,6 @@ x86_64 = "0.1.2"
 once = "0.3.3"
 linked_list_allocator = "0.4.3"
 bit_field = "0.7.0"
-x86 = "*"
 
 [dependencies.lazy_static]
 version = "0.2.4"
