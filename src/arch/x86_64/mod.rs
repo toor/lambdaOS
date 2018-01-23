@@ -28,7 +28,7 @@ pub unsafe fn kinit(multiboot_info: usize) {
 
         interrupts::init(&mut memory_controller);
 
-        MEMORY_CONTROLLER = Some(&mut *Box::into_raw(Box::new(memory_controller)));
+        // MEMORY_CONTROLLER = Some(&mut *Box::into_raw(Box::new(memory_controller)));
 
         device::pic::PICS.lock().init();
 
