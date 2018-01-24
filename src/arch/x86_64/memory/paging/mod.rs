@@ -138,9 +138,10 @@ impl ActivePageTable {
         use x86_64::instructions::tlb;
 
         {
+            // Get reference to current P4 table.
             let backup = Frame::containing_address(control_regs::cr3().0 as usize);
 
-            // map temporary_page to current p4 table
+            // map temporary_page to current P4 table
             let p4_table = temporary_page.map_table_frame(backup.clone(), self);
 
             // overwrite recursive mapping
@@ -153,7 +154,7 @@ impl ActivePageTable {
             // execute f in the new context
             f(self);
 
-            // restore recursive mapping to original p4 table
+            // restore recursive mapping to original P4 table
             p4_table[511].set(backup, EntryFlags::PRESENT | EntryFlags::WRITABLE);
             tlb::flush_all();
         }

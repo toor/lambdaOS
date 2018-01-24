@@ -5,7 +5,7 @@ use device;
 use self::memory::MemoryController;
 use alloc::boxed::Box;
 
-pub static mut MEMORY_CONTROLLER: Option<&'static mut MemoryController> = None;
+pub static mut MEMORY_CONTROLLER: Option<MemoryController> = None;
 
 pub unsafe fn memory_controller() -> &'static mut MemoryController {
     match MEMORY_CONTROLLER {
@@ -28,7 +28,7 @@ pub unsafe fn kinit(multiboot_info: usize) {
 
         interrupts::init(&mut memory_controller);
 
-        // MEMORY_CONTROLLER = Some(&mut *Box::into_raw(Box::new(memory_controller)));
+        MEMORY_CONTROLLER = Some(memory_controller);
 
         device::pic::PICS.lock().init();
 
