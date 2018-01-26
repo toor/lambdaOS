@@ -45,8 +45,6 @@ impl Pci {
             return None;
         }
 
-        println!("Found device {}-{}-{}", bus, slot, function);
-
         let config_4 = self.read_config(bus, slot, function, 0x8);
         let config_c = self.read_config(bus, slot, function, 0xC);
 
@@ -216,43 +214,16 @@ pub fn init() {
     println!("Discovered {} PCI devices", DEVICES.lock().len());
 
     for dev in DEVICES.lock().iter_mut() {
-        match dev.device_id {
-            0x7000 => {
-                println!("{}-{}-{} PIIX3 PCI-to-ISA Bridge (Triton II) {}",
-                         dev.bus,
-                         dev.device,
-                         dev.function,
-                         dev)
-            }
-            0x7010 => {
-                println!("{}-{}-{} PIIX3 IDE Interface (Triton II) {}",
-                         dev.bus,
-                         dev.device,
-                         dev.function,
-                         dev)
-            }
-            0x7113 => {
-                println!("{}-{}-{} PIIX4/4E/4M Power Management Controller {}",
-                         dev.bus,
-                         dev.device,
-                         dev.function,
-                         dev)
-            }
-            0x1111 => {
-                println!("{}-{}-{} VGA {}",
-                         dev.bus,
-                         dev.device,
-                         dev.function,
-                         dev)
-            }
-            0x1237 => {
-                println!("{}-{}-{} 82440LX/EX {}",
-                         dev.bus,
-                         dev.device,
-                         dev.function,
-                         dev)
-            }
-            _ => println!("{}", dev),
+        // Check the type of device, in oder to identify important stuff that we will use.
+        match dev.class {
+            DeviceClass::Legacy => {},
+            DeviceClass::MassStorage => {
+                match dev.subclass {
+                    0x06 => println!("AHCI controller found.."),
+                    _ => (),
+                }
+            },
+            _ => {}
         }
     }
 }
