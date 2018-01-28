@@ -14,8 +14,7 @@ pub type Scheduler = CoopScheduler;
 /// A simple cooperative scheduler. It uses round-robin scheduling, where the next available, ready
 /// process is the next process to be ran.
 pub struct CoopScheduler {
-    current_pid: AtomicUsize,
-    
+    current_pid: AtomicUsize,    
     task_t: RwLock<ProcessList>,
     ready_list: RwLock<VecDeque<ProcessId>>,
 }
@@ -36,9 +35,9 @@ impl Scheduling for CoopScheduler {
         let self_ptr: Box<&Scheduling> = Box::new(self);
         
         // Reserve three elements on the stack.
-        // stack.len() - 3 -> pointer to the entry point of the address. This is what RSP is set to
+        // stack.len() - 3 -> pointer to the entry point of the process. This is what RSP is set to
         // under Context::switch_to().
-        // stack.len() - 2 -> function that we jump to after
+        // stack.len() - 2 -> function that we jump to after process return.
 
         let stack_vals: Vec<usize> = vec![
             func as usize,

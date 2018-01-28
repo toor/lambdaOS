@@ -2,6 +2,7 @@ use device::io::Port;
 use spin::Mutex;
 use alloc::Vec;
 use core::fmt;
+// use core::num::Float;
 
 #[allow(dead_code)]
 const MAX_BUS: u8 = 255;
@@ -214,13 +215,20 @@ pub fn init() {
     println!("Discovered {} PCI devices", DEVICES.lock().len());
 
     for dev in DEVICES.lock().iter_mut() {
-        // Check the type of device, in oder to identify important stuff that we will use.
+        // Check the type of device, in order to identify important stuff that we will use.
         match dev.class {
             DeviceClass::Legacy => {},
             DeviceClass::MassStorage => {
-                match dev.subclass {
-                    0x06 => println!("AHCI controller found.."),
-                    _ => (),
+                match dev.subclass { 
+                    0x06 => {
+                        // Reference ABAR.
+                        let mut bar = unsafe {dev.read(0x24)};
+                        
+                        let address = bar & 0xFFFFFFF0;
+
+                        println!("Found AHCI controller. Controller mapped at {:#x}", address);
+                    }
+                    _ => {},
                 }
             },
             _ => {}

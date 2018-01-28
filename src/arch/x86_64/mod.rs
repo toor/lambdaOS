@@ -3,7 +3,6 @@ pub mod memory;
 
 use device;
 use self::memory::MemoryController;
-use alloc::boxed::Box;
 
 pub static mut MEMORY_CONTROLLER: Option<MemoryController> = None;
 
@@ -16,6 +15,7 @@ pub unsafe fn memory_controller() -> &'static mut MemoryController {
 
 pub unsafe fn kinit(multiboot_info: usize) {
     interrupts::disable_interrupts();
+    
     {
         device::vga::buffer::clear_screen();
 
@@ -34,6 +34,7 @@ pub unsafe fn kinit(multiboot_info: usize) {
 
         device::init();
     }
+
     interrupts::enable_interrupts();
 }
 
