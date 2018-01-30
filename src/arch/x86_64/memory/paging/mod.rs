@@ -5,7 +5,7 @@ pub use self::mapper::Mapper;
 use core::ops::{Add, Deref, DerefMut};
 use multiboot2::BootInformation;
 
-mod entry;
+pub mod entry;
 mod table;
 mod temporary_page;
 mod mapper;
