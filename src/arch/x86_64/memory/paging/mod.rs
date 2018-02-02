@@ -211,7 +211,8 @@ where
 
     let mut active_table = unsafe { ActivePageTable::new() };
     let mut new_table = {
-        let frame = allocator.allocate_frame().expect("no more frames");
+        // Allocate a frame for the p4 table, and set this table as inactive.
+        let frame = allocator.allocate_frame(1).expect("no more frames");
         InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
     };
 

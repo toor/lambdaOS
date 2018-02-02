@@ -58,12 +58,18 @@ impl AreaFrameAllocator {
 
 impl FrameAllocator for AreaFrameAllocator {
     /// Allocate a single frame. Return `None` if we are OOM.
-    fn allocate_frame(&mut self) -> Option<Frame> {
-        if let Some(area) = self.current_area {
+    fn allocate_frame(&mut self, count: usize) -> Option<Frame> {
+        if count == 0 {
+            return None;
+        } else if let Some(area) = self.current_area {
             // "clone" the frame to return it if it's free. Frame doesn't
             // implement Clone, but we can construct an identical frame.
-            let frame = Frame {
+            let start_frame = Frame {
                 number: self.next_free_frame.number,
+            };
+
+            let end_frame = Frame {
+                number: self.next_free_frame.number + (count - 1),
             };
 
             // the last frame of the current area
@@ -72,15 +78,19 @@ impl FrameAllocator for AreaFrameAllocator {
                 Frame::containing_address(address as usize)
             };
 
-            if frame > current_area_last_frame {
+            if end_frame > current_area_last_frame {
                 // all frames of current area are used, switch to next area
                 self.choose_next_area();
-            } else if frame >= self.kernel_start && frame <= self.kernel_end {
-                // `frame` is used by the kernel
+            } else if (start_frame >= self.kernel_start && start_frame <= self.kernel_end)
+                || (end_frame >= self.kernel_start && start_frame <= self.kernel_end)
+            {
+                // frame range is used by the kernel.
                 self.next_free_frame = Frame {
                     number: self.kernel_end.number + 1,
                 };
-            } else if frame >= self.multiboot_start && frame <= self.multiboot_end {
+            } else if (start_frame >= self.multiboot_start && start_frame <= self.multiboot_end) 
+                || (end_frame >= self.multiboot_start && end_frame <= self.multiboot_end)
+            {
                 // `frame` is used by the multiboot information structure
                 self.next_free_frame = Frame {
                     number: self.multiboot_end.number + 1,
@@ -88,10 +98,10 @@ impl FrameAllocator for AreaFrameAllocator {
             } else {
                 // frame is unused, increment `next_free_frame` and return it
                 self.next_free_frame.number += 1;
-                return Some(frame);
+                return Some(start_frame);
             }
             // `frame` was not valid, try it again with the updated `next_free_frame`
-            self.allocate_frame()
+            self.allocate_frame(count)
         } else {
             None // no free frames left
         }

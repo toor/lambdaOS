@@ -71,7 +71,7 @@ where
                 !self.entries[index].flags().contains(EntryFlags::HUGE_PAGE),
                 "mapping code does not support huge pages"
             );
-            let frame = allocator.allocate_frame().expect("no frames available");
+            let frame = allocator.allocate_frame(1).expect("no frames available");
             self.entries[index].set(frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
             self.next_table_mut(index).unwrap().zero();
         }

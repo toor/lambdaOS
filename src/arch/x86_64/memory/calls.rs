@@ -1,7 +1,7 @@
 use super::paging::{VirtualAddress, PhysicalAddress};
 use super::paging::entry::EntryFlags;
 use super::paging::ActivePageTable;
-use super::Frame;
+use super::{Frame, FrameAllocator};
 use super::paging::Page;
 
 /// A bit of memory granted to a userpace process.
@@ -34,4 +34,11 @@ impl Grant {
             is_mapped: true,
         }
     }
+}
+
+/// Allocate some physical memory.
+pub fn physalloc(size: usize) -> Result<usize, &'static str> {
+    let allocator = unsafe { super::allocator() };
+
+    allocator.allocate_frame((size + 4095) / 4096).ok_or("OOM").map(|frame| frame.start_address())
 }

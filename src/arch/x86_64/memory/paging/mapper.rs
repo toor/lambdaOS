@@ -92,7 +92,7 @@ impl Mapper {
     where
         A: FrameAllocator,
     {
-        let frame = allocator.allocate_frame().expect("out of memory");
+        let frame = allocator.allocate_frame(1).expect("out of memory");
         self.map_to(page, frame, flags, allocator)
     }
     

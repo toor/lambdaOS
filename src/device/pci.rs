@@ -212,7 +212,7 @@ pub fn init() {
         init_bus(bus);
     }
 
-    println!("Discovered {} PCI devices", DEVICES.lock().len());
+    println!("[ OK ] Discovered {} PCI devices", DEVICES.lock().len());
 
     for dev in DEVICES.lock().iter_mut() {
         // Check the type of device, in order to identify important stuff that we will use.
@@ -232,7 +232,7 @@ pub fn init() {
 
                         AHCI_BASE.store(address as usize, Ordering::SeqCst);
 
-                        println!("Found AHCI controller. Controller mapped at {:#x}", address);
+                        println!("[ OK ] Found AHCI controller. Controller mapped at {:#x}", address);
                     }
                     _ => {},
                 }
