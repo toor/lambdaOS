@@ -54,7 +54,7 @@ impl TinyAllocator {
     where
         A: FrameAllocator,
     {
-        let mut f = || allocator.allocate_frame();
+        let mut f = || allocator.allocate_frame(1);
         let frames = [f(), f(), f()];
         TinyAllocator(frames)
     }
@@ -62,7 +62,7 @@ impl TinyAllocator {
 
 impl FrameAllocator for TinyAllocator {
     /// Allocate the frames that have been borrowed from the main allocator.
-    fn allocate_frame(&mut self) -> Option<Frame> {
+    fn allocate_frame(&mut self, _count: usize) -> Option<Frame> {
         for frame_option in &mut self.0 {
             if frame_option.is_some() {
                 return frame_option.take();

@@ -212,7 +212,7 @@ pub fn init() {
         init_bus(bus);
     }
 
-    println!("Discovered {} PCI devices", DEVICES.lock().len());
+    println!("[ OK ] Discovered {} PCI devices", DEVICES.lock().len());
 
     for dev in DEVICES.lock().iter_mut() {
         // Check the type of device, in order to identify important stuff that we will use.
@@ -221,12 +221,18 @@ pub fn init() {
             DeviceClass::MassStorage => {
                 match dev.subclass { 
                     0x06 => {
-                        // Reference ABAR.
-                        let mut bar = unsafe {dev.read(0x24)};
+                        use device::ahci::hba::AHCI_BASE;
+                        use core::sync::atomic::Ordering;
+
+                        // Read header offset 24h to get reference to the ABAR.
+                        let mut bar = unsafe { dev.read(0x24) };
                         
+                        // Read bits 31-34, these point to the ABAR.
                         let address = bar & 0xFFFFFFF0;
 
-                        println!("Found AHCI controller. Controller mapped at {:#x}", address);
+                        AHCI_BASE.store(address as usize, Ordering::SeqCst);
+
+                        println!("[ OK ] Found AHCI controller. Controller mapped at {:#x}", address);
                     }
                     _ => {},
                 }

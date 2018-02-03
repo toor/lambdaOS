@@ -8,7 +8,7 @@ pub mod area_frame_allocator;
 pub mod heap_allocator;
 pub mod paging;
 pub mod stack_allocator;
-//pub mod phys;
+pub mod calls;
 
 pub const PAGE_SIZE: usize = 4096;
 
@@ -58,16 +58,18 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
 
     let heap_start_page = Page::containing_address(HEAP_START);
     let heap_end_page = Page::containing_address(HEAP_START + HEAP_SIZE - 1);
-
+    
+    // Briefly use the frame allocator to map the heap pages.
     for page in Page::range_inclusive(heap_start_page, heap_end_page) {
         active_table.map(page, paging::EntryFlags::WRITABLE, &mut frame_allocator);
     }
 
-    //Init the heap
+    // Init the heap
     unsafe {
         ::HEAP_ALLOCATOR.init(HEAP_START, HEAP_SIZE);
     }
-
+    
+    // The stack allocator will live just past the heap.
     let stack_allocator = {
         let stack_alloc_start = heap_end_page + 1;
         let stack_alloc_end = stack_alloc_start + 100;
@@ -96,6 +98,11 @@ impl MemoryController {
             ref mut stack_allocator,
         } = self;
         stack_allocator.alloc_stack(active_table, frame_allocator, size_in_pages)
+    }
+    
+    /// Get reference to the global frame allocator.
+    pub fn frame_allocator(&mut self) -> &mut AreaFrameAllocator {
+        &mut self.frame_allocator
     }
 }
 
@@ -149,6 +156,14 @@ impl Iterator for FrameIter {
 }
 
 pub trait FrameAllocator {
-    fn allocate_frame(&mut self) -> Option<Frame>;
+    fn allocate_frame(&mut self, count: usize) -> Option<Frame>;
     fn deallocate_frame(&mut self, frame: Frame);
+}
+
+pub unsafe fn allocator<'a>() -> &'a mut AreaFrameAllocator {
+    if let Some(ref mut memory_controller) = ::arch::MEMORY_CONTROLLER {
+        return memory_controller.frame_allocator();
+    } else {
+        panic!("memory controller called before init.");
+    }
 }
