@@ -2,21 +2,26 @@ use spin::Mutex;
 use device::vga::vga::{Color, ColorCode, VGA};
 use core::fmt;
 
-//Main print interface.
+/// Main print interface.
 pub fn print(args: fmt::Arguments) {
     use core::fmt::Write;
     SCREEN.lock().write_fmt(args).unwrap();
 }
 
+/// The width of the VGA text buffer.
 pub const BUFFER_WIDTH: usize = 80;
+/// The height of the VGA text buffer.
 pub const BUFFER_HEIGHT: usize = 25;
 
+#[derive(Copy, Clone)]
 pub struct TextBuffer {
-    //Array of rows of characters.
+    /// Array of rows of characters.
     chars: [[u8; BUFFER_WIDTH]; BUFFER_HEIGHT],
-    //How far along a row we are.
+    /// How far along a row we are.
     column_position: usize,
+    /// Represents the colour of the TTY buffer.
     color_code: ColorCode,
+    active: bool,
 }
 
 /// Clear the VGA buffer.
@@ -84,7 +89,8 @@ impl TextBuffer {
         self.sync();
     }
 
-    /// Newline.
+    /// Newline. This method will be called when a `\n` character is written
+    /// to the virtual buffer.
     pub fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
@@ -118,8 +124,10 @@ impl ::core::fmt::Write for TextBuffer {
     }
 }
 
+/// Global interface to the VGA 
 pub static SCREEN: Mutex<TextBuffer> = Mutex::new(TextBuffer {
     column_position: 0,
     color_code: ColorCode::new(Color::LightGreen, Color::Black),
     chars: [[b' '; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    active: true,
 });
