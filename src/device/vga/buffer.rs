@@ -134,19 +134,34 @@ pub static SCREEN: Mutex<TextBuffer> = Mutex::new(TextBuffer {
     active: true,
 });
 
-pub static TTYS: Mutex<Option<[&'static mut TextBuffer; 6]>> = Mutex::new(None);
+pub static TTYS: Mutex<Option<[TextBuffer; 6]>> = Mutex::new(None);
 
 /// Switch `SCREEN` to `ttys[index]`.
-pub fn switch(index: usize, mut ttys: Option<[&'static mut TextBuffer; 6]>) {
-    let inner = |idx: usize, list: &mut [&'static mut TextBuffer; 6]| {
-        *SCREEN.lock() = *list[index];
+pub fn switch(index: usize) {
+    let inner = |idx: usize, list: &mut [TextBuffer; 6]| {
+        *SCREEN.lock() = list[index];
+        list[index].active = true;
     };
 
-    let list = match ttys {
+    let mut list = *TTYS.lock();
+
+    let list = match list {
         Some(ref mut t) => t,
-        None => panic!("Tried to access non-initialised TTY list."),
+        None => panic!("TTY list called before init."),
     };
-    
+
     // Only gets called if `list` is Some
     inner(index, list);
+}
+
+pub fn tty_init() {
+    // Create six identical TTYS.
+    let buffers: [TextBuffer; 6] = [TextBuffer {
+        column_position: 0,
+        color_code: ColorCode::new(Color::LightGray, Color::Black),
+        chars: [[b' '; BUFFER_WIDTH]; BUFFER_HEIGHT],
+        active: false,
+    }; 6];
+
+    *TTYS.lock() = Some(buffers);
 }
