@@ -13,7 +13,7 @@ pub unsafe fn memory_controller() -> &'static mut MemoryController {
     }
 }
 
-pub unsafe fn kinit(multiboot_info: usize) {
+pub unsafe fn init(multiboot_info: usize) {
     interrupts::disable_interrupts();
     
     {

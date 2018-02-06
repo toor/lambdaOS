@@ -1,4 +1,6 @@
+
 #[derive(Clone, Debug)]
+/// Register context.
 pub struct Context {
     pub cr3: usize,
     rbp: usize,
