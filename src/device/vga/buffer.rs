@@ -16,12 +16,12 @@ pub const BUFFER_HEIGHT: usize = 25;
 #[derive(Copy, Clone)]
 pub struct TextBuffer {
     /// Array of rows of characters.
-    chars: [[u8; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    pub chars: [[u8; BUFFER_WIDTH]; BUFFER_HEIGHT],
     /// How far along a row we are.
-    column_position: usize,
+    pub column_position: usize,
     /// Represents the colour of the TTY buffer.
-    color_code: ColorCode,
-    active: bool,
+    pub color_code: ColorCode,
+    pub active: bool,
 }
 
 /// Clear the VGA buffer.
@@ -54,11 +54,13 @@ impl TextBuffer {
         match byte {
             // Newline character.
             b'\n' => self.new_line(),
+            // Backspace.
             0x8 => self.delete_byte(),
             // Tab escape.
             b'\t' => for _ in 0..4 {
                 self.write_byte(b' ');
             },
+            // Catch-all pattern that just updates the character array with the given byte.
             byte => {
                 if self.column_position >= BUFFER_WIDTH {
                     // At end of row.
@@ -124,10 +126,27 @@ impl ::core::fmt::Write for TextBuffer {
     }
 }
 
-/// Global interface to the VGA 
+/// Global interface to the VGA text mode. 
 pub static SCREEN: Mutex<TextBuffer> = Mutex::new(TextBuffer {
     column_position: 0,
     color_code: ColorCode::new(Color::LightGreen, Color::Black),
     chars: [[b' '; BUFFER_WIDTH]; BUFFER_HEIGHT],
     active: true,
 });
+
+pub static TTYS: Mutex<Option<[&'static mut TextBuffer; 6]>> = Mutex::new(None);
+
+/// Switch `SCREEN` to `ttys[index]`.
+pub fn switch(index: usize, mut ttys: Option<[&'static mut TextBuffer; 6]>) {
+    let inner = |idx: usize, list: &mut [&'static mut TextBuffer; 6]| {
+        *SCREEN.lock() = *list[index];
+    };
+
+    let list = match ttys {
+        Some(ref mut t) => t,
+        None => panic!("Tried to access non-initialised TTY list."),
+    };
+    
+    // Only gets called if `list` is Some
+    inner(index, list);
+}

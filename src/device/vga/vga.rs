@@ -78,7 +78,7 @@ impl Vga {
 
         for row in 0..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
-                //Update using the text buffer.
+                // Update using the text buffer.
                 let character = ScreenChar {
                     ascii_character: buffer.chars()[row][col],
                     color_code: buffer.color_code(),
@@ -90,7 +90,7 @@ impl Vga {
     }
 
     #[allow(exceeding_bitshifts)]
-    /// Update the text mode cursor to coordinates (x, y).
+    /// Update the text mode cursor to coordinates (row, col).
     pub fn update_cursor(&self, row: usize, col: usize) {
         let pos = ((BUFFER_WIDTH as u16) * (row as u16)) + col as u16;
         use device::Port;
