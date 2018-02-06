@@ -180,13 +180,13 @@ p3_table:
 p2_table:
     resb 4096
 stack_bottom:
-    resb 4096 * 4
+    resb 4096 * 8 ; 32 Kib
 stack_top:
 
 section .rodata
 gdt64:
     dq 0 ; zero entry
-.code: equ $ - gdt64 ; new
+.code: equ $ - gdt64 
     dq (1<<44) | (1<<47) | (1<<43) | (1<<53) ; code segment
 .pointer:
     dw $ - gdt64 - 1
