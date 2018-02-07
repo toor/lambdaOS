@@ -74,7 +74,9 @@ impl TextBuffer {
             }
         }
 
-        self.sync();
+        if self.active {
+            self.sync();
+        }
     }
 
     /// Delete a single byte from the buffer.
@@ -88,7 +90,10 @@ impl TextBuffer {
 
         self.chars[BUFFER_HEIGHT - 1][col] = b' ';
         self.column_position -= 1;
-        self.sync();
+        
+        if self.active {
+            self.sync();
+        }
     }
 
     /// Newline. This method will be called when a `\n` character is written
@@ -104,7 +109,9 @@ impl TextBuffer {
         //Set position to start of row.
         self.column_position = 0;
 
-        self.sync();
+        if self.active {
+            self.sync();
+        }
     }
 
     /// Clear a single row by stepping across the entire width of the current row, and writing a
@@ -139,8 +146,8 @@ pub static TTYS: Mutex<Option<[TextBuffer; 6]>> = Mutex::new(None);
 /// Switch `SCREEN` to `ttys[index]`.
 pub fn switch(index: usize) {
     let inner = |idx: usize, list: &mut [TextBuffer; 6]| {
-        *SCREEN.lock() = list[index];
-        list[index].active = true;
+        list[idx].active = true;
+        *SCREEN.lock() = list[idx]; 
     };
 
     let mut list = *TTYS.lock();
@@ -154,6 +161,7 @@ pub fn switch(index: usize) {
     inner(index, list);
 }
 
+/// Initialise all the TTYS.
 pub fn tty_init() {
     // Create six identical TTYS.
     let buffers: [TextBuffer; 6] = [TextBuffer {

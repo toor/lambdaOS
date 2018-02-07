@@ -43,7 +43,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
         arch::init(multiboot_information_address)
     };
 
-    let proc_closure = || {
+    /* let proc_closure = || {
         let max_procs = 50;
 
         for i in 0..max_procs {
@@ -55,7 +55,11 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     use alloc::String;
 
-    syscall::create(real_main, String::from("real_main"));
+    syscall::create(real_main, String::from("real_main")); */
+
+    // Test a print to the new TTY.
+    
+    tty_test();
 
     loop {}
 }
@@ -67,6 +71,20 @@ pub extern "C" fn real_main() {
 
 pub extern "C" fn process_test() {
     println!("Inside test process.");
+}
+
+pub fn tty_test() {
+    use device::vga::buffer;
+    
+    /* {
+        // Reference the original screen buffer.
+        let mut original: buffer::TextBuffer = (*buffer::SCREEN.lock());
+
+        // Make the 0th entry be the SCREEN, for switching back.
+        buffer::TTYS.lock().unwrap()[0] = original;
+    } */
+
+    buffer::switch(1);
 }
 
 use arch::memory::heap_allocator::HeapAllocator;

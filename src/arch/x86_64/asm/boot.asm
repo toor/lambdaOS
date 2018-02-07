@@ -23,7 +23,7 @@ start:
     jmp gdt64.code:long_mode_start
 
 set_up_page_tables:
-    ; recursive map P4
+    ; recursively map P4
     mov eax, p4_table
     or eax, 0b11 ; present + writable
     mov [p4_table + 511 * 8], eax
@@ -173,6 +173,7 @@ set_up_SSE:
 
 section .bss
 align 4096
+; Each page table occupies a single 4KiB physical frame.
 p4_table:
     resb 4096
 p3_table:
@@ -180,7 +181,7 @@ p3_table:
 p2_table:
     resb 4096
 stack_bottom:
-    resb 4096 * 8 ; 32 Kib
+    resb 4096 * 8 ; 32 KiB
 stack_top:
 
 section .rodata

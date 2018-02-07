@@ -1,5 +1,7 @@
 macro_rules! print {
     ($($arg:tt)*) => ({
+        // use arch::interrupts::disable_interrupts_and_then;
+
         $crate::device::vga::buffer::print(format_args!($($arg)*));
     });
 }
@@ -10,11 +12,11 @@ macro_rules! println {
 }
 
 macro_rules! format {
-  ($($arg:tt)*) => ({
-    use alloc::string::String;
-    use core::fmt;
-    let mut output = String::new();
-    fmt::write(&mut output, format_args!($($arg)*)).unwrap();
-    output
-  });
+    ($($arg:tt)*) => ({
+        use alloc::string::String;
+        use core::fmt;
+        let mut output = String::new();
+        fmt::write(&mut output, format_args!($($arg)*)).unwrap();
+        output
+    });
 }
