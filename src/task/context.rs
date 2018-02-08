@@ -34,7 +34,7 @@ impl Context {
     #[inline(never)]
     pub unsafe extern "C" fn switch_to(&mut self, next: &mut Context) {
         asm!("pushfq ; pop $0" : "=r"(self.rflags) : : "memory" : "intel", "volatile");
-        asm!("push $0 ; popfq" : "=r"(self.rflags) : : "memory" : "intel", "volatile");
+        asm!("push $0 ; popfq" : : "r"(next.rflags) : "memory" : "intel", "volatile");
 
         asm!("mov $0, cr3" : "=r"(self.cr3) : : "memory" : "intel", "volatile");
         asm!("mov $0, rbx" : "=r"(self.rbx) : : "memory" : "intel", "volatile");
