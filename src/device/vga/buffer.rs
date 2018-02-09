@@ -14,6 +14,7 @@ pub const BUFFER_WIDTH: usize = 80;
 pub const BUFFER_HEIGHT: usize = 25;
 
 #[derive(Copy, Clone)]
+/// A virtual text buffer.
 pub struct TextBuffer {
     /// Array of rows of characters.
     pub chars: [[u8; BUFFER_WIDTH]; BUFFER_HEIGHT],
@@ -136,7 +137,7 @@ impl ::core::fmt::Write for TextBuffer {
 /// Global interface to the VGA text mode. 
 pub static SCREEN: Mutex<TextBuffer> = Mutex::new(TextBuffer {
     column_position: 0,
-    color_code: ColorCode::new(Color::LightGreen, Color::Black),
+    color_code: ColorCode::new(Color::LightGray, Color::Black),
     chars: [[b' '; BUFFER_WIDTH]; BUFFER_HEIGHT],
     active: true,
 });

@@ -142,6 +142,7 @@ fn retrieve_bytes(scancode: u8) -> u64 {
         .fold(0, |acc, &b| (acc << 1) + b as u64)
 }
 
+/// Print an ascii character.
 pub fn print_char(character: char) {
     match character {
         '\n' | ' ' | '\t' | '\x08' => print!("{}", character),
