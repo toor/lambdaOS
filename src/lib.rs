@@ -59,7 +59,7 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
 
     // Test a print to the new TTY.
     
-    tty_test();
+    // tty_test();
 
     loop {}
 }
