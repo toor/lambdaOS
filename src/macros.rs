@@ -18,3 +18,11 @@ macro_rules! format {
         output
     });
 }
+
+macro_rules! tty_switch {
+    ($x:expr) => ({
+        use device::vga::buffer::switch;
+
+        switch($x);
+    });
+}
