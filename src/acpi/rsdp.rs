@@ -20,7 +20,7 @@ pub struct RsdpDescriptor {
 }
 
 impl RsdpDescriptor {
-    pub fn init(active_table: &mut ActivePageTable) -> Result<Self, String> {
+    pub fn init(active_table: &mut ActivePageTable) -> Option<&Self> {
         let rsdp_start: usize = 0xe0000;
         let rsdp_end: usize = 0xf_ffff;
         
@@ -37,14 +37,14 @@ impl RsdpDescriptor {
             }
         }
 
-        RsdpDescriptor::search(rsdp_start, rsdp_end).ok_or(String::from("Could not find Rsdp"))
+        RsdpDescriptor::search(rsdp_start, rsdp_end)
     }
 
-    fn search(start_addr: usize, end_addr: usize) -> Option<RsdpDescriptor> {
+    fn search<'a>(start_addr: usize, end_addr: usize) -> Option<&'a RsdpDescriptor> {
         for i in 0 .. (end_addr + 1 - start_addr)/16 {
             let rsdp = unsafe { &*((start_addr + i * 16) as *const RsdpDescriptor) };
             if &rsdp.signature == b"RSD PTR " {
-                return Some(*rsdp);
+                return Some(&rsdp);
             }
         }
 
