@@ -2,21 +2,27 @@ use spin::Mutex;
 use device::vga::vga::{Color, ColorCode, VGA};
 use core::fmt;
 
-//Main print interface.
+/// Main print interface.
 pub fn print(args: fmt::Arguments) {
     use core::fmt::Write;
     SCREEN.lock().write_fmt(args).unwrap();
 }
 
+/// The width of the VGA text buffer.
 pub const BUFFER_WIDTH: usize = 80;
+/// The height of the VGA text buffer.
 pub const BUFFER_HEIGHT: usize = 25;
 
+#[derive(Copy, Clone)]
+/// A virtual text buffer.
 pub struct TextBuffer {
-    //Array of rows of characters.
-    chars: [[u8; BUFFER_WIDTH]; BUFFER_HEIGHT],
-    //How far along a row we are.
-    column_position: usize,
-    color_code: ColorCode,
+    /// Array of rows of characters.
+    pub chars: [[u8; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    /// How far along a row we are.
+    pub column_position: usize,
+    /// Represents the colour of the TTY buffer.
+    pub color_code: ColorCode,
+    pub active: bool,
 }
 
 /// Clear the VGA buffer.
@@ -49,11 +55,13 @@ impl TextBuffer {
         match byte {
             // Newline character.
             b'\n' => self.new_line(),
+            // Backspace.
             0x8 => self.delete_byte(),
             // Tab escape.
             b'\t' => for _ in 0..4 {
                 self.write_byte(b' ');
             },
+            // Catch-all pattern that just updates the character array with the given byte.
             byte => {
                 if self.column_position >= BUFFER_WIDTH {
                     // At end of row.
@@ -67,7 +75,9 @@ impl TextBuffer {
             }
         }
 
-        self.sync();
+        if self.active {
+            self.sync();
+        }
     }
 
     /// Delete a single byte from the buffer.
@@ -81,10 +91,14 @@ impl TextBuffer {
 
         self.chars[BUFFER_HEIGHT - 1][col] = b' ';
         self.column_position -= 1;
-        self.sync();
+        
+        if self.active {
+            self.sync();
+        }
     }
 
-    /// Newline.
+    /// Newline. This method will be called when a `\n` character is written
+    /// to the virtual buffer.
     pub fn new_line(&mut self) {
         for row in 1..BUFFER_HEIGHT {
             for col in 0..BUFFER_WIDTH {
@@ -96,7 +110,9 @@ impl TextBuffer {
         //Set position to start of row.
         self.column_position = 0;
 
-        self.sync();
+        if self.active {
+            self.sync();
+        }
     }
 
     /// Clear a single row by stepping across the entire width of the current row, and writing a
@@ -118,8 +134,43 @@ impl ::core::fmt::Write for TextBuffer {
     }
 }
 
+/// Global interface to the VGA text mode. 
 pub static SCREEN: Mutex<TextBuffer> = Mutex::new(TextBuffer {
     column_position: 0,
-    color_code: ColorCode::new(Color::LightGreen, Color::Black),
+    color_code: ColorCode::new(Color::LightGray, Color::Black),
     chars: [[b' '; BUFFER_WIDTH]; BUFFER_HEIGHT],
+    active: true,
 });
+
+pub static TTYS: Mutex<Option<[TextBuffer; 6]>> = Mutex::new(None);
+
+/// Switch `SCREEN` to `ttys[index]`.
+pub fn switch(index: usize) {
+    let inner = |idx: usize, list: &mut [TextBuffer; 6]| {
+        list[idx].active = true;
+        *SCREEN.lock() = list[idx]; 
+    };
+
+    let mut list = *TTYS.lock();
+
+    let list = match list {
+        Some(ref mut t) => t,
+        None => panic!("TTY list called before init."),
+    };
+
+    // Only gets called if `list` is Some
+    inner(index, list);
+}
+
+/// Initialise all the TTYS.
+pub fn tty_init() {
+    // Create six identical TTYS.
+    let buffers: [TextBuffer; 6] = [TextBuffer {
+        column_position: 0,
+        color_code: ColorCode::new(Color::LightGray, Color::Black),
+        chars: [[b' '; BUFFER_WIDTH]; BUFFER_HEIGHT],
+        active: false,
+    }; 6];
+
+    *TTYS.lock() = Some(buffers);
+}

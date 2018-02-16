@@ -40,32 +40,11 @@ pub use runtime_glue::*;
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
-    unsafe { arch::kinit(multiboot_information_address) };
-
-    let proc_closure = || {
-        let max_procs = 50;
-
-        for i in 0..max_procs {
-            syscall::create(process_test, format!("test_process_{}", i));
-        }
+    unsafe {
+        arch::init(multiboot_information_address)
     };
 
-    proc_closure();
-
-    use alloc::String;
-
-    syscall::create(real_main, String::from("real_main"));
-
     loop {}
-}
-
-#[no_mangle]
-pub extern "C" fn real_main() {
-    println!("In real main");
-}
-
-pub extern "C" fn process_test() {
-    println!("Inside test process.");
 }
 
 use arch::memory::heap_allocator::HeapAllocator;
