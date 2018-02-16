@@ -13,12 +13,16 @@ pub unsafe fn memory_controller() -> &'static mut MemoryController {
     }
 }
 
-pub unsafe fn kinit(multiboot_info: usize) {
+/// Main kernel init function. This sets everything up for us.
+pub unsafe fn init(multiboot_info: usize) {
+    
     interrupts::disable_interrupts();
     
     {
         device::vga::buffer::clear_screen();
-
+        
+        println!("[ INFO ] lambdaOS: Begin init.");
+        
         let boot_info = ::multiboot2::load(multiboot_info);
 
         enable_nxe_bit();
@@ -36,6 +40,8 @@ pub unsafe fn kinit(multiboot_info: usize) {
     }
 
     interrupts::enable_interrupts();
+
+    println!("[ OK ] Init successful, you may now type.")
 }
 
 pub fn enable_nxe_bit() {

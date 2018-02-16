@@ -55,7 +55,7 @@ pub fn is_special_key(byte: u8) -> Option<u8> {
 fn match_scancode(scancode: u64) -> Option<KeyEvent> {
     let idx = scancode as usize;
     match scancode {
-        // ASCII Keys by keyboard row
+        // ASCII Keys by keyboard row.
         0x02...0x0D => key_press!(LowerAscii(b"1234567890-="[idx - 0x02])),
         0x10...0x1B => key_press!(LowerAscii(b"qwertyuiop[]"[idx - 0x10])),
         0x1E...0x28 => key_press!(LowerAscii(b"asdfghjkl;'"[idx - 0x1E])),
@@ -80,6 +80,20 @@ fn match_scancode(scancode: u64) -> Option<KeyEvent> {
         0x3A => key_press!(Meta(CapsLock)),
         0x45 => key_press!(Meta(NumLock)),
         0x46 => key_press!(Meta(ScrollLock)),
+        // F1 .. F10
+        0x3B => key_press!(Meta(FunctionKeys(0))),
+        0x3C => key_press!(Meta(FunctionKeys(1))),
+        0x3D => key_press!(Meta(FunctionKeys(2))),
+        0x3E => key_press!(Meta(FunctionKeys(3))),
+        0x3F => key_press!(Meta(FunctionKeys(4))),
+        0x40 => key_press!(Meta(FunctionKeys(5))),
+        0x41 => key_press!(Meta(FunctionKeys(6))),
+        0x42 => key_press!(Meta(FunctionKeys(7))),
+        0x43 => key_press!(Meta(FunctionKeys(8))),
+        0x44 => key_press!(Meta(FunctionKeys(9))),
+        // F11, F12
+        0x57 => key_press!(Meta(FunctionKeys(10))),
+        0x58 => key_press!(Meta(FunctionKeys(11))),
 
         0xAA => key_release!(Meta(ShiftLeft(false))),
         0xB6 => key_release!(Meta(ShiftRight(false))),
@@ -87,6 +101,19 @@ fn match_scancode(scancode: u64) -> Option<KeyEvent> {
         0xE09D => key_release!(Meta(ControlRight(false))),
         0xB8 => key_release!(Meta(AltLeft(false))),
         0xE0B8 => key_release!(Meta(AltRight(false))),
+        // F1 .. F10
+        0xBB => key_release!(Meta(FunctionKeys(0))),
+        0xBC => key_release!(Meta(FunctionKeys(1))),
+        0xBD => key_release!(Meta(FunctionKeys(2))),
+        0xBE => key_release!(Meta(FunctionKeys(3))),
+        0xBF => key_release!(Meta(FunctionKeys(4))),
+        0xC0 => key_release!(Meta(FunctionKeys(5))),
+        0xC1 => key_release!(Meta(FunctionKeys(6))),
+        0xC2 => key_release!(Meta(FunctionKeys(7))),
+        0xC3 => key_release!(Meta(FunctionKeys(8))),
+        0xC4 => key_release!(Meta(FunctionKeys(9))),
+        0xD7 => key_release!(Meta(FunctionKeys(10))),
+        0xD8 => key_release!(Meta(FunctionKeys(11))),
 
         _ => None,
     }

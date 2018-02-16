@@ -35,6 +35,9 @@ pub enum Modifiers {
     ScrollLock,
     ShiftLeft(bool),
     ShiftRight(bool),
+    /// Function keys, the usize represents the index
+    /// of the key in the array `functions` under `ModifierState`.
+    FunctionKeys(usize),
 }
 
 struct ModifierState {
@@ -44,6 +47,7 @@ struct ModifierState {
     caps_lock: bool,
     num_lock: bool,
     scroll_lock: bool,
+    function_keys: [bool; 12],
 }
 
 impl ModifierState {
@@ -55,6 +59,7 @@ impl ModifierState {
             caps_lock: false,
             num_lock: false,
             scroll_lock: false,
+            function_keys: [false; 12],
         }
     }
 
@@ -63,12 +68,32 @@ impl ModifierState {
         self.shift.is_pressed() ^ self.caps_lock
     }
 
+    fn should_switch_tty(&self) -> (bool, usize) {
+        let is_ctrl: bool = self.control.left || self.control.right;
+
+        for i in 0..12 {
+            // If any one of the function keys is pressed
+            if self.function_keys[i] && is_ctrl {
+                return (true, i);
+            } else {
+                continue;
+            }
+        }
+
+        (false, 0)
+    }
+
     /// Apply modifiers to ascii and return updated ascii.
     fn apply_to(&self, ascii: char) -> String {
         if self.use_uppercase_letters() {
             use device::keyboard::layout::map_to_upper;
 
             map_to_upper(ascii).iter().collect()
+        } else if self.should_switch_tty().0 {
+            let index = self.should_switch_tty().1;
+            tty_switch!(index);
+
+            ascii.to_string()
         } else {
             ascii.to_string()
         }
@@ -88,6 +113,7 @@ impl ModifierState {
             ScrollLock => self.num_lock = !self.scroll_lock,
             ShiftLeft(m) => self.shift.left = m,
             ShiftRight(m) => self.shift.right = m,
+            FunctionKeys(m) => self.function_keys[m] = true,
         }
     }
 }
@@ -142,6 +168,7 @@ fn retrieve_bytes(scancode: u8) -> u64 {
         .fold(0, |acc, &b| (acc << 1) + b as u64)
 }
 
+/// Print an ascii character.
 pub fn print_char(character: char) {
     match character {
         '\n' | ' ' | '\t' | '\x08' => print!("{}", character),
