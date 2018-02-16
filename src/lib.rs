@@ -33,6 +33,7 @@ pub mod device;
 pub mod task;
 pub mod syscall;
 pub mod arch;
+pub mod acpi;
 mod runtime_glue;
 
 pub use runtime_glue::*;
