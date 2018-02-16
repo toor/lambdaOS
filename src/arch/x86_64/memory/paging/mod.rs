@@ -125,7 +125,6 @@ impl ActivePageTable {
         control_regs::cr3().0 as usize
     }
     
-    /// Execute a given mapping closure.
     pub fn with<F>(
         &mut self,
         table: &mut InactivePageTable,

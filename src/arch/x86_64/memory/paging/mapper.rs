@@ -35,7 +35,8 @@ impl Mapper {
     pub fn translate_page(&self, page: Page) -> Option<Frame> {
         // Get reference to the P3 table.
         let p3 = self.p4().next_table(page.p4_index());
-
+        
+        // Revert to this closure if we can't successfully walk the page tables normally.
         let huge_page = || {
             p3.and_then(|p3| {
                 let p3_entry = &p3[page.p3_index()];
