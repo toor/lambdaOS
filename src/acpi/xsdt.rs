@@ -1,14 +1,13 @@
-use super::sdt::Sdt;
+use super::sdt::SdtHeader;
 
 #[derive(Debug)]
-pub struct Xsdt(&'static Sdt);
+pub struct Xsdt(&'static SdtHeader);
 
 impl Xsdt {
-    pub fn new(sdt: &'static Sdt) -> Option<Xsdt> {
-        if &sdt.signature == b"XSDT" {
-            Some(Xsdt(sdt))
-        } else {
-            None
+    pub fn new(sdt: &'static SdtHeader) -> Option<Xsdt> {
+        match &sdt.signature {
+            b"XSDT" => Some(Xsdt(sdt)),
+            _ => None,
         }
     }
 }
