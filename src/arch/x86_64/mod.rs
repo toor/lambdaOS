@@ -2,7 +2,8 @@ pub mod interrupts;
 pub mod memory;
 
 use device;
-use self::memory::MemoryController;
+use self::memory::{MemoryController, active_table};
+use acpi;
 
 pub static mut MEMORY_CONTROLLER: Option<MemoryController> = None;
 
@@ -38,6 +39,8 @@ pub unsafe fn init(multiboot_info: usize) {
 
         device::init();
     }
+
+    acpi::init(active_table());
 
     interrupts::enable_interrupts();
 

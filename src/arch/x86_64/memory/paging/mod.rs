@@ -202,7 +202,7 @@ impl InactivePageTable {
 /// and turn the previous kernel stack into a guard page - this prevents silent stack overflows, as
 /// given that the guard page is unmapped, any stack overflow into this page will instantly cause a
 /// page fault. Returns the currently active kernel page table.
-pub fn remap_the_kernel<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
+pub fn paging_init<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
 where
     A: FrameAllocator,
 {

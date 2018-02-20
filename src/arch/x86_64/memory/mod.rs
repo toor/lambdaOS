@@ -1,5 +1,5 @@
 pub use self::area_frame_allocator::AreaFrameAllocator;
-pub use self::paging::remap_the_kernel;
+pub use self::paging::{paging_init, ActivePageTable};
 pub use self::stack_allocator::Stack;
 use self::paging::PhysicalAddress;
 use multiboot2::BootInformation;
@@ -51,7 +51,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         memory_map_tag.memory_areas(),
     );
 
-    let mut active_table = paging::remap_the_kernel(&mut frame_allocator, boot_info);
+    let mut active_table = paging::paging_init(&mut frame_allocator, boot_info);
 
     use self::paging::Page;
     use self::heap_allocator::{HEAP_SIZE, HEAP_START};
@@ -103,6 +103,10 @@ impl MemoryController {
     /// Get reference to the global frame allocator.
     pub fn frame_allocator(&mut self) -> &mut AreaFrameAllocator {
         &mut self.frame_allocator
+    }
+
+    pub fn active_table(&mut self) -> &mut ActivePageTable {
+        &mut self.active_table
     }
 }
 
@@ -163,6 +167,14 @@ pub trait FrameAllocator {
 pub unsafe fn allocator<'a>() -> &'a mut AreaFrameAllocator {
     if let Some(ref mut memory_controller) = ::arch::MEMORY_CONTROLLER {
         return memory_controller.frame_allocator();
+    } else {
+        panic!("memory controller called before init.");
+    }
+}
+
+pub unsafe fn active_table<'a>() -> &'a mut ActivePageTable {
+    if let Some(ref mut memory_controller) = ::arch::MEMORY_CONTROLLER {
+        memory_controller.active_table()
     } else {
         panic!("memory controller called before init.");
     }
