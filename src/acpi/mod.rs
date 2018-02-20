@@ -1,4 +1,31 @@
+use arch::memory::paging::{ActivePageTable, Page, VirtualAddress};
+use arch::memory::Frame;
+use arch::memory::paging::entry::EntryFlags;
+use arch::memory::allocator;
+
 pub mod rsdp;
 pub mod sdt;
 pub mod rsdt;
 pub mod xsdt;
+
+/// Retrieve an SDT from a pointer found using the RSDP
+fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::SdtHeader {
+    let allocator = unsafe { allocator() };
+
+    {
+        let frame = Frame::containing_address(address);
+        active_table.identity_map(frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator);
+    }
+
+    // Cast physical address to usable object.
+    let sdt = unsafe { &*(address as *const sdt::SdtHeader) };
+
+    sdt
+}
+
+pub fn init(active_table: &mut ActivePageTable) {
+    match rsdp::RsdpDescriptor::init(active_table) {
+        Some(r) => r,
+        None => panic!("Could not find RSDP, aborting..."),
+    };
+}
