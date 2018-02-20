@@ -39,11 +39,12 @@ impl RsdpDescriptor {
 
         RsdpDescriptor::search(rsdp_start, rsdp_end)
     }
-
+    
     fn search<'a>(start_addr: usize, end_addr: usize) -> Option<&'a RsdpDescriptor> {
         for i in 0 .. (end_addr + 1 - start_addr)/16 {
             let rsdp = unsafe { &*((start_addr + i * 16) as *const RsdpDescriptor) };
             if &rsdp.signature == b"RSD PTR " {
+                println!("[ OK ] ACPI: Found RSDP at {:#x}", rsdp as *const RsdpDescriptor as usize);
                 return Some(&rsdp);
             }
         }
