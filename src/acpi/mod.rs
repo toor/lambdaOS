@@ -27,4 +27,10 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
     let rsdp = rsdp::RsdpDescriptor::init(active_table).expect("Could not find rsdp, aborting ...");
 
     let sdt = get_sdt(rsdp.sdt(), active_table);
+
+    if rsdp.revision >= 2 {
+        println!("[ OK ] ACPI: Found XSDT at {:#x}", rsdp.sdt());
+    } else {
+        println!("[ OK ] ACPI: Found RSDT at {:#x}", rsdp.sdt());
+    }
 }

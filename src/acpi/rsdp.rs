@@ -12,7 +12,7 @@ pub struct RsdpDescriptor {
     signature: [u8; 8],
     checksum: u8,
     oem_id: [u8; 6],
-    revision: u8,
+    pub revision: u8,
     rsdt_address: u32,
     length: u32,
     xsdt_address: u64,
