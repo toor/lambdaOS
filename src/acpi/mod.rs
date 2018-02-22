@@ -23,9 +23,8 @@ fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::
     sdt
 }
 
-pub fn init(active_table: &mut ActivePageTable) {
-    match rsdp::RsdpDescriptor::init(active_table) {
-        Some(r) => r,
-        None => panic!("Could not find RSDP, aborting..."),
-    };
+pub unsafe fn init(active_table: &mut ActivePageTable) {
+    let rsdp = rsdp::RsdpDescriptor::init(active_table).expect("Could not find rsdp, aborting ...");
+
+    let sdt = get_sdt(rsdp.sdt(), active_table);
 }
