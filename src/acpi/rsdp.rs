@@ -6,6 +6,7 @@ use arch::memory::allocator;
 use arch::memory::paging::entry::EntryFlags;
 use alloc::String;
 
+#[derive(Copy, Clone, Debug)]
 #[repr(packed)]
 pub struct RsdpDescriptor {
     signature: [u8; 8],
@@ -20,7 +21,8 @@ pub struct RsdpDescriptor {
 }
 
 impl RsdpDescriptor {
-    pub fn init(active_table: &mut ActivePageTable) -> Option<&Self> {
+    /// Search for the RSDP and return if found.
+    pub fn init(active_table: &mut ActivePageTable) -> Option<Self> {
         let rsdp_start: usize = 0xe0000;
         let rsdp_end: usize = 0xf_ffff;
         
@@ -40,12 +42,11 @@ impl RsdpDescriptor {
         RsdpDescriptor::search(rsdp_start, rsdp_end)
     }
     
-    fn search<'a>(start_addr: usize, end_addr: usize) -> Option<&'a RsdpDescriptor> {
+    fn search(start_addr: usize, end_addr: usize) -> Option<RsdpDescriptor> {
         for i in 0 .. (end_addr + 1 - start_addr)/16 {
             let rsdp = unsafe { &*((start_addr + i * 16) as *const RsdpDescriptor) };
             if &rsdp.signature == b"RSD PTR " {
-                println!("[ OK ] ACPI: Found RSDP at {:#x}", rsdp as *const RsdpDescriptor as usize);
-                return Some(&rsdp);
+                return Some(*rsdp);
             }
         }
 
