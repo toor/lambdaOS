@@ -9,6 +9,7 @@
 #![feature(const_max_value)]
 #![feature(core_intrinsics)]
 #![feature(global_allocator)]
+#![feature(ptr_internals)]
 #![no_std]
 
 #[macro_use]
