@@ -7,6 +7,7 @@ pub mod rsdp;
 pub mod sdt;
 pub mod rsdt;
 pub mod xsdt;
+pub mod madt;
 
 /// Retrieve an SDT from a pointer found using the RSDP
 fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::SdtHeader {
@@ -33,4 +34,8 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
     } else {
         println!("[ OK ] ACPI: Found RSDT at {:#x}", rsdp.sdt());
     }
+
+    let rsdp = if let Some(r) = rsdt::Rsdt::new(sdt) {
+        r
+    };
 }
