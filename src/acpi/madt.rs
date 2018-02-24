@@ -9,6 +9,19 @@ pub struct Madt {
     pub flags: u32,
 }
 
+impl Madt {
+    pub fn new(sdt: &'static SdtHeader) -> Self {
+        let local_address = unsafe { *(sdt.data_address() as *const u32) };
+        let flags = unsafe { *(sdt.data_address() as *const u32).offset(1) };
+
+        Madt {
+            sdt: sdt,
+            address: local_address,
+            flags: flags,
+        }
+    }
+}
+
 /// The Local APIC.
 pub struct LapicEntry {
     /// The ID of the parent AP.

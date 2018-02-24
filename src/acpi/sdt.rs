@@ -2,6 +2,7 @@ use core::mem;
 use core::slice;
 
 #[derive(Copy, Clone, Debug)]
+#[repr(packed)]
 pub struct SdtHeader {
     pub signature: [u8; 4],
     pub length: u32,
