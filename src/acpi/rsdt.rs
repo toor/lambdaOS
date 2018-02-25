@@ -1,5 +1,6 @@
 use super::sdt::SdtHeader;
 use core::mem;
+use core::str;
 use super::madt::Madt;
 
 #[derive(Debug)]
@@ -12,7 +13,7 @@ impl <'a> Rsdt <'a> {
     pub fn new(sdt: &'static SdtHeader) -> Self {
         match &sdt.signature {
             b"RSDT" => {
-                let array = unsafe { mem::transmute::<&[u8], &[u32]>(sdt.data()) };
+                let array = unsafe { sdt.data() };
 
                 Rsdt {
                     sdt: sdt,
@@ -22,18 +23,24 @@ impl <'a> Rsdt <'a> {
             _ => panic!("Non-matching signature, aborting ..."),
         }
     }
-
+    
+    /// Retrieve a pointed-to table using a byte signature.
     pub fn find_sdt(&self, signature: &[u8]) -> Option<TableType> {
+        
         // Iterate over all the pointers to other tables.
-        for i in 0 .. self.other_entries.len() {
-            let sdt = self.other_entries[i] as usize as *const SdtHeader;
+        for i in self.other_entries.iter() {
+            let sdt = *i as *const SdtHeader;
             let sdt = unsafe { &*sdt };
 
-            let sig = &sdt.signature;
-
-            match sig {
-                b"APIC" if sig == signature => return Some(TableType::Madt(Madt::new(sdt))),
-                _ => return None,
+            let sig: &[u8] = &sdt.signature;
+            
+            if sig != signature {
+                continue;
+            } else {
+                match signature {
+                    b"APIC" => return Some(TableType::Madt(Madt::new(sdt))),
+                    _ => return None,
+                }
             }
         }
 
@@ -42,5 +49,7 @@ impl <'a> Rsdt <'a> {
 }
 
 pub enum TableType {
-    Madt(super::madt::Madt),
+    Madt(Madt),
+    Facp,
+    Hpet,
 }
