@@ -2,6 +2,10 @@ use arch::memory::paging::{ActivePageTable, Page, VirtualAddress};
 use arch::memory::Frame;
 use arch::memory::paging::entry::EntryFlags;
 use arch::memory::allocator;
+use spin::Mutex;
+use alloc::btree_map::BTreeMap;
+use alloc::String;
+use core::str;
 
 pub mod rsdp;
 pub mod sdt;
@@ -29,13 +33,11 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
 
     let sdt = get_sdt(rsdp.sdt(), active_table);
 
-    if rsdp.revision >= 2 {
-        println!("[ OK ] ACPI: Found XSDT at {:#x}", rsdp.sdt());
-    } else {
-        println!("[ OK ] ACPI: Found RSDT at {:#x}", rsdp.sdt());
-    }
+    let rsdt = rsdt::Rsdt::new(sdt);
+    println!("[ DEBUG ] ACPI: RSDT points to {} tables", rsdt.other_entries.len());
 
-    let rsdp = if let Some(r) = rsdt::Rsdt::new(sdt) {
-        r
-    };
+    match rsdt.find_sdt(b"APIC") {
+        Some(rsdt::TableType::Madt(m)) => println!("MADT at address {:#x}", m.sdt.data_address()),
+        _ => println!("Could not find MADT."),
+    }
 }
