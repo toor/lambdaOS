@@ -18,12 +18,12 @@ pub struct SdtHeader {
 impl SdtHeader {
     /// Check if this is valid.
     pub fn checksum(&self) -> bool {
-        let mut sum: u8 = 0;
+        let mut sum: u64 = 0;
 
-        for i in 0..self.length {
+        for _i in 0..self.length {
             let slice: [u8; mem::size_of::<Self>()] = unsafe { mem::transmute_copy(self) };
 
-            sum = slice.iter().sum();
+            sum = slice.iter().map(|i| *i as u64).sum::<u64>();
         }
 
         sum == 0
@@ -48,7 +48,7 @@ impl SdtHeader {
     }
 
     /// Return a slice of this table's data.
-    pub unsafe fn data(&self) -> &[u8] {
-        slice::from_raw_parts(self.data_address() as *const u8, self.data_len())
+    pub unsafe fn data(&self) -> &[u32] {
+        slice::from_raw_parts(self.data_address() as *const u32, self.data_len())
     }
 }
