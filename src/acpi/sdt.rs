@@ -49,6 +49,6 @@ impl SdtHeader {
 
     /// Return a slice of this table's data.
     pub unsafe fn data(&self) -> &[u32] {
-        slice::from_raw_parts(self.data_address() as *const u32, self.data_len())
+        slice::from_raw_parts(self.data_address() as *const u32, self.data_len() / 4)
     }
 }
