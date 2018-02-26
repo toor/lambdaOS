@@ -30,14 +30,17 @@ fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::
 
 pub unsafe fn init(active_table: &mut ActivePageTable) {
     let rsdp = rsdp::RsdpDescriptor::init(active_table).expect("Could not find rsdp, aborting ...");
-
+ 
     let sdt = get_sdt(rsdp.sdt(), active_table);
 
     let rsdt = rsdt::Rsdt::new(sdt);
+    println!("[ OK ] ACPI: Found RSDT at address {:#x}", rsdt.sdt as *const sdt::SdtHeader as usize);
     println!("[ DEBUG ] ACPI: RSDT points to {} tables", rsdt.other_entries.len());
 
     match rsdt.find_sdt(b"APIC") {
-        Some(rsdt::TableType::Madt(m)) => println!("MADT at address {:#x}", m.sdt.data_address()),
+        Some(rsdt::TableType::Madt(m)) => println!(
+            "[ OK ] ACPI: Found MADT at address {:#x}", 
+            m.sdt as *const sdt::SdtHeader as usize),
         _ => println!("Could not find MADT."),
     }
 }
