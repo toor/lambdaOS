@@ -15,13 +15,13 @@ pub type Scheduler = CoopScheduler;
 /// process is the next process to be ran.
 pub struct CoopScheduler {
     current_pid: AtomicUsize,    
-    task_t: RwLock<ProcessList>,
+    task_table: RwLock<ProcessList>,
     ready_list: RwLock<VecDeque<ProcessId>>,
 }
 
 impl Scheduling for CoopScheduler {
     /// Create a process using a C-declared function pointer as an argument. This function allocates a
-    /// stack which has an initial size of 1024.
+    /// 1 KiB stack.
     fn create(&self, func: extern "C" fn(), name: String) -> Result<ProcessId, i16> {
         use arch::memory::paging;
 
@@ -50,9 +50,9 @@ impl Scheduling for CoopScheduler {
             stack[proc_top + i] = *val;
         }
 
-        let mut proc_t_lock = self.task_t.write();
+        let mut task_table_lock = self.task_table.write();
 
-        let proc_lock = proc_t_lock.add()?;
+        let proc_lock = task_table_lock.add()?;
         {
             let mut process = proc_lock.write();
 
@@ -83,7 +83,7 @@ impl Scheduling for CoopScheduler {
     /// dropped.
     fn kill(&self, id: ProcessId) {
         {
-            let task_table_lock = self.task_t.read();
+            let task_table_lock = self.task_table.read();
             let mut proc_lock = task_table_lock
                 .get(id)
                 .expect("Cannot kill a non-existent process")
@@ -119,7 +119,7 @@ impl Scheduling for CoopScheduler {
 
         // Separate the locks from the context switch through scoping
         {
-            let task_table_lock = self.task_t.read();
+            let task_table_lock = self.task_table.read();
             let mut ready_list_lock = self.ready_list.write();
 
             let curr_id: ProcessId = self.get_id();
@@ -172,7 +172,7 @@ impl CoopScheduler {
     pub fn new() -> Self {
         CoopScheduler {
             current_pid: AtomicUsize::new(ProcessId::NULL_PROC.inner()),
-            task_t: RwLock::new(ProcessList::new()),
+            task_table: RwLock::new(ProcessList::new()),
             ready_list: RwLock::new(VecDeque::<ProcessId>::new()),
         }
     }
