@@ -22,8 +22,10 @@ pub mod pci;
 pub use self::io::cpuio::{Port, UnsafePort};
 pub use self::io::mmio;
 
+/// Perform hardware init.
 pub unsafe fn init() {
     vga::init();
+    pic::PICS.lock().init();
     pit::init();
     ps2_8042::PS2.lock().init();
     pci::init();
