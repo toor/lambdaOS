@@ -1,10 +1,8 @@
-use rlibc::memcmp;
 use arch::memory::Frame;
 use arch::memory::paging::{Page, PhysicalAddress, VirtualAddress};
 use arch::memory::paging::ActivePageTable;
 use arch::memory::allocator;
 use arch::memory::paging::entry::EntryFlags;
-use alloc::String;
 
 #[derive(Copy, Clone, Debug)]
 #[repr(packed)]

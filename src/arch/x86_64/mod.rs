@@ -35,8 +35,7 @@ pub unsafe fn init(multiboot_info: usize) {
 
         MEMORY_CONTROLLER = Some(memory_controller);
 
-        device::pic::PICS.lock().init();
-
+        
         device::init();
     }
 
