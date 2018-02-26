@@ -1,4 +1,5 @@
 use acpi::sdt::SdtHeader;
+use arch::memory::paging::ActivePageTable;
 
 #[derive(Debug)]
 pub struct Madt {
@@ -10,6 +11,11 @@ pub struct Madt {
 }
 
 impl Madt {
+    // TODO - this ought to find all the AP's and register them, and pass control to SMP.
+    pub fn init(active_table: &mut ActivePageTable) {
+    
+    }
+    
     pub fn new(sdt: &'static SdtHeader) -> Self {
         let local_address = unsafe { *(sdt.data_address() as *const u32) };
         let flags = unsafe { *(sdt.data_address() as *const u32).offset(1) };
@@ -23,6 +29,7 @@ impl Madt {
 }
 
 /// The Local APIC.
+#[repr(packed)]
 pub struct LapicEntry {
     /// The ID of the parent AP.
     pub processor_id: u8,
@@ -32,6 +39,7 @@ pub struct LapicEntry {
     pub flags: u32,
 }
 
+#[repr(packed)]
 pub struct IoApic {
     /// The ID of this I/O APIC.
     pub id: u8,
@@ -43,6 +51,7 @@ pub struct IoApic {
 }
 
 /// Mapping of IRQ source to interrupt.
+#[repr(packed)]
 pub struct InterruptSourceOverride {
     pub bus_source: u8,
     pub irq_source: u8,
@@ -51,6 +60,7 @@ pub struct InterruptSourceOverride {
 }
 
 /// Non-maskable interrupts.
+#[repr(packed)]
 pub struct ApicNMI {
     pub processor_id: u8,
     pub flags: u16,
