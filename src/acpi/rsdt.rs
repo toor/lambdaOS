@@ -38,6 +38,7 @@ impl <'a> Rsdt <'a> {
                 continue;
             } else {
                 match signature {
+                    // TODO: Support more tables.
                     b"APIC" => return Some(TableType::Madt(Madt::new(sdt))),
                     _ => return None,
                 }

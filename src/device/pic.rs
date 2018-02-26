@@ -113,4 +113,10 @@ impl ChainedPics {
             self.pics[0].end_of_interrupt();
         }
     }
+
+    /// Disables both PIC0 and PIC1.
+    pub unsafe fn disable_8259_pic(&mut self) {
+        self.pics[0].write(0xff);
+        self.pics[1].write(0xff);
+    }
 }
