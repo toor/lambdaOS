@@ -104,21 +104,31 @@ pub extern "x86-interrupt" fn double_fault_handler(
 
 /// The Invalid TSS exception occurs when an invalid segment selector is referenced during
 /// control transfer through a gate descriptor.
-pub extern "x86-interrupt" fn invalid_tss_handler(stack_frame: &mut ExceptionStackFrame, error_code: u64) {
+pub extern "x86-interrupt" fn invalid_tss_handler(
+    stack_frame: &mut ExceptionStackFrame,
+    error_code: u64,
+) {
     disable_interrupts_and_then(|| {
-        println!("\nEXCEPTION: INVALID TSS with code: {:?}\n{:#?}", error_code, stack_frame);
+        println!(
+            "\nEXCEPTION: INVALID TSS with code: {:?}\n{:#?}",
+            error_code, stack_frame
+        );
         loop {}
     });
 }
 
 /// A Segment Not Present exception occurs when an attempt is made to load a segment which has its
 /// present bit set to 0.
-pub extern "x86-interrupt" fn seg_not_present_handler(stack_frame: &mut ExceptionStackFrame,
-                                                      error_code: u64)
-{
+pub extern "x86-interrupt" fn seg_not_present_handler(
+    stack_frame: &mut ExceptionStackFrame,
+    error_code: u64,
+) {
     disable_interrupts_and_then(|| {
-        println!("\nEXCEPTION: SEGMENT NOT PRESENT\nerror code: \
-                 {:?}\n{:#?}", error_code, stack_frame);
+        println!(
+            "\nEXCEPTION: SEGMENT NOT PRESENT\nerror code: \
+             {:?}\n{:#?}",
+            error_code, stack_frame
+        );
 
         loop {}
     });
@@ -128,12 +138,16 @@ pub extern "x86-interrupt" fn seg_not_present_handler(stack_frame: &mut Exceptio
 /// - Loading a stack segment referencing a non-present segment descriptor.
 /// - PUSH/POP using ESP/EBP where the referenced address is non-canonical.
 /// - The stack limit check fails.
-pub extern "x86-interrupt" fn stack_seg_fault_handler(stack_frame: &mut ExceptionStackFrame,
-                                                      error_code: u64)
-{
+pub extern "x86-interrupt" fn stack_seg_fault_handler(
+    stack_frame: &mut ExceptionStackFrame,
+    error_code: u64,
+) {
     disable_interrupts_and_then(|| {
-        println!("\nEXCEPTION: STACK SEGMENT FAULT\nerror code: \
-                 {:?}\n{:#?}", error_code, stack_frame);
+        println!(
+            "\nEXCEPTION: STACK SEGMENT FAULT\nerror code: \
+             {:?}\n{:#?}",
+            error_code, stack_frame
+        );
 
         loop {}
     });
@@ -190,7 +204,10 @@ pub extern "x86-interrupt" fn x87_fp_exception_handler(stack_frame: &mut Excepti
 /// The Alignment Check exception occurs when alignment checking is enabled and a instruction
 /// attempts to reference an unaligned memory address. Alignment checking is only performed if
 /// `CPL = 3`.
-pub extern "x86-interrupt" fn alignment_check_handler(stack_frame: &mut ExceptionStackFrame, _error_code: u64) {
+pub extern "x86-interrupt" fn alignment_check_handler(
+    stack_frame: &mut ExceptionStackFrame,
+    _error_code: u64,
+) {
     disable_interrupts_and_then(|| {
         println!("\nEXCEPTION: ALIGNMENT CHECK\n{:#?}", stack_frame);
         loop {}
@@ -212,7 +229,10 @@ pub extern "x86-interrupt" fn machine_check_handler(stack_frame: &mut ExceptionS
 /// will cause this exception. Otherwise, an `Invalid Opcode` exception occurs.
 pub extern "x86-interrupt" fn simd_fp_exception_handler(stack_frame: &mut ExceptionStackFrame) {
     disable_interrupts_and_then(|| {
-        println!("\nEXCEPTION: SIMD FLOATING POINT EXCEPTION\n{:#?}", stack_frame);
+        println!(
+            "\nEXCEPTION: SIMD FLOATING POINT EXCEPTION\n{:#?}",
+            stack_frame
+        );
         loop {}
     });
 }

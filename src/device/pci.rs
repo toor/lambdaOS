@@ -30,14 +30,13 @@ pub struct Pci {
 impl Pci {
     /// Read an aligned dword from the PCI configuration space.
     pub unsafe fn read_config(&mut self, bus: u8, slot: u8, func: u8, offset: u8) -> u32 {
-        let address: u32 = 0x80000000 | (bus as u32) << 16 | (slot as u32) << 11 | 
-            (func as u32) << 8 |
-            (offset & 0xFC) as u32;
-        
+        let address: u32 = 0x80000000 | (bus as u32) << 16 | (slot as u32) << 11
+            | (func as u32) << 8 | (offset & 0xFC) as u32;
+
         self.cfg_address.write(address);
         self.cfg_data.read()
     }
-    
+
     /// Read data from `CFG_DATA` to determine unique info about a device.
     pub unsafe fn probe(&mut self, bus: u8, slot: u8, function: u8) -> Option<Device> {
         let config_0 = self.read_config(bus, slot, function, 0);
@@ -66,15 +65,17 @@ impl Pci {
 
 impl fmt::Display for Device {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f,
-               "{}.{}.{}: 0x{:04x} 0x{:04x} {:?} {:02x}",
-               self.bus,
-               self.device,
-               self.function,
-               self.vendor_id,
-               self.device_id,
-               self.class,
-               self.subclass)
+        write!(
+            f,
+            "{}.{}.{}: 0x{:04x} 0x{:04x} {:?} {:02x}",
+            self.bus,
+            self.device,
+            self.function,
+            self.vendor_id,
+            self.device_id,
+            self.class,
+            self.subclass
+        )
     }
 }
 
@@ -133,8 +134,8 @@ pub struct Device {
 
 impl Device {
     fn address(&self, offset: u32) -> u32 {
-        return 1 << 31 | (self.bus as u32) << 16 | (self.device as u32) << 11 |
-            (self.function as u32) << 8 | (offset as u32 & 0xFC);
+        return 1 << 31 | (self.bus as u32) << 16 | (self.device as u32) << 11
+            | (self.function as u32) << 8 | (offset as u32 & 0xFC);
     }
 
     /// Read.
@@ -193,7 +194,7 @@ fn init_dev(bus: u8, dev: u8) {
                 Some(mut d) => {
                     d.load_bars();
                     DEVICES.lock().push(d);
-                },
+                }
 
                 None => {}
             }
@@ -217,26 +218,29 @@ pub fn init() {
     for dev in DEVICES.lock().iter_mut() {
         // Check the type of device, in order to identify important stuff that we will use.
         match dev.class {
-            DeviceClass::Legacy => {},
+            DeviceClass::Legacy => {}
             DeviceClass::MassStorage => {
-                match dev.subclass { 
+                match dev.subclass {
                     0x06 => {
                         use device::ahci::hba::AHCI_BASE;
                         use core::sync::atomic::Ordering;
 
                         // Read header offset 24h to get reference to the ABAR.
                         let mut bar = unsafe { dev.read(0x24) };
-                        
+
                         // Read bits 31-34, these point to the ABAR.
                         let address = bar & 0xFFFFFFF0;
 
                         AHCI_BASE.store(address as usize, Ordering::SeqCst);
 
-                        println!("[ OK ] Found AHCI controller. Controller mapped at {:#x}", address);
+                        println!(
+                            "[ OK ] Found AHCI controller. Controller mapped at {:#x}",
+                            address
+                        );
                     }
-                    _ => {},
+                    _ => {}
                 }
-            },
+            }
             _ => {}
         }
     }

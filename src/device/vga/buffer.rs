@@ -91,7 +91,7 @@ impl TextBuffer {
 
         self.chars[BUFFER_HEIGHT - 1][col] = b' ';
         self.column_position -= 1;
-        
+
         if self.active {
             self.sync();
         }
@@ -134,7 +134,7 @@ impl ::core::fmt::Write for TextBuffer {
     }
 }
 
-/// Global interface to the VGA text mode. 
+/// Global interface to the VGA text mode.
 pub static SCREEN: Mutex<TextBuffer> = Mutex::new(TextBuffer {
     column_position: 0,
     color_code: ColorCode::new(Color::LightGray, Color::Black),
@@ -148,7 +148,7 @@ pub static TTYS: Mutex<Option<[TextBuffer; 6]>> = Mutex::new(None);
 pub fn switch(index: usize) {
     let inner = |idx: usize, list: &mut [TextBuffer; 6]| {
         list[idx].active = true;
-        *SCREEN.lock() = list[idx]; 
+        *SCREEN.lock() = list[idx];
     };
 
     let mut list = *TTYS.lock();

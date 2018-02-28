@@ -2,7 +2,7 @@ pub mod interrupts;
 pub mod memory;
 
 use device;
-use self::memory::{MemoryController, active_table};
+use self::memory::{active_table, MemoryController};
 use acpi;
 
 pub static mut MEMORY_CONTROLLER: Option<MemoryController> = None;
@@ -16,14 +16,13 @@ pub unsafe fn memory_controller() -> &'static mut MemoryController {
 
 /// Main kernel init function. This sets everything up for us.
 pub unsafe fn init(multiboot_info: usize) {
-    
     interrupts::disable_interrupts();
-    
+
     {
         device::vga::buffer::clear_screen();
-        
+
         println!("[ INFO ] lambdaOS: Begin init.");
-        
+
         let boot_info = ::multiboot2::load(multiboot_info);
 
         enable_nxe_bit();
@@ -35,7 +34,6 @@ pub unsafe fn init(multiboot_info: usize) {
 
         MEMORY_CONTROLLER = Some(memory_controller);
 
-        
         device::init();
     }
 

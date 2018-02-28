@@ -41,19 +41,19 @@ where
             None
         }
     }
-    
+
     /// Return a reference to the next table.
     pub fn next_table(&self, index: usize) -> Option<&Table<L::NextLevel>> {
         self.next_table_address(index)
             .map(|address| unsafe { &*(address as *const _) })
     }
-    
+
     /// Return a mutable reference to the next table.
     pub fn next_table_mut(&mut self, index: usize) -> Option<&mut Table<L::NextLevel>> {
         self.next_table_address(index)
             .map(|address| unsafe { &mut *(address as *mut _) })
     }
-    
+
     /// Allocate a single 4096-byte physical frame for the next level page table and set the given
     /// index to point to the new frame. Set important flags on the table so we can modify it and
     /// return a mutable reference. Note - this code will panic if the given index has flags set on

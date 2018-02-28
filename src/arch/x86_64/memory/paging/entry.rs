@@ -9,17 +9,17 @@ impl Entry {
     pub fn is_unused(&self) -> bool {
         self.0 == 0
     }
-    
+
     /// Set this entry as unused.
     pub fn set_unused(&mut self) {
         self.0 = 0;
     }
-    
+
     /// Return the current flags on the page.
     pub fn flags(&self) -> EntryFlags {
         EntryFlags::from_bits_truncate(self.0)
     }
-    
+
     /// Return the physical frame that this page points to.
     pub fn pointed_frame(&self) -> Option<Frame> {
         if self.flags().contains(EntryFlags::PRESENT) {
@@ -30,7 +30,7 @@ impl Entry {
             None
         }
     }
-    
+
     /// Set some flags on an entry.
     pub fn set(&mut self, frame: Frame, flags: EntryFlags) {
         assert!(frame.start_address() & !0x000fffff_fffff000 == 0);

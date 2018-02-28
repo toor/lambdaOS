@@ -1,4 +1,3 @@
-
 #[derive(Clone, Debug)]
 /// Register context.
 pub struct Context {

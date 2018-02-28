@@ -28,7 +28,7 @@ pub enum Color {
 }
 
 #[derive(Debug, Clone, Copy)]
-/// A representation of a VGA bg/fg colour code, calculated from byte-sized 
+/// A representation of a VGA bg/fg colour code, calculated from byte-sized
 /// bg/fg data.
 pub struct ColorCode(u8);
 
@@ -71,7 +71,7 @@ impl Vga {
     fn frame(&mut self) -> &mut ScreenBuffer {
         unsafe { self.frame.as_mut() }
     }
-    
+
     /// Sync the virtual `buffer` with the `ScreenBuffer` pointer.
     pub fn sync_buffer(&mut self, buffer: &TextBuffer) {
         let frame = self.frame();

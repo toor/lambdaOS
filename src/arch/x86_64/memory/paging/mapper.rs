@@ -23,7 +23,7 @@ impl Mapper {
     pub fn p4_mut(&mut self) -> &mut Table<Level4> {
         unsafe { self.p4.as_mut() }
     }
-    
+
     /// Translate a virtual address to a physical address.
     pub fn translate(&self, virtual_address: VirtualAddress) -> Option<PhysicalAddress> {
         let offset = virtual_address % PAGE_SIZE;
@@ -35,7 +35,7 @@ impl Mapper {
     pub fn translate_page(&self, page: Page) -> Option<Frame> {
         // Get reference to the P3 table.
         let p3 = self.p4().next_table(page.p4_index());
-        
+
         // Revert to this closure if we can't successfully walk the page tables normally.
         let huge_page = || {
             p3.and_then(|p3| {
@@ -73,7 +73,7 @@ impl Mapper {
             .and_then(|p1| p1[page.p1_index()].pointed_frame())
             .or_else(huge_page)
     }
-    
+
     /// Map a page to a frame by getting reference to the page tables and setting the index in the
     /// P1 table to the given frame.
     pub fn map_to<A>(&mut self, page: Page, frame: Frame, flags: EntryFlags, allocator: &mut A)
@@ -87,7 +87,7 @@ impl Mapper {
         assert!(p1[page.p1_index()].is_unused());
         p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
     }
-    
+
     /// Map a page by allocating a free frame and mapping a page to that frame.
     pub fn map<A>(&mut self, page: Page, flags: EntryFlags, allocator: &mut A)
     where
@@ -96,7 +96,7 @@ impl Mapper {
         let frame = allocator.allocate_frame(1).expect("out of memory");
         self.map_to(page, frame, flags, allocator)
     }
-    
+
     /// Map a page by translating a given `Frame` to a `Page`.
     pub fn identity_map<A>(&mut self, frame: Frame, flags: EntryFlags, allocator: &mut A)
     where
@@ -105,7 +105,7 @@ impl Mapper {
         let page = Page::containing_address(frame.start_address());
         self.map_to(page, frame, flags, allocator)
     }
-    
+
     /// Unmap a page from a physical frame.
     pub fn unmap<A>(&mut self, page: Page, _allocator: &mut A)
     where
@@ -113,7 +113,7 @@ impl Mapper {
     {
         use x86_64::VirtualAddress;
         use x86_64::instructions::tlb;
-    
+
         // Panic if we were unable to free the start-address.
         assert!(self.translate(page.start_address()).is_some());
 

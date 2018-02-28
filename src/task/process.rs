@@ -55,17 +55,17 @@ impl Process {
             stack: None,
         }
     }
-    
+
     /// Set the state of the process.
     pub fn set_state(&mut self, new: State) {
         self.state = new;
     }
-    
+
     /// Set `cr3` to point to the address specified by `addr`.
     pub fn set_page_table(&mut self, addr: usize) {
         self.ctx.set_page_table(addr);
     }
-    
+
     /// Set the stack pointer register.
     pub fn set_stack(&mut self, addr: usize) {
         self.ctx.set_stack(addr);
@@ -86,7 +86,7 @@ pub unsafe extern "C" fn process_return() {
     let scheduler = Box::from_raw(scheduler_ptr);
 
     let current: ProcessId = scheduler.get_id();
-    
+
     // Process returned, we kill it
     scheduler.kill(current);
 }

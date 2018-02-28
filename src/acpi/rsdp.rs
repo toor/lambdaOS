@@ -22,10 +22,10 @@ impl RsdpDescriptor {
     /// Map RSDP address space, search for RSDP.
     pub fn init(active_table: &mut ActivePageTable) -> Option<Self> {
         // TODO: Search in EBDA as well.
-        
+
         let rsdp_start: usize = 0xe0000;
         let rsdp_end: usize = 0xf_ffff;
-        
+
         let allocator = unsafe { allocator() };
 
         // Map address space.
@@ -34,20 +34,29 @@ impl RsdpDescriptor {
             let end_frame = Frame::containing_address(rsdp_end as PhysicalAddress);
 
             for frame in Frame::range_inclusive(start_frame, end_frame) {
-                let page = Page::containing_address(frame.start_address() as usize as VirtualAddress);
-                active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator);
+                let page =
+                    Page::containing_address(frame.start_address() as usize as VirtualAddress);
+                active_table.map_to(
+                    page,
+                    frame,
+                    EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
+                    allocator,
+                );
             }
         }
 
         RsdpDescriptor::search(rsdp_start, rsdp_end)
     }
-    
+
     /// Find and parse the RSDP.
     fn search(start_addr: usize, end_addr: usize) -> Option<RsdpDescriptor> {
-        for i in 0 .. (end_addr + 1 - start_addr)/16 {
+        for i in 0..(end_addr + 1 - start_addr) / 16 {
             let rsdp = unsafe { &*((start_addr + i * 16) as *const RsdpDescriptor) };
             if &rsdp.signature == b"RSD PTR " {
-                println!("[ OK ] ACPI: Found RSDP at {:#x}", rsdp as *const RsdpDescriptor as usize);
+                println!(
+                    "[ OK ] ACPI: Found RSDP at {:#x}",
+                    rsdp as *const RsdpDescriptor as usize
+                );
                 return Some(*rsdp);
             }
         }

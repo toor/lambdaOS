@@ -70,7 +70,7 @@ impl FrameAllocator for TinyAllocator {
         }
         None
     }
-    
+
     /// Mark any `None` frames as `Some`, and return.
     fn deallocate_frame(&mut self, frame: Frame) {
         for frame_option in &mut self.0 {

@@ -88,7 +88,7 @@ impl FrameAllocator for AreaFrameAllocator {
                 self.next_free_frame = Frame {
                     number: self.kernel_end.number + 1,
                 };
-            } else if (start_frame >= self.multiboot_start && start_frame <= self.multiboot_end) 
+            } else if (start_frame >= self.multiboot_start && start_frame <= self.multiboot_end)
                 || (end_frame >= self.multiboot_start && end_frame <= self.multiboot_end)
             {
                 // `frame` is used by the multiboot information structure

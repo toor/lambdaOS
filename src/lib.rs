@@ -41,9 +41,7 @@ pub use runtime_glue::*;
 
 #[no_mangle]
 pub extern "C" fn kmain(multiboot_information_address: usize) {
-    unsafe {
-        arch::init(multiboot_information_address)
-    };
+    unsafe { arch::init(multiboot_information_address) };
 
     loop {}
 }

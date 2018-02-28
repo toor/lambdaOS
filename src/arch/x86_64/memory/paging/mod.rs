@@ -52,7 +52,7 @@ impl Page {
     fn p1_index(&self) -> usize {
         (self.number >> 0) & 0o777
     }
-    
+
     /// Return an iterator between the given two pages.
     pub fn range_inclusive(start: Page, end: Page) -> PageIter {
         PageIter {
@@ -118,13 +118,13 @@ impl ActivePageTable {
             mapper: Mapper::new(),
         }
     }
-    
+
     /// Get the start address of the current P4 table as stored in `cr3`.
     pub unsafe fn address(&self) -> usize {
         use x86_64::registers::control_regs;
         control_regs::cr3().0 as usize
     }
-    
+
     pub fn with<F>(
         &mut self,
         table: &mut InactivePageTable,
@@ -160,7 +160,7 @@ impl ActivePageTable {
 
         temporary_page.unmap(self);
     }
-    
+
     /// Switch the active page table, and return the old page table.
     pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable {
         use x86_64::PhysicalAddress;
