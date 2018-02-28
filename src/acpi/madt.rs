@@ -1,7 +1,11 @@
 use acpi::sdt::SdtHeader;
 use arch::memory::paging::ActivePageTable;
+use core::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+use core::mem;
 
-#[derive(Debug)]
+static CPUS: AtomicUsize = ATOMIC_USIZE_INIT;
+
+#[derive(Debug, Clone, Copy)]
 pub struct Madt {
     pub sdt: &'static SdtHeader,
     /// Address of LAPIC.
@@ -11,11 +15,32 @@ pub struct Madt {
 }
 
 impl Madt {
-    // TODO - this ought to find all the AP's and register them, and pass control to SMP.
-    pub fn init(active_table: &mut ActivePageTable) {
-    
+    /// Initialise all the MADT entries.
+    pub fn init(&mut self, active_table: &mut ActivePageTable) {
+        for entry in self.iter() {
+            // TODO Here we should check if the APIC we find is the BSP LAPIC.
+            match entry {
+                MadtEntry::Lapic(local_apic) => {
+                    // New core?
+                    if local_apic.flags & 1 == 1 {
+                        println!("Found another core, id: {}", local_apic.id);
+                        CPUS.fetch_add(1, Ordering::SeqCst);
+
+                        // TODO: smp::init(CPUS.load(Ordering::SeqCst));
+
+                    } else {
+                        println!("Found disabled core, id: {}", local_apic.id);
+                    }
+                },
+
+                _ => {
+                    println!("No more entries...");
+                    return;
+                },
+            }
+        }
     }
-    
+
     pub fn new(sdt: &'static SdtHeader) -> Self {
         let local_address = unsafe { *(sdt.data_address() as *const u32) };
         let flags = unsafe { *(sdt.data_address() as *const u32).offset(1) };
@@ -24,6 +49,13 @@ impl Madt {
             sdt: sdt,
             address: local_address,
             flags: flags,
+        }
+    }
+
+    fn iter(&self) -> MadtIter {
+        MadtIter {
+            sdt: self.sdt,
+            i: 8, /* Skip laddr and flags */
         }
     }
 }
@@ -56,7 +88,7 @@ pub struct InterruptSourceOverride {
     pub bus_source: u8,
     pub irq_source: u8,
     pub gsi: u32,
-    pub flags: u16
+    pub flags: u16,
 }
 
 /// Non-maskable interrupts.
@@ -65,4 +97,59 @@ pub struct ApicNMI {
     pub processor_id: u8,
     pub flags: u16,
     pub lint_no: u8,
+}
+
+pub enum MadtEntry {
+    Lapic(&'static LapicEntry),
+    InvalidLapic(usize),
+    IoApic(&'static IoApic),
+    InvalidIoApic(usize),
+    Iso(&'static InterruptSourceOverride),
+    InvalidIso(usize),
+    Nmi(&'static ApicNMI),
+    Unknown(u8),
+}
+
+struct MadtIter {
+    sdt: &'static SdtHeader,
+    i: usize,
+}
+
+impl Iterator for MadtIter {
+    type Item = MadtEntry;
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i + 1 < self.sdt.data_len() {
+            let ty = unsafe { *(self.sdt.data_address() as *const u8).offset(self.i as isize) };
+            let len = unsafe { *(self.sdt.data_address() as *const u8).offset(self.i as isize + 1) } as usize;
+
+            if self.i + len <= self.sdt.data_len() {
+                let item = match ty {
+                    0 => if len == mem::size_of::<LapicEntry>() + 2 {
+                        MadtEntry::Lapic(unsafe { &*((self.sdt.data_address() + self.i + 2) as *const LapicEntry) })
+                    } else {
+                        MadtEntry::InvalidLapic(len)
+                    },
+                    1 => if len == mem::size_of::<IoApic>() + 2 {
+                        MadtEntry::IoApic(unsafe { &*((self.sdt.data_address() + self.i + 2) as *const IoApic) })
+                    } else {
+                        MadtEntry::InvalidIoApic(len)
+                    },
+                    2 => if len == mem::size_of::<InterruptSourceOverride>() + 2 {
+                        MadtEntry::Iso(unsafe { &*((self.sdt.data_address() + self.i + 2) as *const InterruptSourceOverride) })
+                    } else {
+                        MadtEntry::InvalidIso(len)
+                    },
+                    _ => MadtEntry::Unknown(ty)
+                };
+
+                self.i += len;
+
+                Some(item)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
 }
