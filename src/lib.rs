@@ -27,6 +27,7 @@ extern crate rlibc;
 extern crate spin;
 extern crate volatile;
 extern crate x86_64;
+extern crate raw_cpuid;
 
 #[macro_use]
 mod macros;
@@ -46,8 +47,8 @@ pub extern "C" fn kmain(multiboot_information_address: usize) {
     loop {}
 }
 
+// TODO: Move this to the memory module once some bugs with Rust get figured out.
 use arch::memory::heap_allocator::HeapAllocator;
 
-// Attribute tells Rust to use this as the default heap allocator.
 #[global_allocator]
 static HEAP_ALLOCATOR: HeapAllocator = HeapAllocator::new();
