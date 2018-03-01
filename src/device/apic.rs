@@ -5,7 +5,8 @@ use acpi::madt::{IO_APICS};
 
 lazy_static! {
     static ref BASE: AtomicU32 = {
-        let address = rdmsr(IA32_APIC_BASE);
+        // Calculate base address.
+        let address = rdmsr(IA32_APIC_BASE) & 0xffff0000;
         AtomicU32::new(address as u32)
     };
 }
@@ -90,7 +91,7 @@ impl IoApic {
                 redirection |= 1 << 15;
             }
 
-            redirection |= (io_apic as u64) << 56;
+            redirection |= (id as u64) << 56;
 
             let ioredtbl: u32 = (gsi - IO_APICS.lock()[io_apic].gsib) * 2 + 16;
 

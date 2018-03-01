@@ -1,11 +1,9 @@
-use arch::memory::paging::{ActivePageTable, Page, VirtualAddress};
+use arch::memory::paging::{ActivePageTable, Page, VirtualAddress, PhysicalAddress};
 use arch::memory::Frame;
 use arch::memory::paging::entry::EntryFlags;
 use arch::memory::allocator;
 use spin::Mutex;
 use alloc::btree_map::BTreeMap;
-use alloc::String;
-use core::str;
 use core::mem;
 
 pub mod rsdp;
@@ -21,26 +19,36 @@ fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::
     };
     
     {
-        let frame = Frame::containing_address(address);
-        active_table.identity_map(
-            frame,
-            EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
-            allocator,
-        );
+        let page = Page::containing_address(address as VirtualAddress);
+        if active_table.translate_page(page).is_none() {
+            let frame = Frame::containing_address(page.start_address());
+            active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator);
+        }
     }
 
-    // Cast physical address to usable object.
     let sdt = unsafe { &*(address as *const sdt::SdtHeader) };
+
+    {   
+        // Map next page, and all pages within the range occupied by the data table.
+        let start_page = Page::containing_address(address + 4096);
+        let end_page = Page::containing_address(address + sdt.length as usize);
+        for page in Page::range_inclusive(start_page, end_page) {
+            // Check if this page has already been mapped to a frame.
+            if active_table.translate_page(page).is_none() {
+                let frame = Frame::containing_address(page.start_address() as PhysicalAddress);
+                active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator);
+            }
+        }
+    }
 
     sdt
 }
 
 pub unsafe fn init(active_table: &mut ActivePageTable) {
     let rsdp = rsdp::RsdpDescriptor::init(active_table).expect("Could not find rsdp, aborting ...");
-
     let sdt = get_sdt(rsdp.sdt(), active_table);
-
     let rsdt = rsdt::Rsdt::new(sdt);
+
     println!(
         "[ OK ] ACPI: Found RSDT at address {:#x}",
         rsdt.sdt as *const sdt::SdtHeader as usize
@@ -58,7 +66,6 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
     );
 
     // let mut madt: madt::Madt = unsafe { *(&*(0 as *const madt::Madt)) };
-
     match rsdt.find_sdt(b"APIC") {
         Some(rsdt::TableType::Madt(mut m)) => {
             println!(
