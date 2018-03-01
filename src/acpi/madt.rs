@@ -2,8 +2,14 @@ use acpi::sdt::SdtHeader;
 use arch::memory::paging::ActivePageTable;
 use core::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use core::mem;
+use spin::Mutex;
+use alloc::Vec;
 
 static CPUS: AtomicUsize = ATOMIC_USIZE_INIT;
+
+lazy_static! {
+    pub static ref IO_APICS: Mutex<Vec<&'static IoApic>> = Mutex::new(Vec::new());
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Madt {
@@ -31,6 +37,10 @@ impl Madt {
                     } else {
                         println!("Found disabled core, id: {}", local_apic.id);
                     }
+                },
+
+                MadtEntry::IoApic(io_apic) => {
+                    IO_APICS.lock().push(io_apic);  
                 },
 
                 _ => {
