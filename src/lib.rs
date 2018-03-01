@@ -10,6 +10,7 @@
 #![feature(core_intrinsics)]
 #![feature(global_allocator)]
 #![feature(ptr_internals)]
+#![feature(integer_atomics)]
 #![no_std]
 
 #[macro_use]
