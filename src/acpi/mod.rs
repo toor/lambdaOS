@@ -16,8 +16,10 @@ pub mod madt;
 
 /// Retrieve an SDT from a pointer found using the RSDP
 fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::SdtHeader {
-    let allocator = unsafe { allocator() };
-
+    let allocator = unsafe {
+        allocator()
+    };
+    
     {
         let frame = Frame::containing_address(address);
         active_table.identity_map(
