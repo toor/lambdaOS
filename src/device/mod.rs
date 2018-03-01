@@ -18,6 +18,7 @@ pub mod pit;
 pub mod ahci;
 /// PCI functionality
 pub mod pci;
+pub mod apic;
 
 pub use self::io::cpuio::{Port, UnsafePort};
 pub use self::io::mmio;
