@@ -256,8 +256,8 @@ where
                 "sections need to be page aligned"
             );
             println!(
-                "[ vmm ] Identity mapping kernel section at addr: {:#x}, size in pages: {}",
-                section.addr, section.addr / PAGE_SIZE as u64
+                "[ vmm ] Identity mapping kernel section at addr: {:#x}, size: {}",
+                section.addr, section.size,
             );
 
             let flags = EntryFlags::from_elf_section_flags(section);
