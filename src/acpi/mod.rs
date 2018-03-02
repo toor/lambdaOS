@@ -19,9 +19,9 @@ fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::
     };
     
     {
-        let page = Page::containing_address(address as VirtualAddress);
+        let page = Page::containing_address(VirtualAddress::new(address));
         if active_table.translate_page(page).is_none() {
-            let frame = Frame::containing_address(page.start_address());
+            let frame = Frame::containing_address(PhysicalAddress::new(page.start_address().get()));
             active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator);
         }
     }
@@ -30,12 +30,12 @@ fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::
 
     {   
         // Map next page, and all pages within the range occupied by the data table.
-        let start_page = Page::containing_address(address + 4096);
-        let end_page = Page::containing_address(address + sdt.length as usize);
+        let start_page = Page::containing_address(VirtualAddress::new(address + 4096));
+        let end_page = Page::containing_address(VirtualAddress::new(address + sdt.length as usize));
         for page in Page::range_inclusive(start_page, end_page) {
             // Check if this page has already been mapped to a frame.
             if active_table.translate_page(page).is_none() {
-                let frame = Frame::containing_address(page.start_address() as PhysicalAddress);
+                let frame = Frame::containing_address(PhysicalAddress::new(page.start_address().get()));
                 active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator);
             }
         }
