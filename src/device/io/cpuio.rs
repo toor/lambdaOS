@@ -1,38 +1,38 @@
 use core::marker::PhantomData;
 
 pub mod x86_io {
-    ///Read a single byte from the port.
+    /// Read a single byte from the port.
     pub unsafe fn inb(port: u16) -> u8 {
         let result: u8;
         asm!("inb %dx, %al" : "={al}"(result) : "{dx}"(port) :: "volatile");
         result
     }
 
-    ///Write a single byte to the port.
+    /// Write a single byte to the port.
     pub unsafe fn outb(value: u8, port: u16) {
         asm!("outb %al, %dx" :: "{dx}"(port), "{al}"(value) :: "volatile");
     }
 
-    ///Read a word from the port.
+    /// Read a word from the port.
     pub unsafe fn inw(port: u16) -> u16 {
         let result: u16;
         asm!("inw %dx, %ax" : "={ax}"(result) : "{dx}"(port) :: "volatile");
         result
     }
 
-    ///Write a word to the port.
+    /// Write a word to the port.
     pub unsafe fn outw(value: u16, port: u16) {
         asm!("outw %ax, %dx" :: "{dx}"(port), "{ax}"(value) :: "volatile");
     }
 
-    ///Read a dword from the port.
+    /// Read a dword from the port.
     pub unsafe fn inl(port: u16) -> u32 {
         let result: u32;
         asm!("inl %dx, %eax" : "={eax}"(result) : "{dx}"(port) :: "volatile");
         result
     }
 
-    ///Write a dword to the port.
+    /// Write a dword to the port.
     pub unsafe fn outl(value: u32, port: u16) {
         asm!("outl %eax, %dx" :: "{dx}"(port), "{eax}"(value) :: "volatile");
     }
@@ -40,8 +40,8 @@ pub mod x86_io {
 
 use self::x86_io::{inb, inl, inw, outb, outl, outw};
 
-///Nice little type that allows us to specify the size of the value read without using inb
-///directly.
+/// Nice little type that allows us to specify the size of the value read without using inb
+/// directly.
 pub trait InOut {
     unsafe fn port_in(port: u16) -> Self;
     unsafe fn port_out(port: u16, value: Self);
@@ -74,19 +74,19 @@ impl InOut for u32 {
     }
 }
 
-///An `InOut`sized port. This could be any of the type implementors for `InOut`.
+/// An `InOut`sized port. This could be any of the type implementors for `InOut`.
 #[derive(Debug)]
 pub struct Port<T: InOut> {
-    // Port address.
+    /// Port address.
     port: u16,
 
-    // Zero-byte placeholder.  This is only here so that we can have a
-    // type parameter `T` without a compiler error.
+    /// Zero-byte placeholder.  This is only here so that we can have a
+    /// type parameter `T` without a compiler error.
     phantom: PhantomData<T>,
 }
 
 impl<T: InOut> Port<T> {
-    ///Create a port which can handle values of `T` size.
+    /// Create a port which can handle values of `T` size.
     pub const unsafe fn new(port: u16) -> Port<T> {
         Port {
             port: port,
@@ -94,12 +94,12 @@ impl<T: InOut> Port<T> {
         }
     }
 
-    ///Read a value from the port.
+    /// Read a value from the port.
     pub fn read(&mut self) -> T {
         unsafe { T::port_in(self.port) }
     }
 
-    ///Write a value to the port.
+    /// Write a value to the port.
     pub fn write(&mut self, value: T) {
         unsafe {
             T::port_out(self.port, value);
@@ -114,7 +114,7 @@ pub struct UnsafePort<T: InOut> {
 }
 
 impl<T: InOut> UnsafePort<T> {
-    ///Create a new unsafe port.
+    /// Create a new unsafe port.
     pub const unsafe fn new(port: u16) -> UnsafePort<T> {
         UnsafePort {
             port: port,
@@ -122,12 +122,12 @@ impl<T: InOut> UnsafePort<T> {
         }
     }
 
-    ///Read a value from the port.
+    /// Read a value from the port.
     pub unsafe fn read(&mut self) -> T {
         T::port_in(self.port)
     }
 
-    // Write a value to the port.
+    /// Write a value to the port.
     pub unsafe fn write(&mut self, value: T) {
         T::port_out(self.port, value);
     }
