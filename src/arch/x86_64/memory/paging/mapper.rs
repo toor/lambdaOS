@@ -26,9 +26,9 @@ impl Mapper {
 
     /// Translate a virtual address to a physical address.
     pub fn translate(&self, virtual_address: VirtualAddress) -> Option<PhysicalAddress> {
-        let offset = virtual_address % PAGE_SIZE;
+        let offset = virtual_address.get() % PAGE_SIZE;
         self.translate_page(Page::containing_address(virtual_address))
-            .map(|frame| frame.number * PAGE_SIZE + offset)
+            .map(|frame| PhysicalAddress::new(frame.number * PAGE_SIZE + offset))
     }
 
     /// Walk the page tables to find the physical frame that a passed `page` is mapped to.
@@ -102,7 +102,7 @@ impl Mapper {
     where
         A: FrameAllocator,
     {
-        let page = Page::containing_address(frame.start_address());
+        let page = Page::containing_address(VirtualAddress::new(frame.start_address().get()));
         self.map_to(page, frame, flags, allocator)
     }
 
@@ -111,7 +111,7 @@ impl Mapper {
     where
         A: FrameAllocator,
     {
-        use x86_64::VirtualAddress;
+        use x86_64;
         use x86_64::instructions::tlb;
 
         // Panic if we were unable to free the start-address.
@@ -124,7 +124,7 @@ impl Mapper {
             .expect("mapping code does not support huge pages");
         let _frame = p1[page.p1_index()].pointed_frame().unwrap();
         p1[page.p1_index()].set_unused();
-        tlb::flush(VirtualAddress(page.start_address()));
+        tlb::flush(x86_64::VirtualAddress(page.start_address().get()));
         // TODO free p(1,2,3) table if empty
         // allocator.deallocate_frame(frame);
     }

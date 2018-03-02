@@ -1,5 +1,6 @@
 use arch::memory::{Frame, FrameAllocator};
 use multiboot2::{MemoryArea, MemoryAreaIter};
+use arch::memory::paging::PhysicalAddress;
 
 /// A frame allocator that uses the memory areas from the multiboot information structure as
 /// source. The {kernel, multiboot}_{start, end} fields are used to avoid returning memory that is
@@ -25,13 +26,13 @@ impl AreaFrameAllocator {
         memory_areas: MemoryAreaIter,
     ) -> AreaFrameAllocator {
         let mut allocator = AreaFrameAllocator {
-            next_free_frame: Frame::containing_address(0),
+            next_free_frame: Frame::containing_address(PhysicalAddress::new(0)),
             current_area: None,
             areas: memory_areas,
-            kernel_start: Frame::containing_address(kernel_start),
-            kernel_end: Frame::containing_address(kernel_end),
-            multiboot_start: Frame::containing_address(multiboot_start),
-            multiboot_end: Frame::containing_address(multiboot_end),
+            kernel_start: Frame::containing_address(PhysicalAddress::new(kernel_start)),
+            kernel_end: Frame::containing_address(PhysicalAddress::new(kernel_end)),
+            multiboot_start: Frame::containing_address(PhysicalAddress::new(multiboot_start)),
+            multiboot_end: Frame::containing_address(PhysicalAddress::new(multiboot_end)),
         };
         allocator.choose_next_area();
         allocator
@@ -43,12 +44,12 @@ impl AreaFrameAllocator {
             .clone()
             .filter(|area| {
                 let address = area.base_addr + area.length - 1;
-                Frame::containing_address(address as usize) >= self.next_free_frame
+                Frame::containing_address(PhysicalAddress::new(address as usize)) >= self.next_free_frame
             })
             .min_by_key(|area| area.base_addr);
 
         if let Some(area) = self.current_area {
-            let start_frame = Frame::containing_address(area.base_addr as usize);
+            let start_frame = Frame::containing_address(PhysicalAddress::new(area.base_addr as usize));
             if self.next_free_frame < start_frame {
                 self.next_free_frame = start_frame;
             }
@@ -75,7 +76,7 @@ impl FrameAllocator for AreaFrameAllocator {
             // the last frame of the current area
             let current_area_last_frame = {
                 let address = area.base_addr + area.length - 1;
-                Frame::containing_address(address as usize)
+                Frame::containing_address(PhysicalAddress::new(address as usize))
             };
 
             if end_frame > current_area_last_frame {

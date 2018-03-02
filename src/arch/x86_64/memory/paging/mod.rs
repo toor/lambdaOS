@@ -50,9 +50,9 @@ impl Page {
     /// Return the number of the page which contains the given `VirtualAddress`.
     pub fn containing_address(address: VirtualAddress) -> Page {
         assert!(
-            address < 0x0000_8000_0000_0000 || address >= 0xffff_8000_0000_0000,
+            address.get() < 0x0000_8000_0000_0000 || address.get() >= 0xffff_8000_0000_0000,
             "invalid address: 0x{:x}",
-            address
+            address.get()
         );
         Page {
             number: address.get() / PAGE_SIZE,
@@ -144,9 +144,9 @@ impl ActivePageTable {
     }
 
     /// Get the start address of the current P4 table as stored in `cr3`.
-    pub unsafe fn address(&self) -> usize {
+    pub fn address(&self) -> usize {
         use x86_64::registers::control_regs;
-        control_regs::cr3().0 as usize
+        unsafe { control_regs::cr3().0 as usize }
     }
 
     pub fn with<F>(
@@ -187,15 +187,16 @@ impl ActivePageTable {
 
     /// Switch the active page table, and return the old page table.
     pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable { 
+        use x86_64;
         use x86_64::registers::control_regs;
-
+            
         let old_table = InactivePageTable {
             p4_frame: Frame::containing_address(PhysicalAddress::new(control_regs::cr3().0 as usize)),
         };
-        
-        let address = new_table.p4_frame.start_address().get();
 
-        asm!("mov $0, cr3" : : "r"(address as u64) : "memory" : "intel")
+        unsafe{
+            control_regs::cr3_write(x86_64::PhysicalAddress(new_table.p4_frame.start_address().get() as u64));
+        }
         old_table
     }
 }
@@ -244,7 +245,7 @@ where
             .elf_sections_tag()
             .expect("Memory map tag required");
 
-        // identity map the allocated kernel sections
+        // identity map the entire kernel.
         for section in elf_sections_tag.sections() {
             if !section.is_allocated() {
                 // section is not loaded to memory
@@ -256,37 +257,39 @@ where
                 "sections need to be page aligned"
             );
             println!(
-                "[ DEBUG ] Mapping kernel section at addr: {:#x}, size: {:#x}",
+                "[ OK ] Mapping kernel section at addr: {:#x}, size: {:#x}",
                 section.addr, section.size
             );
 
             let flags = EntryFlags::from_elf_section_flags(section);
 
-            let start_frame = Frame::containing_address(section.start_address());
-            let end_frame = Frame::containing_address(section.end_address() - 1);
+            let start_frame = Frame::containing_address(PhysicalAddress::new(
+                    section.start_address()));
+            let end_frame = Frame::containing_address(PhysicalAddress::new(
+                    section.end_address() - 1));
             for frame in Frame::range_inclusive(start_frame, end_frame) {
                 mapper.identity_map(frame, flags, allocator);
             }
         }
 
         // identity map the VGA text buffer
-        let vga_buffer_frame = Frame::containing_address(0xb8000);
+        let vga_buffer_frame = Frame::containing_address(PhysicalAddress::new(0xb8000));
         mapper.identity_map(vga_buffer_frame, EntryFlags::WRITABLE, allocator);
 
         // identity map the multiboot info structure
-        let multiboot_start = Frame::containing_address(boot_info.start_address());
-        let multiboot_end = Frame::containing_address(boot_info.end_address() - 1);
+        let multiboot_start = Frame::containing_address(PhysicalAddress::new(boot_info.start_address()));
+        let multiboot_end = Frame::containing_address(PhysicalAddress::new(boot_info.end_address() - 1));
         for frame in Frame::range_inclusive(multiboot_start, multiboot_end) {
             mapper.identity_map(frame, EntryFlags::PRESENT, allocator);
         }
     });
 
     let old_table = active_table.switch(new_table);
-    println!("[ OK ] Switched to new page table.");
+    println!("[ OK ] Switched to new page table. PML4 at {:#x}", active_table.address());
 
-    let old_p4_page = Page::containing_address(old_table.p4_frame.start_address());
+    let old_p4_page = Page::containing_address(VirtualAddress::new(old_table.p4_frame.start_address().get()));
     active_table.unmap(old_p4_page, allocator);
-    println!("[ OK ] Guard page at {:#x}.", old_p4_page.start_address());
+    println!("[ OK ] Guard page at {:#x}.", old_p4_page.start_address().get());
 
     active_table
 }

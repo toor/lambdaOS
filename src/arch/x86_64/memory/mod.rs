@@ -1,7 +1,7 @@
 pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::{paging_init, ActivePageTable};
 pub use self::stack_allocator::Stack;
-use self::paging::PhysicalAddress;
+use self::paging::{PhysicalAddress, VirtualAddress};
 use multiboot2::BootInformation;
 
 pub mod area_frame_allocator;
