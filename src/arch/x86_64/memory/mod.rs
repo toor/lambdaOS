@@ -56,10 +56,9 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     use self::paging::Page;
     use self::heap_allocator::{HEAP_SIZE, HEAP_START};
 
-    let heap_start_page = Page::containing_address(HEAP_START);
-    let heap_end_page = Page::containing_address(HEAP_START + HEAP_SIZE - 1);
-
-    // Briefly use the frame allocator to map the heap pages.
+    let heap_start_page = Page::containing_address(VirtualAddress::new(HEAP_START));
+    let heap_end_page = Page::containing_address(VirtualAddress::new(HEAP_START + HEAP_SIZE - 1));
+ 
     for page in Page::range_inclusive(heap_start_page, heap_end_page) {
         active_table.map(page, paging::EntryFlags::WRITABLE, &mut frame_allocator);
     }
@@ -116,14 +115,14 @@ pub struct Frame {
 }
 
 impl Frame {
-    pub fn containing_address(address: usize) -> Frame {
+    pub fn containing_address(address: PhysicalAddress) -> Frame {
         Frame {
-            number: address / PAGE_SIZE,
+            number: address.get() / PAGE_SIZE,
         }
     }
 
     pub fn start_address(&self) -> PhysicalAddress {
-        self.number * PAGE_SIZE
+        PhysicalAddress::new(self.number * PAGE_SIZE)
     }
 
     fn clone(&self) -> Frame {

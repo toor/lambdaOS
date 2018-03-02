@@ -1,7 +1,7 @@
 pub use self::entry::EntryFlags;
+pub use self::mapper::Mapper;
 use arch::memory::{Frame, FrameAllocator, PAGE_SIZE};
 use self::temporary_page::TemporaryPage;
-pub use self::mapper::Mapper;
 use core::ops::{Add, Deref, DerefMut};
 use multiboot2::BootInformation;
 
@@ -13,10 +13,34 @@ mod mapper;
 /// Maximum number of entries a page table can hold.
 const ENTRY_COUNT: usize = 512;
 
-pub type PhysicalAddress = usize;
-pub type VirtualAddress = usize;
+// pub type PhysicalAddress = usize;
+// pub type VirtualAddress = usize;
 
-/// Singular 4KiB page on the system.
+pub struct PhysicalAddress(pub usize);
+
+impl PhysicalAddress {
+    pub fn new(addr: usize) -> Self {
+        PhysicalAddress(addr)
+    }
+
+    pub fn get(&self) -> usize {
+        self.0
+    }
+}
+
+pub struct VirtualAddress(pub usize);
+
+impl VirtualAddress {
+    pub fn new(addr: usize) -> Self {
+        VirtualAddress(addr)
+    }
+
+    pub fn get(&self) -> usize {
+        self.0
+    }
+}
+
+/// A 4KiB page.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Page {
     number: usize,
@@ -31,13 +55,13 @@ impl Page {
             address
         );
         Page {
-            number: address / PAGE_SIZE,
+            number: address.get() / PAGE_SIZE,
         }
     }
 
     /// Return the starting address of a page.
-    pub fn start_address(&self) -> usize {
-        self.number * PAGE_SIZE
+    pub fn start_address(&self) -> VirtualAddress {
+        VirtualAddress::new(self.number * PAGE_SIZE)
     }
 
     fn p4_index(&self) -> usize {
@@ -138,7 +162,7 @@ impl ActivePageTable {
 
         {
             // Get reference to current P4 table.
-            let backup = Frame::containing_address(control_regs::cr3().0 as usize);
+            let backup = Frame::containing_address(PhysicalAddress::new(control_regs::cr3().0 as usize));
 
             // map temporary_page to current P4 table
             let p4_table = temporary_page.map_table_frame(backup.clone(), self);
@@ -162,16 +186,16 @@ impl ActivePageTable {
     }
 
     /// Switch the active page table, and return the old page table.
-    pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable {
-        use x86_64::PhysicalAddress;
+    pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable { 
         use x86_64::registers::control_regs;
 
         let old_table = InactivePageTable {
-            p4_frame: Frame::containing_address(control_regs::cr3().0 as usize),
+            p4_frame: Frame::containing_address(PhysicalAddress::new(control_regs::cr3().0 as usize)),
         };
-        unsafe {
-            control_regs::cr3_write(PhysicalAddress(new_table.p4_frame.start_address() as u64));
-        }
+        
+        let address = new_table.p4_frame.start_address().get();
+
+        asm!("mov $0, cr3" : : "r"(address as u64) : "memory" : "intel")
         old_table
     }
 }
