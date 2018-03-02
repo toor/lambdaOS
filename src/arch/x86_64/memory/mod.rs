@@ -8,7 +8,6 @@ pub mod area_frame_allocator;
 pub mod heap_allocator;
 pub mod paging;
 pub mod stack_allocator;
-pub mod calls;
 
 pub const PAGE_SIZE: usize = 4096;
 
