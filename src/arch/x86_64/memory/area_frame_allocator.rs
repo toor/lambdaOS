@@ -111,4 +111,26 @@ impl FrameAllocator for AreaFrameAllocator {
     fn deallocate_frame(&mut self, _frame: Frame) {
         unimplemented!()
     }
+
+    fn free_frames(&mut self) -> usize {
+        let mut count = 0;
+
+        for area in self.areas.clone() {
+            let start_frame = Frame::containing_address(PhysicalAddress::new(area.base_addr as usize));
+            let end_frame = Frame::containing_address(
+                PhysicalAddress::new((area.base_addr + area.length -1) as usize));
+            
+            for frame in Frame::range_inclusive(start_frame, end_frame) {
+                if frame >= self.kernel_start && frame <= self.kernel_end {
+                    // Frame is used by the kernel.
+                } else if frame >= self.next_free_frame {
+                    count += 1;
+                } else {
+                    // Inside of used range.
+                }
+            }
+        }
+
+        count
+    }
 }
