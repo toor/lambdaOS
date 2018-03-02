@@ -13,9 +13,7 @@ mod mapper;
 /// Maximum number of entries a page table can hold.
 const ENTRY_COUNT: usize = 512;
 
-// pub type PhysicalAddress = usize;
-// pub type VirtualAddress = usize;
-
+/// A physical memory address.
 pub struct PhysicalAddress(pub usize);
 
 impl PhysicalAddress {
@@ -28,6 +26,7 @@ impl PhysicalAddress {
     }
 }
 
+/// A virtual memory address.
 pub struct VirtualAddress(pub usize);
 
 impl VirtualAddress {
@@ -224,10 +223,10 @@ impl InactivePageTable {
 }
 
 /// Identity map important sections and switch the page table, remapping the kernel one page above
-/// and turn the previous kernel stack into a guard page - this prevents silent stack overflows, as
+/// and turning the previous kernel stack into a guard page - this prevents silent stack overflows, as
 /// given that the guard page is unmapped, any stack overflow into this page will instantly cause a
 /// page fault. Returns the currently active kernel page table.
-pub fn paging_init<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
+pub fn init<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
 where
     A: FrameAllocator,
 {
@@ -257,8 +256,8 @@ where
                 "sections need to be page aligned"
             );
             println!(
-                "[ OK ] Mapping kernel section at addr: {:#x}, size: {:#x}",
-                section.addr, section.size
+                "[ vmm ] Identity mapping kernel section at addr: {:#x}, size in pages: {}",
+                section.addr, section.addr / PAGE_SIZE as u64
             );
 
             let flags = EntryFlags::from_elf_section_flags(section);
@@ -273,10 +272,12 @@ where
         }
 
         // identity map the VGA text buffer
+        println!("[ vmm ] Identity mapping the VGA text buffer.");
         let vga_buffer_frame = Frame::containing_address(PhysicalAddress::new(0xb8000));
         mapper.identity_map(vga_buffer_frame, EntryFlags::WRITABLE, allocator);
 
-        // identity map the multiboot info structure
+        // identity map the multiboot info structure.
+        println!("[ vmm ] Identity mapping multiboot structures.");
         let multiboot_start = Frame::containing_address(PhysicalAddress::new(boot_info.start_address()));
         let multiboot_end = Frame::containing_address(PhysicalAddress::new(boot_info.end_address() - 1));
         for frame in Frame::range_inclusive(multiboot_start, multiboot_end) {
@@ -285,11 +286,11 @@ where
     });
 
     let old_table = active_table.switch(new_table);
-    println!("[ OK ] Switched to new page table. PML4 at {:#x}", active_table.address());
+    println!("[ vmm ] Switched to new page table. PML4 at {:#x}", active_table.address());
 
     let old_p4_page = Page::containing_address(VirtualAddress::new(old_table.p4_frame.start_address().get()));
     active_table.unmap(old_p4_page, allocator);
-    println!("[ OK ] Guard page at {:#x}.", old_p4_page.start_address().get());
+    println!("[ vmm ] Guard page at {:#x}.", old_p4_page.start_address().get());
 
     active_table
 }

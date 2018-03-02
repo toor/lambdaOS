@@ -50,18 +50,18 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
     let rsdt = rsdt::Rsdt::new(sdt);
 
     println!(
-        "[ OK ] ACPI: Found RSDT at address {:#x}",
+        "[ apci ] Found RSDT at address {:#x}",
         rsdt.sdt as *const sdt::SdtHeader as usize
     );
 
     println!(
-        "[ OK ] ACPI: RSDT length {}, data length {}",
+        "[ acpi ] RSDT length {}, data length {}",
         rsdt.sdt.length,
         rsdt.sdt.length as usize - mem::size_of::<sdt::SdtHeader>()
     );
 
     println!(
-        "[ DEBUG ] ACPI: RSDT points to {} tables",
+        "[ acpi ] RSDT points to {} tables",
         rsdt.other_entries.len()
     );
 
@@ -69,7 +69,7 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
     match rsdt.find_sdt(b"APIC") {
         Some(rsdt::TableType::Madt(mut m)) => {
             println!(
-                "[ OK ] ACPI: Found MADT at address {:#x}",
+                "[ apci ] Found MADT at address {:#x}",
                 m.sdt as *const sdt::SdtHeader as usize
             );
 

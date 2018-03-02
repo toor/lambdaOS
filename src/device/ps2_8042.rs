@@ -27,6 +27,7 @@ impl Ps2 {
     }
 
     pub fn init(&mut self) {
+        println!("[ dev ] Initialising PS/2 8042 controller.");
         // Disable devices.
         self.controller.write(0xAD);
         self.controller.write(0xA7);
@@ -70,7 +71,7 @@ impl Ps2 {
         // Clear output buffer.
         self.device.read();
 
-        println!("[ OK ] PS/2 driver.");
+        println!("[ dev ] PS/2 8042 initialised.");
     }
 
     pub fn read_char(&mut self) -> u8 {

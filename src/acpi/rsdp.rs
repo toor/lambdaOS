@@ -53,7 +53,7 @@ impl RsdpDescriptor {
             let rsdp = unsafe { &*((start_addr + i * 16) as *const RsdpDescriptor) };
             if &rsdp.signature == b"RSD PTR " {
                 println!(
-                    "[ OK ] ACPI: Found RSDP at {:#x}",
+                    "[ acpi ] Found RSDP at {:#x}",
                     rsdp as *const RsdpDescriptor as usize
                 );
                 return Some(*rsdp);

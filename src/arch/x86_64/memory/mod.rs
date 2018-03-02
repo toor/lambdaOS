@@ -1,5 +1,5 @@
 pub use self::area_frame_allocator::AreaFrameAllocator;
-pub use self::paging::{paging_init, ActivePageTable};
+pub use self::paging::ActivePageTable;
 pub use self::stack_allocator::Stack;
 use self::paging::{PhysicalAddress, VirtualAddress};
 use multiboot2::BootInformation;
@@ -33,11 +33,11 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         .unwrap();
 
     println!(
-        "[ DEBUG ] Kernel start: {:#x}, kernel end: {:#x}",
+        "[ pmm ] Kernel start: {:#x}, kernel end: {:#x}",
         kernel_start, kernel_end
     );
     println!(
-        "[ DEBUG ] Multiboot data structure start: {:#x}, end: {:#x}",
+        "[ pmm ] Multiboot data structure start: {:#x}, end: {:#x}",
         boot_info.start_address(),
         boot_info.end_address()
     );
@@ -50,24 +50,28 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         memory_map_tag.memory_areas(),
     );
 
-    let mut active_table = paging::paging_init(&mut frame_allocator, boot_info);
+    println!("[ vmm ] Initialising paging...");
+    let mut active_table = paging::init(&mut frame_allocator, boot_info);
 
     use self::paging::Page;
     use self::heap_allocator::{HEAP_SIZE, HEAP_START};
 
     let heap_start_page = Page::containing_address(VirtualAddress::new(HEAP_START));
     let heap_end_page = Page::containing_address(VirtualAddress::new(HEAP_START + HEAP_SIZE - 1));
- 
+    
+    println!("[ vmm ] Mapping heap pages.");
     for page in Page::range_inclusive(heap_start_page, heap_end_page) {
         active_table.map(page, paging::EntryFlags::WRITABLE, &mut frame_allocator);
     }
+
+    println!("[ vmm ] Heap start: {:#x}", heap_start_page.start_address().get());
+    println!("[ vmm ] Heap end: {:#x}", heap_end_page.start_address().get());
 
     // Init the heap
     unsafe {
         ::HEAP_ALLOCATOR.init(HEAP_START, HEAP_SIZE);
     }
 
-    // The stack allocator will live just past the heap.
     let stack_allocator = {
         let stack_alloc_start = heap_end_page + 1;
         let stack_alloc_end = stack_alloc_start + 100;
@@ -160,6 +164,7 @@ impl Iterator for FrameIter {
 pub trait FrameAllocator {
     fn allocate_frame(&mut self, count: usize) -> Option<Frame>;
     fn deallocate_frame(&mut self, frame: Frame);
+    fn free_frames(&mut self) -> usize;
 }
 
 pub unsafe fn allocator<'a>() -> &'a mut AreaFrameAllocator {

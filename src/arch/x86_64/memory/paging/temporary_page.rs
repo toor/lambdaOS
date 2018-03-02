@@ -81,4 +81,16 @@ impl FrameAllocator for TinyAllocator {
         }
         panic!("Tiny allocator can hold only 3 frames.");
     }
+
+    fn free_frames(&mut self) -> usize {
+        let mut count: usize = 0;
+        
+        for frame_option in &mut self.0 {
+            if frame_option.is_some() {
+                count += 1;
+            }
+        }
+
+        count
+    }
 }

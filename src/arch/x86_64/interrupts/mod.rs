@@ -15,7 +15,8 @@ const DOUBLE_FAULT_IST_INDEX: usize = 0;
 lazy_static! {
     static ref IDT: Idt = {
         let mut idt = Idt::new();
-
+        
+        println!("[ interrupts ] Installing exception handlers.");
         idt.divide_by_zero.set_handler_fn(exceptions::divide_by_zero_handler);
         idt.debug.set_handler_fn(exceptions::debug_handler);
         idt.non_maskable_interrupt.set_handler_fn(exceptions::nmi_handler);
@@ -40,7 +41,8 @@ lazy_static! {
         idt.alignment_check.set_handler_fn(exceptions::alignment_check_handler);
         idt.machine_check.set_handler_fn(exceptions::machine_check_handler);
         idt.simd_floating_point.set_handler_fn(exceptions::simd_fp_exception_handler);
-
+        
+        println!("[ interrupts ] Installing IRQs.");
         idt.interrupts[0].set_handler_fn(irq::timer_handler);
         idt.interrupts[1].set_handler_fn(irq::keyboard_handler);
 
@@ -74,6 +76,7 @@ pub fn init(memory_controller: &mut MemoryController) {
     let mut tss_selector = SegmentSelector(0);
     let gdt = GDT.call_once(|| {
         let mut gdt = gdt::Gdt::new();
+        println!("[ tables ] Loading GDT entries.");
         code_selector = gdt.add_entry(gdt::Descriptor::kernel_code_segment());
         tss_selector = gdt.add_entry(gdt::Descriptor::tss_segment(&tss));
         gdt
@@ -81,16 +84,18 @@ pub fn init(memory_controller: &mut MemoryController) {
 
     // Load a new GDT in the CPU.
     gdt.load();
-    println!("[ OK ] GDT.");
+    println!("[ tables ] Successfully loaded GDT.");
 
     unsafe {
-        // reload code segment register
+        // reload code segment register.
+        println!("[ tables ] Reloading CS.");
         set_cs(code_selector);
         // load TSS
+        println!("[ tables ] Loading TSS.");
         load_tss(tss_selector);
     }
 
-    // Load the IDT.
+    // Load the IDT
     IDT.load();
-    println!("[ OK ] IDT.")
+    println!("[ tables ] Successfully loaded IDT.")
 }
