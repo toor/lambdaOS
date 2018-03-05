@@ -1,7 +1,6 @@
 use arch::memory::paging::{ActivePageTable, Page, VirtualAddress, PhysicalAddress};
 use arch::memory::Frame;
 use arch::memory::paging::entry::EntryFlags;
-use arch::memory::allocator;
 use spin::Mutex;
 use alloc::btree_map::BTreeMap;
 use core::mem;
@@ -14,15 +13,11 @@ pub mod madt;
 
 /// Retrieve an SDT from a pointer found using the RSDP
 fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::SdtHeader {
-    let allocator = unsafe {
-        allocator()
-    };
-    
     {
         let page = Page::containing_address(VirtualAddress::new(address));
         if active_table.translate_page(page).is_none() {
             let frame = Frame::containing_address(PhysicalAddress::new(page.start_address().get()));
-            active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator);
+            active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
         }
     }
 
@@ -36,7 +31,7 @@ fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::
             // Check if this page has already been mapped to a frame.
             if active_table.translate_page(page).is_none() {
                 let frame = Frame::containing_address(PhysicalAddress::new(page.start_address().get()));
-                active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator);
+                active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
             }
         }
     }

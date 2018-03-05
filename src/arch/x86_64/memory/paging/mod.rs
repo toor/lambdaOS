@@ -1,6 +1,8 @@
 pub use self::entry::EntryFlags;
 pub use self::mapper::Mapper;
-use arch::memory::{Frame, FrameAllocator, PAGE_SIZE};
+use arch::memory::{Frame, AreaFrameAllocator, PAGE_SIZE};
+use arch::memory::allocate_frames;
+use arch::memory::stack_allocator::StackAllocator;
 use self::temporary_page::TemporaryPage;
 use core::ops::{Add, Deref, DerefMut};
 use multiboot2::BootInformation;
@@ -21,6 +23,7 @@ impl PhysicalAddress {
         PhysicalAddress(addr)
     }
 
+    /// Return the inner address this `PhysicalAddress` wraps.
     pub fn get(&self) -> usize {
         self.0
     }
@@ -30,10 +33,12 @@ impl PhysicalAddress {
 pub struct VirtualAddress(pub usize);
 
 impl VirtualAddress {
+    /// Create a new virtual address.
     pub fn new(addr: usize) -> Self {
         VirtualAddress(addr)
     }
 
+    /// Return the inner address this `VirtualAddress` wraps.
     pub fn get(&self) -> usize {
         self.0
     }
@@ -96,7 +101,7 @@ impl Add<usize> for Page {
 }
 
 /// An iterator over pages between `start` and `end`.
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct PageIter {
     start: Page,
     end: Page,
@@ -161,7 +166,8 @@ impl ActivePageTable {
 
         {
             // Get reference to current P4 table.
-            let backup = Frame::containing_address(PhysicalAddress::new(control_regs::cr3().0 as usize));
+            let backup =
+                Frame::containing_address(PhysicalAddress::new(control_regs::cr3().0 as usize));
 
             // map temporary_page to current P4 table
             let p4_table = temporary_page.map_table_frame(backup.clone(), self);
@@ -185,16 +191,20 @@ impl ActivePageTable {
     }
 
     /// Switch the active page table, and return the old page table.
-    pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable { 
+    pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable {
         use x86_64;
         use x86_64::registers::control_regs;
-            
+
         let old_table = InactivePageTable {
-            p4_frame: Frame::containing_address(PhysicalAddress::new(control_regs::cr3().0 as usize)),
+            p4_frame: Frame::containing_address(PhysicalAddress::new(
+                control_regs::cr3().0 as usize,
+            )),
         };
 
-        unsafe{
-            control_regs::cr3_write(x86_64::PhysicalAddress(new_table.p4_frame.start_address().get() as u64));
+        unsafe {
+            control_regs::cr3_write(x86_64::PhysicalAddress(
+                new_table.p4_frame.start_address().get() as u64,
+            ));
         }
         old_table
     }
@@ -226,20 +236,26 @@ impl InactivePageTable {
 /// and turning the previous kernel stack into a guard page - this prevents silent stack overflows, as
 /// given that the guard page is unmapped, any stack overflow into this page will instantly cause a
 /// page fault. Returns the currently active kernel page table.
-pub fn init<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
-where
-    A: FrameAllocator,
+pub fn init(boot_info: &BootInformation) -> (ActivePageTable, StackAllocator)
 {
-    let mut temporary_page = TemporaryPage::new(Page { number: 0xcafebabe }, allocator);
+    use arch::memory::stack_allocator::{self, StackAllocator};
+    
+    // let mut allocator: AreaFrameAllocator = *ALLOCATOR.lock();
+    let mut temporary_page = TemporaryPage::new(Page { number: 0xcafebabe });
+    
+    let mut stack_allocator: StackAllocator = unsafe { *(&*(0 as *const StackAllocator)) };
 
     let mut active_table = unsafe { ActivePageTable::new() };
     let mut new_table = {
-        // Allocate a frame for the p4 table, and set this table as inactive.
-        let frame = allocator.allocate_frame(1).expect("no more frames");
+        // Allocate a frame for the PML4.
+        let frame = allocate_frames(1).expect("out of memory");
         InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
     };
-
+    
+    // Do important mapping work.
     active_table.with(&mut new_table, &mut temporary_page, |mapper| {
+        println!("[ vmm ] Initialising paging.");
+        
         let elf_sections_tag = boot_info
             .elf_sections_tag()
             .expect("Memory map tag required");
@@ -252,45 +268,96 @@ where
             }
 
             assert!(
-                section.addr as usize % PAGE_SIZE == 0,
+                section.start_address() as usize % PAGE_SIZE == 0,
                 "sections need to be page aligned"
             );
             println!(
-                "[ vmm ] Identity mapping kernel section at addr: {:#x}, size: {}",
-                section.addr, section.size,
+                "[ vmm ] Identity mapping kernel section at addr: {:#x}, size: {} KiB",
+                section.start_address(),
+                section.size() / 1024,
             );
+            
+            // Translate ELF section flags to paging flags, and map the kernel sections
+            // into the virtual address space using these flags.
+            let flags = EntryFlags::from_elf_section_flags(&section);
 
-            let flags = EntryFlags::from_elf_section_flags(section);
-
-            let start_frame = Frame::containing_address(PhysicalAddress::new(
-                    section.start_address()));
-            let end_frame = Frame::containing_address(PhysicalAddress::new(
-                    section.end_address() - 1));
+            let start_frame =
+                Frame::containing_address(PhysicalAddress::new(section.start_address() as usize));
+            let end_frame =
+                Frame::containing_address(PhysicalAddress::new((section.end_address() - 1) as usize));
             for frame in Frame::range_inclusive(start_frame, end_frame) {
-                mapper.identity_map(frame, flags, allocator);
+                mapper.identity_map(frame, flags);
             }
         }
 
         // identity map the VGA text buffer
         println!("[ vmm ] Identity mapping the VGA text buffer.");
         let vga_buffer_frame = Frame::containing_address(PhysicalAddress::new(0xb8000));
-        mapper.identity_map(vga_buffer_frame, EntryFlags::WRITABLE, allocator);
+        mapper.identity_map(vga_buffer_frame, EntryFlags::WRITABLE);
 
         // identity map the multiboot info structure.
         println!("[ vmm ] Identity mapping multiboot structures.");
-        let multiboot_start = Frame::containing_address(PhysicalAddress::new(boot_info.start_address()));
-        let multiboot_end = Frame::containing_address(PhysicalAddress::new(boot_info.end_address() - 1));
+        let multiboot_start =
+            Frame::containing_address(PhysicalAddress::new(boot_info.start_address()));
+        let multiboot_end =
+            Frame::containing_address(PhysicalAddress::new(boot_info.end_address() - 1));
         for frame in Frame::range_inclusive(multiboot_start, multiboot_end) {
-            mapper.identity_map(frame, EntryFlags::PRESENT, allocator);
+            mapper.identity_map(frame, EntryFlags::PRESENT);
         }
+
+        use self::Page;
+        use arch::memory::heap_allocator::{HEAP_SIZE, HEAP_START};
+
+        let heap_start_page = Page::containing_address(VirtualAddress::new(HEAP_START));
+        let heap_end_page = Page::containing_address(VirtualAddress::new(HEAP_START + HEAP_SIZE - 1));
+        
+        // Map the heap pages within the range we specified.
+        println!("[ vmm ] Mapping heap pages.");
+        for page in Page::range_inclusive(heap_start_page, heap_end_page) {
+            mapper.map(page, EntryFlags::WRITABLE);
+        }
+
+        println!(
+            "[ vmm ] Heap start: {:#x}",
+            heap_start_page.start_address().get()
+        );
+        println!(
+            "[ vmm ] Heap end: {:#x}",
+            heap_end_page.start_address().get()
+        );
+
+        // Initialise the allocator API.
+        unsafe {
+            ::HEAP_ALLOCATOR.init(HEAP_START, HEAP_SIZE);
+        }
+        
+        // Initialise a stack allocator.
+        stack_allocator = {
+            // Allocate stacks directly after the heap.
+            let stack_alloc_start = heap_end_page + 1;
+            // allocate stacks within a range of 400KiB.
+            let stack_alloc_end = stack_alloc_start + 100;
+            let stack_alloc_range = Page::range_inclusive(stack_alloc_start, stack_alloc_end);
+            stack_allocator::StackAllocator::new(stack_alloc_range)
+        };
     });
 
     let old_table = active_table.switch(new_table);
-    println!("[ vmm ] Switched to new page table. PML4 at {:#x}", active_table.address());
+    println!(
+        "[ vmm ] Switched to new page table. PML4 at {:#x}",
+        active_table.address()
+    );
 
-    let old_p4_page = Page::containing_address(VirtualAddress::new(old_table.p4_frame.start_address().get()));
-    active_table.unmap(old_p4_page, allocator);
-    println!("[ vmm ] Guard page at {:#x}.", old_p4_page.start_address().get());
+    let old_p4_page = Page::containing_address(VirtualAddress::new(
+        old_table.p4_frame.start_address().get(),
+    ));
+    
+    active_table.unmap(old_p4_page);
+    
+    println!(
+        "[ vmm ] Guard page at {:#x}.",
+        old_p4_page.start_address().get()
+    );
 
-    active_table
+    (active_table, stack_allocator)
 }

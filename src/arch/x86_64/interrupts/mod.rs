@@ -25,9 +25,6 @@ lazy_static! {
         idt.bound_range_exceeded.set_handler_fn(exceptions::bound_range_handler);
         idt.invalid_opcode.set_handler_fn(exceptions::invalid_opcode_handler);
         idt.device_not_available.set_handler_fn(exceptions::device_not_available_handler);
-        // Double-fault. We set the stack index to be the 0th entry in the stack table, so the
-        // kernel jumps to that stack when a double fault occurs - this will prevent the kernel
-        // stack overflowing.
         unsafe {
             idt.double_fault.set_handler_fn(exceptions::double_fault_handler)
                 .set_stack_index(DOUBLE_FAULT_IST_INDEX as u16);

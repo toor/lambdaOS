@@ -3,8 +3,8 @@ pub mod memory;
 pub mod init;
 
 use device;
-use self::memory::{active_table, MemoryController};
 use acpi;
+use self::memory::MemoryController;
 pub use self::init::init;
 
 pub static mut MEMORY_CONTROLLER: Option<MemoryController> = None;

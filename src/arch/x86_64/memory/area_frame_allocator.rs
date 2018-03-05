@@ -43,13 +43,15 @@ impl AreaFrameAllocator {
         self.current_area = self.areas
             .clone()
             .filter(|area| {
-                let address = area.base_addr + area.length - 1;
-                Frame::containing_address(PhysicalAddress::new(address as usize)) >= self.next_free_frame
+                let address = area.start_address() + area.size() - 1;
+                Frame::containing_address(PhysicalAddress::new(address as usize))
+                    >= self.next_free_frame
             })
-            .min_by_key(|area| area.base_addr);
+            .min_by_key(|area| area.start_address());
 
         if let Some(area) = self.current_area {
-            let start_frame = Frame::containing_address(PhysicalAddress::new(area.base_addr as usize));
+            let start_frame =
+                Frame::containing_address(PhysicalAddress::new(area.start_address()));
             if self.next_free_frame < start_frame {
                 self.next_free_frame = start_frame;
             }
@@ -75,8 +77,8 @@ impl FrameAllocator for AreaFrameAllocator {
 
             // the last frame of the current area
             let current_area_last_frame = {
-                let address = area.base_addr + area.length - 1;
-                Frame::containing_address(PhysicalAddress::new(address as usize))
+                let address = area.start_address() + area.size() - 1;
+                Frame::containing_address(PhysicalAddress::new(address))
             };
 
             if end_frame > current_area_last_frame {
@@ -116,10 +118,12 @@ impl FrameAllocator for AreaFrameAllocator {
         let mut count = 0;
 
         for area in self.areas.clone() {
-            let start_frame = Frame::containing_address(PhysicalAddress::new(area.base_addr as usize));
-            let end_frame = Frame::containing_address(
-                PhysicalAddress::new((area.base_addr + area.length -1) as usize));
-            
+            let start_frame =
+                Frame::containing_address(PhysicalAddress::new(area.start_address()));
+            let end_frame = Frame::containing_address(PhysicalAddress::new(
+                (area.start_address() + area.size() - 1),
+            ));
+
             for frame in Frame::range_inclusive(start_frame, end_frame) {
                 if frame >= self.kernel_start && frame <= self.kernel_end {
                     // Frame is used by the kernel.
