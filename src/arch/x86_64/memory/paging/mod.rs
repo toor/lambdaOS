@@ -236,15 +236,10 @@ impl InactivePageTable {
 /// and turning the previous kernel stack into a guard page - this prevents silent stack overflows, as
 /// given that the guard page is unmapped, any stack overflow into this page will instantly cause a
 /// page fault. Returns the currently active kernel page table.
-pub fn init(boot_info: &BootInformation) -> (ActivePageTable, StackAllocator)
-{
-    use arch::memory::stack_allocator::{self, StackAllocator};
-    
+pub fn init(boot_info: &BootInformation) -> ActivePageTable
+{    
     // let mut allocator: AreaFrameAllocator = *ALLOCATOR.lock();
     let mut temporary_page = TemporaryPage::new(Page { number: 0xcafebabe });
-    
-    let mut stack_allocator: StackAllocator = unsafe { *(&*(0 as *const StackAllocator)) };
-
     let mut active_table = unsafe { ActivePageTable::new() };
     let mut new_table = {
         // Allocate a frame for the PML4.
@@ -304,42 +299,6 @@ pub fn init(boot_info: &BootInformation) -> (ActivePageTable, StackAllocator)
         for frame in Frame::range_inclusive(multiboot_start, multiboot_end) {
             mapper.identity_map(frame, EntryFlags::PRESENT);
         }
-
-        use self::Page;
-        use arch::memory::heap_allocator::{HEAP_SIZE, HEAP_START};
-
-        let heap_start_page = Page::containing_address(VirtualAddress::new(HEAP_START));
-        let heap_end_page = Page::containing_address(VirtualAddress::new(HEAP_START + HEAP_SIZE - 1));
-        
-        // Map the heap pages within the range we specified.
-        println!("[ vmm ] Mapping heap pages.");
-        for page in Page::range_inclusive(heap_start_page, heap_end_page) {
-            mapper.map(page, EntryFlags::WRITABLE);
-        }
-
-        println!(
-            "[ vmm ] Heap start: {:#x}",
-            heap_start_page.start_address().get()
-        );
-        println!(
-            "[ vmm ] Heap end: {:#x}",
-            heap_end_page.start_address().get()
-        );
-
-        // Initialise the allocator API.
-        unsafe {
-            ::HEAP_ALLOCATOR.init(HEAP_START, HEAP_SIZE);
-        }
-        
-        // Initialise a stack allocator.
-        stack_allocator = {
-            // Allocate stacks directly after the heap.
-            let stack_alloc_start = heap_end_page + 1;
-            // allocate stacks within a range of 400KiB.
-            let stack_alloc_end = stack_alloc_start + 100;
-            let stack_alloc_range = Page::range_inclusive(stack_alloc_start, stack_alloc_end);
-            stack_allocator::StackAllocator::new(stack_alloc_range)
-        };
     });
 
     let old_table = active_table.switch(new_table);
@@ -347,7 +306,8 @@ pub fn init(boot_info: &BootInformation) -> (ActivePageTable, StackAllocator)
         "[ vmm ] Switched to new page table. PML4 at {:#x}",
         active_table.address()
     );
-
+    
+    // Create a guard page.
     let old_p4_page = Page::containing_address(VirtualAddress::new(
         old_table.p4_frame.start_address().get(),
     ));
@@ -359,5 +319,5 @@ pub fn init(boot_info: &BootInformation) -> (ActivePageTable, StackAllocator)
         old_p4_page.start_address().get()
     );
 
-    (active_table, stack_allocator)
+    active_table
 }
