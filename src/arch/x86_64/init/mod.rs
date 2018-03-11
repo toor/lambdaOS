@@ -8,29 +8,27 @@ mod smp;
 
 /// Main kernel init function. This sets everything up for us.
 pub unsafe fn init(multiboot_info: usize) {
-    // Ensure we aren't interrupted during this critical function.
     interrupts::disable_interrupts();
-    device::vga::buffer::clear_screen();
-    println!("[ INFO ] lambdaOS: Begin init.");
-    
-    let boot_info = ::multiboot2::load(multiboot_info);
-    
-    // Set safety bits in certain registers.
-    enable_nxe_bit();
-    enable_write_protect_bit();
-    
-    // Setup paging and switch the system to the new page table.
-    let (mut active_table, stack_allocator) = 
-            memory::paging::init(&boot_info);
-    
-    let mut memory_controller = memory::init_noncore(stack_allocator, &mut active_table);
-    interrupts::init(&mut memory_controller);
+    {
+        device::vga::buffer::clear_screen();
+        println!("[ INFO ] lambdaOS: Begin init.");
 
-    MEMORY_CONTROLLER = Some(memory_controller);
+        let boot_info = ::multiboot2::load(multiboot_info);
 
-    device::init(); 
-    acpi::init(&mut active_table);
+        // Set safety bits in certain registers.
+        enable_nxe_bit();
+        enable_write_protect_bit();
 
+        // Setup memory management.
+        let mut memory_controller = memory::init(&boot_info);
+        interrupts::init(&mut memory_controller);
+
+        MEMORY_CONTROLLER = Some(memory_controller);
+
+        device::init();
+    }
+
+    // set interrupt flag using sti instruction.
     interrupts::enable_interrupts();
 
     println!("[ OK ] Init successful, you may now type.")
