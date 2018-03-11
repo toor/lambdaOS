@@ -24,14 +24,20 @@ impl Madt {
     /// Initialise all the MADT entries.
     pub fn init(&mut self, active_table: &mut ActivePageTable) {
         for entry in self.iter() {
-            // TODO Here we should check if the APIC we find is the BSP LAPIC.
             match entry {
                 MadtEntry::Lapic(local_apic) => {
+                    use x86_64::registers::msr::{rdmsr, IA32_APIC_BASE};
+
                     // New core?
                     if local_apic.flags & 1 == 1 {
-                        println!("Found another core, id: {}", local_apic.id);
-                        CPUS.fetch_add(1, Ordering::SeqCst);
-
+                        println!("[ dev ] Found local APIC, id: {}, processor id: {}", 
+                                 local_apic.id,
+                                 local_apic.processor_id);
+                        if rdmsr(IA32_APIC_BASE) & (1 << 8) == local_apic.id as u64 {
+                            println!("[ dev ] Found the BSP local APIC, id: {}", local_apic.id);
+                        } else {
+                            CPUS.fetch_add(1, Ordering::SeqCst);
+                        }
                         // TODO: smp::init(CPUS.load(Ordering::SeqCst));
 
                     } else {
@@ -40,15 +46,20 @@ impl Madt {
                 },
 
                 MadtEntry::IoApic(io_apic) => {
+                    println!("[ dev ] Found I/O APIC, id: {}, register base: {:#x}", 
+                             io_apic.id,
+                             io_apic.address);
                     IO_APICS.lock().push(io_apic);  
                 },
 
                 _ => {
-                    println!("No more entries...");
+                    println!("[ acpi ] No more MADT entries...");
                     return;
                 },
             }
         }
+
+        println!("[ smp ] Found {} APs", CPUS.load(Ordering::SeqCst));
     }
 
     pub fn new(sdt: &'static SdtHeader) -> Self {

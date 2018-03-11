@@ -3,6 +3,7 @@ pub use self::paging::ActivePageTable;
 pub use self::stack_allocator::Stack;
 use self::paging::{PhysicalAddress, VirtualAddress};
 use multiboot2::BootInformation;
+use spin::Mutex;
 
 pub mod area_frame_allocator;
 pub mod heap_allocator;
@@ -11,7 +12,9 @@ pub mod stack_allocator;
 
 pub const PAGE_SIZE: usize = 4096;
 
-pub fn init(boot_info: &BootInformation) -> MemoryController {
+pub static ALLOCATOR: Mutex<Option<AreaFrameAllocator>> = Mutex::new(None);
+
+pub fn init(boot_info: &BootInformation) {
     assert_has_not_been_called!("memory::init must be called only once");
 
     let memory_map_tag = boot_info.memory_map_tag().expect("Memory map tag required");
@@ -22,13 +25,13 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     let kernel_start = elf_sections_tag
         .sections()
         .filter(|s| s.is_allocated())
-        .map(|s| s.addr)
+        .map(|s| s.start_address())
         .min()
         .unwrap();
     let kernel_end = elf_sections_tag
         .sections()
         .filter(|s| s.is_allocated())
-        .map(|s| s.addr + s.size)
+        .map(|s| s.start_address() + s.size())
         .max()
         .unwrap();
 
@@ -50,45 +53,27 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         memory_map_tag.memory_areas(),
     );
 
-    println!("[ vmm ] Initialising paging...");
-    let mut active_table = paging::init(&mut frame_allocator, boot_info);
-
-    use self::paging::Page;
-    use self::heap_allocator::{HEAP_SIZE, HEAP_START};
-
-    let heap_start_page = Page::containing_address(VirtualAddress::new(HEAP_START));
-    let heap_end_page = Page::containing_address(VirtualAddress::new(HEAP_START + HEAP_SIZE - 1));
-    
-    println!("[ vmm ] Mapping heap pages.");
-    for page in Page::range_inclusive(heap_start_page, heap_end_page) {
-        active_table.map(page, paging::EntryFlags::WRITABLE, &mut frame_allocator);
-    }
-
-    println!("[ vmm ] Heap start: {:#x}", heap_start_page.start_address().get());
-    println!("[ vmm ] Heap end: {:#x}", heap_end_page.start_address().get());
-
-    // Init the heap
-    unsafe {
-        ::HEAP_ALLOCATOR.init(HEAP_START, HEAP_SIZE);
-    }
-
-    let stack_allocator = {
-        let stack_alloc_start = heap_end_page + 1;
-        let stack_alloc_end = stack_alloc_start + 100;
-        let stack_alloc_range = Page::range_inclusive(stack_alloc_start, stack_alloc_end);
-        stack_allocator::StackAllocator::new(stack_alloc_range)
-    };
-
-    MemoryController {
+    *ALLOCATOR.lock() = Some(frame_allocator);
+    /* MemoryController {
         active_table: active_table,
         frame_allocator: frame_allocator,
         stack_allocator: stack_allocator,
+    }*/
+}
+
+// TODO: Move this back inside the main memory::init function.
+pub fn init_noncore(
+    stack_allocator: stack_allocator::StackAllocator,
+    active_table: &'static mut paging::ActivePageTable,
+) -> MemoryController {
+    MemoryController {
+        active_table,
+        stack_allocator,
     }
 }
 
 pub struct MemoryController {
-    active_table: paging::ActivePageTable,
-    frame_allocator: AreaFrameAllocator,
+    active_table: &'static mut paging::ActivePageTable,
     stack_allocator: stack_allocator::StackAllocator,
 }
 
@@ -96,20 +81,20 @@ impl MemoryController {
     pub fn alloc_stack(&mut self, size_in_pages: usize) -> Option<Stack> {
         let &mut MemoryController {
             ref mut active_table,
+            ref mut stack_allocator,
+        } = self;
+        stack_allocator.alloc_stack(active_table, size_in_pages)
+    }
+
+    /* pub fn allocate_frame(&mut self, count: usize) -> Option<Frame> {
+        let &mut MemoryController {
+            ref mut active_table,
             ref mut frame_allocator,
             ref mut stack_allocator,
         } = self;
-        stack_allocator.alloc_stack(active_table, frame_allocator, size_in_pages)
-    }
 
-    /// Get reference to the global frame allocator.
-    pub fn frame_allocator(&mut self) -> &mut AreaFrameAllocator {
-        &mut self.frame_allocator
-    }
-
-    pub fn active_table(&mut self) -> &mut ActivePageTable {
-        &mut self.active_table
-    }
+        frame_allocator.allocate_frame(count)
+    } */
 }
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -118,12 +103,14 @@ pub struct Frame {
 }
 
 impl Frame {
+    /// Return the frame that contains the given physical address.
     pub fn containing_address(address: PhysicalAddress) -> Frame {
         Frame {
             number: address.get() / PAGE_SIZE,
         }
     }
-
+    
+    /// Return the starting address of this frame.
     pub fn start_address(&self) -> PhysicalAddress {
         PhysicalAddress::new(self.number * PAGE_SIZE)
     }
@@ -167,18 +154,11 @@ pub trait FrameAllocator {
     fn free_frames(&mut self) -> usize;
 }
 
-pub unsafe fn allocator<'a>() -> &'a mut AreaFrameAllocator {
-    if let Some(ref mut memory_controller) = ::arch::MEMORY_CONTROLLER {
-        return memory_controller.frame_allocator();
+/// Allocate a frame.
+pub fn allocate_frames(count: usize) -> Option<Frame> {
+    if let Some(ref mut frame_allocator) = *ALLOCATOR.lock() {
+        return frame_allocator.allocate_frame(count);
     } else {
-        panic!("memory controller called before init.");
-    }
-}
-
-pub unsafe fn active_table<'a>() -> &'a mut ActivePageTable {
-    if let Some(ref mut memory_controller) = ::arch::MEMORY_CONTROLLER {
-        memory_controller.active_table()
-    } else {
-        panic!("memory controller called before init.");
+        panic!("Frame allocator called before init.");
     }
 }

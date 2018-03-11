@@ -1,7 +1,6 @@
 use arch::memory::Frame;
 use arch::memory::paging::{Page, PhysicalAddress, VirtualAddress};
 use arch::memory::paging::ActivePageTable;
-use arch::memory::allocator;
 use arch::memory::paging::entry::EntryFlags;
 
 #[derive(Copy, Clone, Debug)]
@@ -26,8 +25,6 @@ impl RsdpDescriptor {
         let rsdp_start: usize = 0xe0000;
         let rsdp_end: usize = 0xf_ffff;
 
-        let allocator = unsafe { allocator() };
-
         // Map address space.
         {
             let start_frame = Frame::containing_address(PhysicalAddress::new(rsdp_start));
@@ -38,8 +35,7 @@ impl RsdpDescriptor {
                 active_table.map_to(
                     page,
                     frame,
-                    EntryFlags::PRESENT | EntryFlags::NO_EXECUTE,
-                    allocator,
+                    EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, 
                 );
             }
         }
