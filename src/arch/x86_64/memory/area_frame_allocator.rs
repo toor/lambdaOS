@@ -8,12 +8,20 @@ use arch::memory::paging::PhysicalAddress;
 ///
 /// `kernel_end` and `multiboot_end` are _inclusive_ bounds.
 pub struct AreaFrameAllocator {
+    /// The next available physical frame.
     next_free_frame: Frame,
+    /// The current memory area, detected by multiboot using the e820.
     current_area: Option<&'static MemoryArea>,
+    /// An iterator over all memory areas.
     areas: MemoryAreaIter,
+    /// The starting frame of the kernel in physical memory.
+    /// frame.start_address().get() == 1MiB.
     kernel_start: Frame,
+    /// The end frame of the kernel in physical memory.
     kernel_end: Frame,
+    /// The starting frame of the multiboot structure in physical memory,
     multiboot_start: Frame,
+    /// The end frame of the multiboot data structure in physical memory.
     multiboot_end: Frame,
 }
 
@@ -38,7 +46,7 @@ impl AreaFrameAllocator {
         allocator
     }
 
-    /// Choose the next available area.
+    /// Choose the next available memory area.
     fn choose_next_area(&mut self) {
         self.current_area = self.areas
             .clone()
@@ -50,8 +58,11 @@ impl AreaFrameAllocator {
             .min_by_key(|area| area.start_address());
 
         if let Some(area) = self.current_area {
-            let start_frame =
-                Frame::containing_address(PhysicalAddress::new(area.start_address()));
+            let start_frame = Frame::containing_address(PhysicalAddress::new(area.start_address()));
+            println!(
+                "First area starts at address: {:#x}",
+                start_frame.start_address().get()
+            );
             if self.next_free_frame < start_frame {
                 self.next_free_frame = start_frame;
             }
@@ -60,7 +71,7 @@ impl AreaFrameAllocator {
 }
 
 impl FrameAllocator for AreaFrameAllocator {
-    /// Allocate a single frame. Return `None` if we are OOM.
+    /// Allocate a single frame. Return `None` if we are out of memory.
     fn allocate_frame(&mut self, count: usize) -> Option<Frame> {
         if count == 0 {
             return None;
@@ -113,13 +124,13 @@ impl FrameAllocator for AreaFrameAllocator {
     fn deallocate_frame(&mut self, _frame: Frame) {
         unimplemented!()
     }
-
+    
+    /// Get a count of available free frames.
     fn free_frames(&mut self) -> usize {
         let mut count = 0;
 
         for area in self.areas.clone() {
-            let start_frame =
-                Frame::containing_address(PhysicalAddress::new(area.start_address()));
+            let start_frame = Frame::containing_address(PhysicalAddress::new(area.start_address()));
             let end_frame = Frame::containing_address(PhysicalAddress::new(
                 (area.start_address() + area.size() - 1),
             ));
