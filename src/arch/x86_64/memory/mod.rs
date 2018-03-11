@@ -2,6 +2,8 @@ pub use self::area_frame_allocator::AreaFrameAllocator;
 pub use self::paging::ActivePageTable;
 pub use self::stack_allocator::Stack;
 use self::paging::{PhysicalAddress, VirtualAddress};
+use self::paging::entry::EntryFlags;
+
 use multiboot2::BootInformation;
 use spin::Mutex;
 
@@ -10,11 +12,13 @@ pub mod heap_allocator;
 pub mod paging;
 pub mod stack_allocator;
 
+/// The size of a physical page on x86.
 pub const PAGE_SIZE: usize = 4096;
 
+/// The global physical page frame allocator.
 pub static ALLOCATOR: Mutex<Option<AreaFrameAllocator>> = Mutex::new(None);
 
-pub fn init(boot_info: &BootInformation) {
+pub fn init(boot_info: &BootInformation) -> MemoryController {
     assert_has_not_been_called!("memory::init must be called only once");
 
     let memory_map_tag = boot_info.memory_map_tag().expect("Memory map tag required");
@@ -54,26 +58,40 @@ pub fn init(boot_info: &BootInformation) {
     );
 
     *ALLOCATOR.lock() = Some(frame_allocator);
-    /* MemoryController {
-        active_table: active_table,
-        frame_allocator: frame_allocator,
-        stack_allocator: stack_allocator,
-    }*/
-}
+    
+    let mut active_table = paging::init(&boot_info);
 
-// TODO: Move this back inside the main memory::init function.
-pub fn init_noncore(
-    stack_allocator: stack_allocator::StackAllocator,
-    active_table: &'static mut paging::ActivePageTable,
-) -> MemoryController {
+    use self::paging::Page;
+    use self::heap_allocator::{HEAP_START, HEAP_SIZE};
+
+    let heap_start_page = Page::containing_address(VirtualAddress::new(HEAP_START));
+    let heap_end_page = Page::containing_address(VirtualAddress::new(HEAP_START + HEAP_SIZE - 1));
+
+    println!("[ vmm ] Mapping heap pages ...");
+
+    for page in Page::range_inclusive(heap_start_page, heap_end_page) {
+        active_table.map(page, EntryFlags::PRESENT | EntryFlags::WRITABLE);
+    }
+
+    unsafe {
+        ::HEAP_ALLOCATOR.init(HEAP_START, HEAP_SIZE)
+    };
+
+    let stack_allocator = {
+        let stack_start_page = heap_end_page + 1;
+        let stack_end_page = stack_start_page + 100;
+        let stack_alloc_range = Page::range_inclusive(stack_start_page, stack_end_page);
+        stack_allocator::StackAllocator::new(stack_alloc_range)
+    };
+
     MemoryController {
-        active_table,
-        stack_allocator,
+        active_table: active_table,
+        stack_allocator: stack_allocator,
     }
 }
 
 pub struct MemoryController {
-    active_table: &'static mut paging::ActivePageTable,
+    active_table: paging::ActivePageTable,
     stack_allocator: stack_allocator::StackAllocator,
 }
 
