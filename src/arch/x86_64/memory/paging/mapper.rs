@@ -77,7 +77,7 @@ impl Mapper {
 
     /// Map a page to a frame by getting reference to the page tables and setting the index in the
     /// P1 table to the given frame.
-    pub fn map_to(&mut self, page: Page, frame: Frame, flags: EntryFlags) 
+    pub fn map_to(&mut self, page: Page, frame: Frame, flags: EntryFlags) -> MapperFlush
     {
         let p3 = self.p4_mut().next_table_create(page.p4_index());
         let p2 = p3.next_table_create(page.p3_index());
@@ -85,24 +85,26 @@ impl Mapper {
 
         assert!(p1[page.p1_index()].is_unused());
         p1[page.p1_index()].set(frame, flags | EntryFlags::PRESENT);
+
+        MapperFlush::new(page)
     }
 
     /// Map a page by allocating a free frame and mapping a page to that frame.
-    pub fn map(&mut self, page: Page, flags: EntryFlags)
+    pub fn map(&mut self, page: Page, flags: EntryFlags) -> MapperFlush
     {
         let frame = allocate_frames(1).expect("out of memory");
         self.map_to(page, frame, flags)
     }
 
     /// Map a page by translating a given `Frame` to a `Page`.
-    pub fn identity_map(&mut self, frame: Frame, flags: EntryFlags)
+    pub fn identity_map(&mut self, frame: Frame, flags: EntryFlags) -> MapperFlush
     {
         let page = Page::containing_address(VirtualAddress::new(frame.start_address().get()));
         self.map_to(page, frame, flags)
     }
 
     /// Unmap a page from a physical frame.
-    pub fn unmap(&mut self, page: Page)
+    pub fn unmap(&mut self, page: Page) -> MapperFlush
     {
         use x86_64;
         use x86_64::instructions::tlb;
@@ -120,12 +122,19 @@ impl Mapper {
         tlb::flush(x86_64::VirtualAddress(page.start_address().get()));
         // TODO free p(1,2,3) table if empty
         // allocator.deallocate_frame(frame);
+        MapperFlush::new(page)
     }
 }
 
 /// A promise to flush a virtual address.
 #[must_use = "The page must be flushed, or the changes are ignored."]
 pub struct MapperFlush(Page);
+
+impl Drop for MapperFlush {
+    fn drop(&mut self) {
+        panic!("Flush not consumed!");
+    }
+}
 
 impl MapperFlush {
     pub fn new(page: Page) -> Self {
@@ -145,6 +154,12 @@ impl MapperFlush {
 /// A way to flush the entire active page table.
 #[must_use = "The active page table must be flushed, or the changes ignored"]
 pub struct MapperFlushAll(bool);
+
+impl Drop for MapperFlushAll {
+    fn drop(&mut self) {
+        panic!("Flush not consumed!");
+    }
+}
 
 impl MapperFlushAll {
     pub fn new() -> Self {
