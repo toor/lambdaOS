@@ -123,6 +123,8 @@ impl Mapper {
     }
 }
 
+/// A promise to flush a virtual address.
+#[must_use = "The page must be flushed, or the changes are ignored."]
 pub struct MapperFlush(Page);
 
 impl MapperFlush {
@@ -130,8 +132,9 @@ impl MapperFlush {
         MapperFlush(page)
     }
 
-    pub fn flush(self, _at: &mut ActivePageTable) {
-        // TODO.
+    pub fn flush(self, table: &mut ActivePageTable) {
+        table.flush(self.0);
+        mem::forget(self);
     }
 
     pub unsafe fn ignore(self) {
@@ -139,6 +142,8 @@ impl MapperFlush {
     }
 }
 
+/// A way to flush the entire active page table.
+#[must_use = "The active page table must be flushed, or the changes ignored"]
 pub struct MapperFlushAll(bool);
 
 impl MapperFlushAll {
@@ -153,7 +158,7 @@ impl MapperFlushAll {
     
     pub fn flush(self, table: &mut ActivePageTable) {
         if self.0 {
-            // TODO
+            unsafe { table.flush_all() };
         }
 
         mem::forget(self);
