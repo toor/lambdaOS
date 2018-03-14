@@ -208,6 +208,16 @@ impl ActivePageTable {
         }
         old_table
     }
+
+    pub fn flush(&mut self, page: Page) {
+        unsafe { asm!("invlpg ($0)" :: "r"(page.start_address().get())) }; 
+    }
+
+    pub unsafe fn flush_all(&mut self) {
+        use x86_64::registers::control_regs::{cr3, cr3_write};
+
+        cr3_write(cr3());
+    }
 }
 
 /// A page table which has a frame wherein the P4 table lives.
@@ -238,7 +248,6 @@ impl InactivePageTable {
 /// page fault. Returns the currently active kernel page table.
 pub fn init(boot_info: &BootInformation) -> ActivePageTable
 {    
-    // let mut allocator: AreaFrameAllocator = *ALLOCATOR.lock();
     let mut temporary_page = TemporaryPage::new(Page { number: 0xcafebabe });
     let mut active_table = unsafe { ActivePageTable::new() };
     let mut new_table = {

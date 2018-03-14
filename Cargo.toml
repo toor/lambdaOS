@@ -4,6 +4,7 @@ description = "A simple operating system written in Rust"
 license = "GPL-3.0"
 name = "lambdaOS"
 version = "0.1.0"
+
 [dependencies]
 bit_field = "0.7.0"
 bitflags = "1.0.0"

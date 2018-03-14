@@ -1,10 +1,11 @@
-use super::{Page, PhysicalAddress, VirtualAddress, ENTRY_COUNT};
+use super::{Page, PhysicalAddress, ActivePageTable, VirtualAddress, ENTRY_COUNT};
 use super::entry::EntryFlags;
 use super::table::{self, Level4, Table};
 use arch::memory::{allocate_frames, Frame, FrameAllocator, PAGE_SIZE};
 use core::ptr::Unique;
+use core::mem;
 
-/// The `Mapper` struct has functionality related to mapping pages to frames.
+/// A helper struct which does most of the paging gruntwork.
 pub struct Mapper {
     p4: Unique<Table<Level4>>,
 }
@@ -119,5 +120,46 @@ impl Mapper {
         tlb::flush(x86_64::VirtualAddress(page.start_address().get()));
         // TODO free p(1,2,3) table if empty
         // allocator.deallocate_frame(frame);
+    }
+}
+
+pub struct MapperFlush(Page);
+
+impl MapperFlush {
+    pub fn new(page: Page) -> Self {
+        MapperFlush(page)
+    }
+
+    pub fn flush(self, _at: &mut ActivePageTable) {
+        // TODO.
+    }
+
+    pub unsafe fn ignore(self) {
+        mem::forget(self);
+    }
+}
+
+pub struct MapperFlushAll(bool);
+
+impl MapperFlushAll {
+    pub fn new() -> Self {
+        MapperFlushAll(false)
+    }
+
+    pub fn consume(&mut self, flush: MapperFlush) {
+        self.0 = true;
+        mem::forget(flush);
+    }
+    
+    pub fn flush(self, table: &mut ActivePageTable) {
+        if self.0 {
+            // TODO
+        }
+
+        mem::forget(self);
+    }
+
+    pub unsafe fn forget(self) {
+        mem::forget(self);
     }
 }
