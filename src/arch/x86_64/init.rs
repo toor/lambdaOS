@@ -1,6 +1,5 @@
 use super::interrupts;
 use super::memory;
-use super::MEMORY_CONTROLLER;
 use device;
 
 /// Main kernel init function. This sets everything up for us.
@@ -20,8 +19,7 @@ pub unsafe fn init(multiboot_info: usize) {
         let mut memory_controller = memory::init(&boot_info);
         interrupts::init(&mut memory_controller);
 
-        MEMORY_CONTROLLER = Some(memory_controller);
-
+        // Setup hardware devices.
         device::init();
     }
 
