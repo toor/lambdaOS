@@ -125,7 +125,7 @@ impl FrameAllocator for AreaFrameAllocator {
     fn deallocate_frame(&mut self, _frame: Frame) {
         unimplemented!()
     }
-    
+
     /// Get a count of available free frames.
     fn free_frames(&mut self) -> usize {
         let mut count = 0;

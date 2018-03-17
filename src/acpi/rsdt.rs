@@ -46,10 +46,10 @@ impl<'a> Rsdt<'a> {
 
         None
     }
-    
+
     /// Return RSDT data.
     pub fn data(sdt: &'static SdtHeader) -> &[u32] {
-        // len - sizeof(header) / 4. 
+        // len - sizeof(header) / 4.
         unsafe { slice::from_raw_parts(sdt.data_address() as *const u32, sdt.data_len() / 4) }
     }
 }

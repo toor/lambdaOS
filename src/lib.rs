@@ -24,11 +24,11 @@ extern crate linked_list_allocator;
 extern crate multiboot2;
 #[macro_use]
 extern crate once;
+extern crate raw_cpuid;
 extern crate rlibc;
 extern crate spin;
 extern crate volatile;
 extern crate x86_64;
-extern crate raw_cpuid;
 
 #[macro_use]
 mod macros;

@@ -7,11 +7,8 @@ pub struct TemporaryPage {
 }
 
 impl TemporaryPage {
-    pub fn new(page: Page) -> TemporaryPage
-    {
-        TemporaryPage {
-            page: page,
-        }
+    pub fn new(page: Page) -> TemporaryPage {
+        TemporaryPage { page: page }
     }
 
     /// Maps the temporary page to the given frame in the active table.

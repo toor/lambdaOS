@@ -1,7 +1,7 @@
 use arch::memory::paging::entry::EntryFlags;
 use arch::memory::paging::entry::*;
 use arch::memory::paging::ENTRY_COUNT;
-use arch::memory::{allocate_frames};
+use arch::memory::allocate_frames;
 use core::ops::{Index, IndexMut};
 use core::marker::PhantomData;
 
@@ -54,11 +54,7 @@ where
             .map(|address| unsafe { &mut *(address as *mut _) })
     }
 
-    pub fn next_table_create(
-        &mut self,
-        index: usize,
-    ) -> &mut Table<L::NextLevel>
-    {
+    pub fn next_table_create(&mut self, index: usize) -> &mut Table<L::NextLevel> {
         if self.next_table(index).is_none() {
             assert!(
                 !self.entries[index].flags().contains(EntryFlags::HUGE_PAGE),

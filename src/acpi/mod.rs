@@ -1,4 +1,4 @@
-use arch::memory::paging::{ActivePageTable, Page, VirtualAddress, PhysicalAddress};
+use arch::memory::paging::{ActivePageTable, Page, PhysicalAddress, VirtualAddress};
 use arch::memory::Frame;
 use arch::memory::paging::entry::EntryFlags;
 use core::mem;
@@ -15,22 +15,25 @@ fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::
         let page = Page::containing_address(VirtualAddress::new(address));
         if active_table.translate_page(page).is_none() {
             let frame = Frame::containing_address(PhysicalAddress::new(page.start_address().get()));
-            let result = active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
+            let result =
+                active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
             result.flush(active_table);
         }
     }
 
     let sdt = unsafe { &*(address as *const sdt::SdtHeader) };
 
-    {   
+    {
         // Map next page, and all pages within the range occupied by the data table.
         let start_page = Page::containing_address(VirtualAddress::new(address + 4096));
         let end_page = Page::containing_address(VirtualAddress::new(address + sdt.length as usize));
         for page in Page::range_inclusive(start_page, end_page) {
             // Check if this page has already been mapped to a frame.
             if active_table.translate_page(page).is_none() {
-                let frame = Frame::containing_address(PhysicalAddress::new(page.start_address().get()));
-                let result = active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
+                let frame =
+                    Frame::containing_address(PhysicalAddress::new(page.start_address().get()));
+                let result =
+                    active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
                 result.flush(active_table);
             }
         }

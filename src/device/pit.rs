@@ -15,7 +15,7 @@ pub fn init() {
     println!("[ dev ] Setting up frequency.");
     PIT.lock()[1].write((DIVISOR & 0xFF) as u8);
     PIT.lock()[1].write((DIVISOR >> 8) as u8);
-    
+
     let frequency: u32 = 1193182 / 2685;
 
     let irq0_int_timeout = {
@@ -23,7 +23,10 @@ pub fn init() {
         val * 1000
     };
 
-    println!("[ dev ] Initialising PIT, setup to interrupt every {} ms", irq0_int_timeout);
+    println!(
+        "[ dev ] Initialising PIT, setup to interrupt every {} ms",
+        irq0_int_timeout
+    );
 }
 
 pub static PIT_TICKS: AtomicUsize = ATOMIC_USIZE_INIT;

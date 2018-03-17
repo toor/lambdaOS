@@ -209,7 +209,7 @@ impl ActivePageTable {
     }
 
     pub fn flush(&mut self, page: Page) {
-        unsafe { asm!("invlpg ($0)" :: "r"(page.start_address().get())) }; 
+        unsafe { asm!("invlpg ($0)" :: "r"(page.start_address().get())) };
     }
 
     pub unsafe fn flush_all(&mut self) {
@@ -245,8 +245,7 @@ impl InactivePageTable {
 /// and turning the previous kernel stack into a guard page - this prevents silent stack overflows, as
 /// given that the guard page is unmapped, any stack overflow into this page will instantly cause a
 /// page fault. Returns the currently active kernel page table.
-pub fn init(boot_info: &BootInformation) -> ActivePageTable
-{    
+pub fn init(boot_info: &BootInformation) -> ActivePageTable {
     let mut temporary_page = TemporaryPage::new(Page { number: 0xcafebabe });
     let mut active_table = unsafe { ActivePageTable::new() };
     let mut new_table = {
@@ -254,11 +253,11 @@ pub fn init(boot_info: &BootInformation) -> ActivePageTable
         let frame = allocate_frames(1).expect("out of memory");
         InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
     };
-    
+
     // Do important mapping work.
     active_table.with(&mut new_table, &mut temporary_page, |mapper| {
         println!("[ vmm ] Initialising paging.");
-        
+
         let elf_sections_tag = boot_info
             .elf_sections_tag()
             .expect("Memory map tag required");
@@ -279,15 +278,16 @@ pub fn init(boot_info: &BootInformation) -> ActivePageTable
                 section.start_address(),
                 section.size() / 1024,
             );
-            
+
             // Translate ELF section flags to paging flags, and map the kernel sections
             // into the virtual address space using these flags.
             let flags = EntryFlags::from_elf_section_flags(&section);
 
             let start_frame =
                 Frame::containing_address(PhysicalAddress::new(section.start_address() as usize));
-            let end_frame =
-                Frame::containing_address(PhysicalAddress::new((section.end_address() - 1) as usize));
+            let end_frame = Frame::containing_address(PhysicalAddress::new(
+                (section.end_address() - 1) as usize,
+            ));
             for frame in Frame::range_inclusive(start_frame, end_frame) {
                 let result = mapper.identity_map(frame, flags);
                 // Ignore this result since this table is not currently active.
@@ -318,16 +318,16 @@ pub fn init(boot_info: &BootInformation) -> ActivePageTable
         "[ vmm ] Switched to new page table. PML4 at {:#x}",
         active_table.address()
     );
-    
+
     // Create a guard page.
     let old_p4_page = Page::containing_address(VirtualAddress::new(
         old_table.p4_frame.start_address().get(),
     ));
-    
+
     let result = active_table.unmap(old_p4_page);
     // Flush old p4 in TLB.
     result.flush(&mut active_table);
-    
+
     println!(
         "[ vmm ] Guard page at {:#x}.",
         old_p4_page.start_address().get()

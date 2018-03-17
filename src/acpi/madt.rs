@@ -30,32 +30,33 @@ impl Madt {
 
                     // New core?
                     if local_apic.flags & 1 == 1 {
-                        println!("[ dev ] Found local APIC, id: {}, processor id: {}", 
-                                 local_apic.id,
-                                 local_apic.processor_id);
+                        println!(
+                            "[ dev ] Found local APIC, id: {}, processor id: {}",
+                            local_apic.id, local_apic.processor_id
+                        );
                         if rdmsr(IA32_APIC_BASE) & (1 << 8) == local_apic.id as u64 {
                             println!("[ dev ] Found the BSP local APIC, id: {}", local_apic.id);
                         } else {
                             CPUS.fetch_add(1, Ordering::SeqCst);
                         }
-                        // TODO: smp::init(CPUS.load(Ordering::SeqCst));
-
+                    // TODO: smp::init(CPUS.load(Ordering::SeqCst));
                     } else {
                         println!("Found disabled core, id: {}", local_apic.id);
                     }
-                },
+                }
 
                 MadtEntry::IoApic(io_apic) => {
-                    println!("[ dev ] Found I/O APIC, id: {}, register base: {:#x}", 
-                             io_apic.id,
-                             io_apic.address);
-                    IO_APICS.lock().push(io_apic);  
-                },
+                    println!(
+                        "[ dev ] Found I/O APIC, id: {}, register base: {:#x}",
+                        io_apic.id, io_apic.address
+                    );
+                    IO_APICS.lock().push(io_apic);
+                }
 
                 _ => {
                     println!("[ acpi ] No more MADT entries...");
                     return;
-                },
+                }
             }
         }
 
@@ -141,26 +142,34 @@ impl Iterator for MadtIter {
     fn next(&mut self) -> Option<Self::Item> {
         if self.i + 1 < self.sdt.data_len() {
             let ty = unsafe { *(self.sdt.data_address() as *const u8).offset(self.i as isize) };
-            let len = unsafe { *(self.sdt.data_address() as *const u8).offset(self.i as isize + 1) } as usize;
+            let len = unsafe { *(self.sdt.data_address() as *const u8).offset(self.i as isize + 1) }
+                as usize;
 
             if self.i + len <= self.sdt.data_len() {
                 let item = match ty {
                     0 => if len == mem::size_of::<LapicEntry>() + 2 {
-                        MadtEntry::Lapic(unsafe { &*((self.sdt.data_address() + self.i + 2) as *const LapicEntry) })
+                        MadtEntry::Lapic(unsafe {
+                            &*((self.sdt.data_address() + self.i + 2) as *const LapicEntry)
+                        })
                     } else {
                         MadtEntry::InvalidLapic(len)
                     },
                     1 => if len == mem::size_of::<IoApic>() + 2 {
-                        MadtEntry::IoApic(unsafe { &*((self.sdt.data_address() + self.i + 2) as *const IoApic) })
+                        MadtEntry::IoApic(unsafe {
+                            &*((self.sdt.data_address() + self.i + 2) as *const IoApic)
+                        })
                     } else {
                         MadtEntry::InvalidIoApic(len)
                     },
                     2 => if len == mem::size_of::<InterruptSourceOverride>() + 2 {
-                        MadtEntry::Iso(unsafe { &*((self.sdt.data_address() + self.i + 2) as *const InterruptSourceOverride) })
+                        MadtEntry::Iso(unsafe {
+                            &*((self.sdt.data_address() + self.i + 2)
+                                as *const InterruptSourceOverride)
+                        })
                     } else {
                         MadtEntry::InvalidIso(len)
                     },
-                    _ => MadtEntry::Unknown(ty)
+                    _ => MadtEntry::Unknown(ty),
                 };
 
                 self.i += len;

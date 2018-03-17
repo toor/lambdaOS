@@ -58,12 +58,12 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     );
 
     *ALLOCATOR.lock() = Some(frame_allocator);
-    
+
     let mut active_table = paging::init(&boot_info);
 
     use self::paging::Page;
-    use self::heap_allocator::{HEAP_START, HEAP_SIZE};
-    
+    use self::heap_allocator::{HEAP_SIZE, HEAP_START};
+
     // The beginning and end of the heap.
     let heap_start_page = Page::containing_address(VirtualAddress::new(HEAP_START));
     let heap_end_page = Page::containing_address(VirtualAddress::new(HEAP_START + HEAP_SIZE - 1));
@@ -76,9 +76,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         result.flush(&mut active_table);
     }
 
-    unsafe {
-        ::HEAP_ALLOCATOR.init(HEAP_START, HEAP_SIZE)
-    };
+    unsafe { ::HEAP_ALLOCATOR.init(HEAP_START, HEAP_SIZE) };
 
     let stack_allocator = {
         let stack_start_page = heap_end_page + 1;
@@ -130,7 +128,7 @@ impl Frame {
             number: address.get() / PAGE_SIZE,
         }
     }
-    
+
     /// Return the starting address of this frame.
     pub fn start_address(&self) -> PhysicalAddress {
         PhysicalAddress::new(self.number * PAGE_SIZE)

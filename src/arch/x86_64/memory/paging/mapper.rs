@@ -1,4 +1,4 @@
-use super::{Page, PhysicalAddress, ActivePageTable, VirtualAddress, ENTRY_COUNT};
+use super::{ActivePageTable, Page, PhysicalAddress, VirtualAddress, ENTRY_COUNT};
 use super::entry::EntryFlags;
 use super::table::{self, Level4, Table};
 use arch::memory::{allocate_frames, Frame, PAGE_SIZE};
@@ -37,7 +37,7 @@ impl Mapper {
         // Get reference to the P3 table.
         let p3 = self.p4().next_table(page.p4_index());
 
-        // Check if this page is a huge page. 
+        // Check if this page is a huge page.
         let huge_page = || {
             p3.and_then(|p3| {
                 let p3_entry = &p3[page.p3_index()];
@@ -77,8 +77,7 @@ impl Mapper {
 
     /// Map a page to a frame by getting reference to the page tables and setting the index in the
     /// P1 table to the given frame.
-    pub fn map_to(&mut self, page: Page, frame: Frame, flags: EntryFlags) -> MapperFlush
-    {
+    pub fn map_to(&mut self, page: Page, frame: Frame, flags: EntryFlags) -> MapperFlush {
         let p3 = self.p4_mut().next_table_create(page.p4_index());
         let p2 = p3.next_table_create(page.p3_index());
         let p1 = p2.next_table_create(page.p2_index());
@@ -90,22 +89,19 @@ impl Mapper {
     }
 
     /// Map a page by allocating a free frame and mapping a page to that frame.
-    pub fn map(&mut self, page: Page, flags: EntryFlags) -> MapperFlush
-    {
+    pub fn map(&mut self, page: Page, flags: EntryFlags) -> MapperFlush {
         let frame = allocate_frames(1).expect("out of memory");
         self.map_to(page, frame, flags)
     }
 
     /// Map a page by translating a given `Frame` to a `Page`.
-    pub fn identity_map(&mut self, frame: Frame, flags: EntryFlags) -> MapperFlush
-    {
+    pub fn identity_map(&mut self, frame: Frame, flags: EntryFlags) -> MapperFlush {
         let page = Page::containing_address(VirtualAddress::new(frame.start_address().get()));
         self.map_to(page, frame, flags)
     }
 
     /// Unmap a page from a physical frame.
-    pub fn unmap(&mut self, page: Page) -> MapperFlush
-    {
+    pub fn unmap(&mut self, page: Page) -> MapperFlush {
         use x86_64;
         use x86_64::instructions::tlb;
 
@@ -170,7 +166,7 @@ impl MapperFlushAll {
         self.0 = true;
         mem::forget(flush);
     }
-    
+
     pub fn flush(self, table: &mut ActivePageTable) {
         if self.0 {
             unsafe { table.flush_all() };

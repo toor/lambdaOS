@@ -18,7 +18,7 @@ impl StackAllocator {
     /// Allocate a range of pages to use as a stack.
     pub fn alloc_stack(
         &mut self,
-        active_table: &mut ActivePageTable, 
+        active_table: &mut ActivePageTable,
         size_in_pages: usize,
     ) -> Option<Stack> {
         if size_in_pages == 0 {
