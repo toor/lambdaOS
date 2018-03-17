@@ -3,7 +3,7 @@ pub use self::paging::ActivePageTable;
 pub use self::stack_allocator::Stack;
 use self::paging::{PhysicalAddress, VirtualAddress};
 use self::paging::entry::EntryFlags;
-
+use acpi;
 use multiboot2::BootInformation;
 use spin::Mutex;
 
@@ -60,7 +60,8 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     *ALLOCATOR.lock() = Some(frame_allocator);
 
     let mut active_table = paging::init(&boot_info);
-
+    unsafe { acpi::init(&mut active_table) };
+   
     use self::paging::Page;
     use self::heap_allocator::{HEAP_SIZE, HEAP_START};
 

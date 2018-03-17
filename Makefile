@@ -7,7 +7,7 @@ arch ?= x86_64
 kernel := build/kernel-$(arch).bin
 iso := build/os-$(arch).iso
 target ?= $(arch)-lambda
-rust_os := target/$(target)/debug/liblambdaOS.a
+rust_os := target/$(target)/debug/liblambda_os.a
 
 linker_script := src/arch/$(arch)/asm/linker.ld
 grub_cfg := src/arch/$(arch)/asm/grub.cfg

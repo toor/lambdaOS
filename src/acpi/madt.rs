@@ -9,6 +9,7 @@ static CPUS: AtomicUsize = ATOMIC_USIZE_INIT;
 
 lazy_static! {
     pub static ref IO_APICS: Mutex<Vec<&'static IoApic>> = Mutex::new(Vec::new());
+    pub static ref ISOS: Mutex<Vec<&'static InterruptSourceOverride>> = Mutex::new(Vec::new());
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -28,7 +29,7 @@ impl Madt {
                 MadtEntry::Lapic(local_apic) => {
                     use x86_64::registers::msr::{rdmsr, IA32_APIC_BASE};
 
-                    // New core?
+                    // Check if this local APIC corresponds to an active application processor.
                     if local_apic.flags & 1 == 1 {
                         println!(
                             "[ dev ] Found local APIC, id: {}, processor id: {}",
@@ -43,7 +44,7 @@ impl Madt {
                     } else {
                         println!("Found disabled core, id: {}", local_apic.id);
                     }
-                }
+                },
 
                 MadtEntry::IoApic(io_apic) => {
                     println!(
@@ -51,7 +52,14 @@ impl Madt {
                         io_apic.id, io_apic.address
                     );
                     IO_APICS.lock().push(io_apic);
-                }
+                },
+
+                MadtEntry::Iso(iso) => {
+                    println!("[ dev ] Found interrupt source override,\n overrides IRQ {},\n gsi: {}",
+                             iso.irq_source,
+                             iso.gsi);
+                    ISOS.lock().push(iso);  
+                },
 
                 _ => {
                     println!("[ acpi ] No more MADT entries...");
