@@ -1,6 +1,7 @@
 use arch::memory::paging::{ActivePageTable, Page, PageIter};
 use arch::memory::{FrameAllocator, PAGE_SIZE};
 use arch::memory::paging::EntryFlags;
+use arch::memory::paging::mapper;
 
 /// A stack allocator.
 #[derive(Copy, Clone)]
@@ -46,7 +47,8 @@ impl StackAllocator {
 
                 // map stack pages to physical frames
                 for page in Page::range_inclusive(start, end) {
-                    active_table.map(page, EntryFlags::PRESENT);
+                    let result = active_table.map(page, EntryFlags::PRESENT);
+                    result.flush(active_table);
                 }
 
                 // create a new stack

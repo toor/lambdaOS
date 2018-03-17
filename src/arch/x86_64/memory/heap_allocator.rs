@@ -26,6 +26,10 @@ impl HeapAllocator {
     pub unsafe fn init(&self, heap_bottom: usize, heap_size: usize) {
         self.inner.lock().init(heap_bottom, heap_size);
     }
+
+    pub unsafe fn extend(&mut self, by: usize) {
+        self.inner.lock().extend(by);
+    }
 }
 
 /// Wrappers for inner Alloc implementation

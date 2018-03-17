@@ -49,6 +49,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         boot_info.end_address()
     );
 
+    // Construct a physical frame allocator based on parameters passed to the main kernel.
     let mut frame_allocator = AreaFrameAllocator::new(
         kernel_start as usize,
         kernel_end as usize,
@@ -63,14 +64,17 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
 
     use self::paging::Page;
     use self::heap_allocator::{HEAP_START, HEAP_SIZE};
-
+    
+    // The beginning and end of the heap.
     let heap_start_page = Page::containing_address(VirtualAddress::new(HEAP_START));
     let heap_end_page = Page::containing_address(VirtualAddress::new(HEAP_START + HEAP_SIZE - 1));
 
     println!("[ vmm ] Mapping heap pages ...");
 
     for page in Page::range_inclusive(heap_start_page, heap_end_page) {
-        active_table.map(page, EntryFlags::PRESENT | EntryFlags::WRITABLE);
+        let result = active_table.map(page, EntryFlags::PRESENT | EntryFlags::WRITABLE);
+        // Flush this vaddr translation from the TLB.
+        result.flush(&mut active_table);
     }
 
     unsafe {

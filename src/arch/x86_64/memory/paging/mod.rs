@@ -10,7 +10,7 @@ use multiboot2::BootInformation;
 pub mod entry;
 mod table;
 mod temporary_page;
-mod mapper;
+pub mod mapper;
 
 /// Maximum number of entries a page table can hold.
 const ENTRY_COUNT: usize = 512;
@@ -290,14 +290,17 @@ pub fn init(boot_info: &BootInformation) -> ActivePageTable
             let end_frame =
                 Frame::containing_address(PhysicalAddress::new((section.end_address() - 1) as usize));
             for frame in Frame::range_inclusive(start_frame, end_frame) {
-                mapper.identity_map(frame, flags);
+                let result = mapper.identity_map(frame, flags);
+                // Ignore this result since this table is not currently active.
+                unsafe { result.ignore() };
             }
         }
 
         // identity map the VGA text buffer
         println!("[ vmm ] Identity mapping the VGA text buffer.");
         let vga_buffer_frame = Frame::containing_address(PhysicalAddress::new(0xb8000));
-        mapper.identity_map(vga_buffer_frame, EntryFlags::WRITABLE);
+        let res = mapper.identity_map(vga_buffer_frame, EntryFlags::WRITABLE);
+        unsafe { res.ignore() };
 
         // identity map the multiboot info structure.
         println!("[ vmm ] Identity mapping multiboot structures.");
@@ -306,7 +309,8 @@ pub fn init(boot_info: &BootInformation) -> ActivePageTable
         let multiboot_end =
             Frame::containing_address(PhysicalAddress::new(boot_info.end_address() - 1));
         for frame in Frame::range_inclusive(multiboot_start, multiboot_end) {
-            mapper.identity_map(frame, EntryFlags::PRESENT);
+            let result = mapper.identity_map(frame, EntryFlags::PRESENT);
+            unsafe { result.ignore() };
         }
     });
 
@@ -321,7 +325,9 @@ pub fn init(boot_info: &BootInformation) -> ActivePageTable
         old_table.p4_frame.start_address().get(),
     ));
     
-    active_table.unmap(old_p4_page);
+    let result = active_table.unmap(old_p4_page);
+    // Flush old p4 in TLB.
+    result.flush(&mut active_table);
     
     println!(
         "[ vmm ] Guard page at {:#x}.",

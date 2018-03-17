@@ -32,11 +32,13 @@ impl RsdpDescriptor {
 
             for frame in Frame::range_inclusive(start_frame, end_frame) {
                 let page = Page::containing_address(VirtualAddress::new(frame.start_address().get()));
-                active_table.map_to(
+                let res = active_table.map_to(
                     page,
                     frame,
                     EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, 
                 );
+
+                res.flush(active_table);
             }
         }
 

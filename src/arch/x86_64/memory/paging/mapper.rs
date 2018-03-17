@@ -157,7 +157,7 @@ pub struct MapperFlushAll(bool);
 
 impl Drop for MapperFlushAll {
     fn drop(&mut self) {
-        panic!("Flush not consumed!");
+        panic!("FlushAll not consumed!");
     }
 }
 

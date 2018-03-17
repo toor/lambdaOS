@@ -23,7 +23,8 @@ impl TemporaryPage {
             active_table.translate_page(self.page).is_none(),
             "temporary page is already mapped"
         );
-        active_table.map_to(self.page, frame, EntryFlags::WRITABLE);
+        let result = active_table.map_to(self.page, frame, EntryFlags::WRITABLE);
+        result.flush(active_table);
         self.page.start_address()
     }
 
@@ -39,7 +40,8 @@ impl TemporaryPage {
 
     /// Unmaps the temporary page in the active table.
     pub fn unmap(&mut self, active_table: &mut ActivePageTable) {
-        active_table.unmap(self.page)
+        let result = active_table.unmap(self.page);
+        result.flush(active_table);
     }
 }
 

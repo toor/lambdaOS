@@ -17,7 +17,8 @@ fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::
         let page = Page::containing_address(VirtualAddress::new(address));
         if active_table.translate_page(page).is_none() {
             let frame = Frame::containing_address(PhysicalAddress::new(page.start_address().get()));
-            active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
+            let result = active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
+            result.flush(active_table);
         }
     }
 
@@ -31,7 +32,8 @@ fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::
             // Check if this page has already been mapped to a frame.
             if active_table.translate_page(page).is_none() {
                 let frame = Frame::containing_address(PhysicalAddress::new(page.start_address().get()));
-                active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
+                let result = active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
+                result.flush(active_table);
             }
         }
     }
