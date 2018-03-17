@@ -1,7 +1,7 @@
 use super::{Page, PhysicalAddress, ActivePageTable, VirtualAddress, ENTRY_COUNT};
 use super::entry::EntryFlags;
 use super::table::{self, Level4, Table};
-use arch::memory::{allocate_frames, Frame, FrameAllocator, PAGE_SIZE};
+use arch::memory::{allocate_frames, Frame, PAGE_SIZE};
 use core::ptr::Unique;
 use core::mem;
 

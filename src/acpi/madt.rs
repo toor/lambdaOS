@@ -22,7 +22,7 @@ pub struct Madt {
 
 impl Madt {
     /// Initialise all the MADT entries.
-    pub fn init(&mut self, active_table: &mut ActivePageTable) {
+    pub unsafe fn init(&mut self, _active_table: &mut ActivePageTable) {
         for entry in self.iter() {
             match entry {
                 MadtEntry::Lapic(local_apic) => {
@@ -96,7 +96,7 @@ pub struct LapicEntry {
 pub struct IoApic {
     /// The ID of this I/O APIC.
     pub id: u8,
-    resv: u8,
+    _resv: u8,
     /// Address of this I/O APIC.
     pub address: u32,
     /// The first interrupt number this APIC handles.

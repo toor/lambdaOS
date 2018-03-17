@@ -43,6 +43,7 @@ impl AreaFrameAllocator {
             multiboot_end: Frame::containing_address(PhysicalAddress::new(multiboot_end)),
         };
         allocator.choose_next_area();
+        allocator.allocate_frame(1);
         allocator
     }
 
@@ -132,7 +133,7 @@ impl FrameAllocator for AreaFrameAllocator {
         for area in self.areas.clone() {
             let start_frame = Frame::containing_address(PhysicalAddress::new(area.start_address()));
             let end_frame = Frame::containing_address(PhysicalAddress::new(
-                (area.start_address() + area.size() - 1),
+                area.start_address() + area.size() - 1,
             ));
 
             for frame in Frame::range_inclusive(start_frame, end_frame) {

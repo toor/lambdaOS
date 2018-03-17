@@ -1,6 +1,4 @@
 use super::sdt::SdtHeader;
-use core::mem;
-use core::str;
 use core::slice;
 
 use super::madt::Madt;

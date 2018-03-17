@@ -2,8 +2,6 @@ pub mod interrupts;
 pub mod memory;
 pub mod init;
 
-use device;
-use acpi;
 use self::memory::MemoryController;
 pub use self::init::init;
 

@@ -15,7 +15,6 @@ pub mod stack_allocator;
 /// The size of a physical page on x86.
 pub const PAGE_SIZE: usize = 4096;
 
-/// The global physical page frame allocator.
 pub static ALLOCATOR: Mutex<Option<AreaFrameAllocator>> = Mutex::new(None);
 
 pub fn init(boot_info: &BootInformation) -> MemoryController {
@@ -50,7 +49,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     );
 
     // Construct a physical frame allocator based on parameters passed to the main kernel.
-    let mut frame_allocator = AreaFrameAllocator::new(
+    let frame_allocator = AreaFrameAllocator::new(
         kernel_start as usize,
         kernel_end as usize,
         boot_info.start_address(),

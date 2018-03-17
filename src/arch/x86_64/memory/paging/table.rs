@@ -1,7 +1,7 @@
 use arch::memory::paging::entry::EntryFlags;
 use arch::memory::paging::entry::*;
 use arch::memory::paging::ENTRY_COUNT;
-use arch::memory::{allocate_frames, FrameAllocator};
+use arch::memory::{allocate_frames};
 use core::ops::{Index, IndexMut};
 use core::marker::PhantomData;
 

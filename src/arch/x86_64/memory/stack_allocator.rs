@@ -1,7 +1,6 @@
 use arch::memory::paging::{ActivePageTable, Page, PageIter};
-use arch::memory::{FrameAllocator, PAGE_SIZE};
+use arch::memory::PAGE_SIZE;
 use arch::memory::paging::EntryFlags;
-use arch::memory::paging::mapper;
 
 /// A stack allocator.
 #[derive(Copy, Clone)]

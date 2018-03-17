@@ -1,6 +1,6 @@
 use super::{ActivePageTable, Page, VirtualAddress};
 use super::table::{Level1, Table};
-use arch::memory::{Frame, FrameAllocator};
+use arch::memory::Frame;
 
 pub struct TemporaryPage {
     page: Page,
@@ -45,7 +45,7 @@ impl TemporaryPage {
     }
 }
 
-struct TinyAllocator([Option<Frame>; 3]);
+/* struct TinyAllocator([Option<Frame>; 3]);
 
 impl TinyAllocator {
     fn new<A>(allocator: &mut A) -> TinyAllocator
@@ -91,4 +91,4 @@ impl FrameAllocator for TinyAllocator {
 
         count
     }
-}
+} */

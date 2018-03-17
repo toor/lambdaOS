@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 use x86_64::registers::msr::{rdmsr, wrmsr, IA32_APIC_BASE};
 use core::ptr;
 use core::sync::atomic::{AtomicU32, Ordering};
@@ -75,7 +76,7 @@ impl IoApic {
     /// Set the redirect for a given IRQ.
     #[allow(exceeding_bitshifts)]
     pub fn set_redirect(irq: u8, gsi: u32, flags: u16, id: u8) {
-        let mut apic = IoApic::io_apic_from_gsi(gsi);
+        let apic = IoApic::io_apic_from_gsi(gsi);
         
         if apic.is_none() {
             println!("[ ERROR ] I/O APIC: Failed to find redirect for IRQ: {}", irq);
@@ -83,6 +84,7 @@ impl IoApic {
         } else {
             let io_apic = apic.unwrap();
 
+            // Map IRQS: INT48 .. INT64
             let mut redirection: u64 = irq as u64 + 0x30;
 
             if flags & 2 == 0 {

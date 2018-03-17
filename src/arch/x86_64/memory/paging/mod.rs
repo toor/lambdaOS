@@ -1,8 +1,7 @@
 pub use self::entry::EntryFlags;
 pub use self::mapper::Mapper;
-use arch::memory::{Frame, AreaFrameAllocator, PAGE_SIZE};
+use arch::memory::{Frame, PAGE_SIZE};
 use arch::memory::allocate_frames;
-use arch::memory::stack_allocator::StackAllocator;
 use self::temporary_page::TemporaryPage;
 use core::ops::{Add, Deref, DerefMut};
 use multiboot2::BootInformation;
@@ -150,7 +149,7 @@ impl ActivePageTable {
     /// Get the start address of the current P4 table as stored in `cr3`.
     pub fn address(&self) -> usize {
         use x86_64::registers::control_regs;
-        unsafe { control_regs::cr3().0 as usize }
+        control_regs::cr3().0 as usize
     }
 
     pub fn with<F>(

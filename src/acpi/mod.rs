@@ -1,8 +1,6 @@
 use arch::memory::paging::{ActivePageTable, Page, VirtualAddress, PhysicalAddress};
 use arch::memory::Frame;
 use arch::memory::paging::entry::EntryFlags;
-use spin::Mutex;
-use alloc::btree_map::BTreeMap;
 use core::mem;
 
 pub mod rsdp;
