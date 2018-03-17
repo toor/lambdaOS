@@ -1,38 +1,29 @@
 use super::interrupts;
 use super::memory;
-use super::memory::active_table;
-use super::MEMORY_CONTROLLER;
 use device;
-use acpi;
-
-mod smp;
 
 /// Main kernel init function. This sets everything up for us.
 pub unsafe fn init(multiboot_info: usize) {
     interrupts::disable_interrupts();
-    
-    // Massive TODO: Rework memory code to bring more stuff into paging init function;
     {
         device::vga::buffer::clear_screen();
-
         println!("[ INFO ] lambdaOS: Begin init.");
 
         let boot_info = ::multiboot2::load(multiboot_info);
 
+        // Set safety bits in certain registers.
         enable_nxe_bit();
         enable_write_protect_bit();
 
+        // Setup memory management.
         let mut memory_controller = memory::init(&boot_info);
-
         interrupts::init(&mut memory_controller);
 
-        MEMORY_CONTROLLER = Some(memory_controller);
-
+        // Setup hardware devices.
         device::init();
     }
 
-    acpi::init(active_table());
-
+    // set interrupt flag using sti instruction.
     interrupts::enable_interrupts();
 
     println!("[ OK ] Init successful, you may now type.")

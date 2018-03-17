@@ -1,5 +1,6 @@
 use arch::memory::Frame;
 use multiboot2::ElfSection;
+use arch::memory::paging::PhysicalAddress;
 
 /// A page table entry.
 pub struct Entry(u64);
@@ -23,9 +24,9 @@ impl Entry {
     /// Return the physical frame that this page points to.
     pub fn pointed_frame(&self) -> Option<Frame> {
         if self.flags().contains(EntryFlags::PRESENT) {
-            Some(Frame::containing_address(
+            Some(Frame::containing_address(PhysicalAddress::new(
                 self.0 as usize & 0x000fffff_fffff000,
-            ))
+            )))
         } else {
             None
         }
@@ -33,8 +34,8 @@ impl Entry {
 
     /// Set some flags on an entry.
     pub fn set(&mut self, frame: Frame, flags: EntryFlags) {
-        assert!(frame.start_address() & !0x000fffff_fffff000 == 0);
-        self.0 = (frame.start_address() as u64) | flags.bits();
+        assert!(frame.start_address().get() & !0x000fffff_fffff000 == 0);
+        self.0 = (frame.start_address().get() as u64) | flags.bits();
     }
 }
 
@@ -68,18 +69,18 @@ bitflags! {
 impl EntryFlags {
     /// Parse the flags on an ELF section to our `EntryFlags` struct.
     pub fn from_elf_section_flags(section: &ElfSection) -> EntryFlags {
-        use multiboot2::{ELF_SECTION_ALLOCATED, ELF_SECTION_EXECUTABLE, ELF_SECTION_WRITABLE};
+        use multiboot2::ElfSectionFlags;
 
         let mut flags = EntryFlags::empty();
 
-        if section.flags().contains(ELF_SECTION_ALLOCATED) {
+        if section.flags().contains(ElfSectionFlags::ALLOCATED) {
             // section is loaded to memory
             flags = flags | EntryFlags::PRESENT;
         }
-        if section.flags().contains(ELF_SECTION_WRITABLE) {
+        if section.flags().contains(ElfSectionFlags::WRITABLE) {
             flags = flags | EntryFlags::WRITABLE;
         }
-        if !section.flags().contains(ELF_SECTION_EXECUTABLE) {
+        if !section.flags().contains(ElfSectionFlags::EXECUTABLE) {
             flags = flags | EntryFlags::NO_EXECUTE;
         }
 

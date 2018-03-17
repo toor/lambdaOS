@@ -93,7 +93,9 @@ impl ChainedPics {
         wait();
         self.pics[1].data.write(MODE_8086);
 
-        println!("[ OK ] 8259 PIC.")
+        println!("[ dev ] Initialised master and slave 8259 PICs.");
+        println!("[ dev ] PIC0 has vector offset: {:#x}", self.pics[0].offset);
+        println!("[ dev ] PIC1 has vector offset: {:#x}", self.pics[1].offset);
     }
 
     /// Cycle through the PICS until we find one that can handle this interrupt.

@@ -10,11 +10,23 @@ static DIVISOR: u16 = 2685;
 pub static PIT: Mutex<[Port<u8>; 2]> = Mutex::new(unsafe { [Port::new(0x43), Port::new(0x40)] });
 
 pub fn init() {
+    println!("[ dev ] Setting pit mode.");
     PIT.lock()[0].write(PIT_SET);
+    println!("[ dev ] Setting up frequency.");
     PIT.lock()[1].write((DIVISOR & 0xFF) as u8);
     PIT.lock()[1].write((DIVISOR >> 8) as u8);
 
-    println!("[ OK ] Programmable Interval Timer.");
+    let frequency: u32 = 1193182 / 2685;
+
+    let irq0_int_timeout = {
+        let val = 1 / frequency;
+        val * 1000
+    };
+
+    println!(
+        "[ dev ] Initialising PIT, setup to interrupt every {} ms",
+        irq0_int_timeout
+    );
 }
 
 pub static PIT_TICKS: AtomicUsize = ATOMIC_USIZE_INIT;

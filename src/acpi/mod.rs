@@ -1,9 +1,6 @@
-use arch::memory::paging::{ActivePageTable, Page, VirtualAddress, PhysicalAddress};
+use arch::memory::paging::{ActivePageTable, Page, PhysicalAddress, VirtualAddress};
 use arch::memory::Frame;
 use arch::memory::paging::entry::EntryFlags;
-use arch::memory::allocator;
-use spin::Mutex;
-use alloc::btree_map::BTreeMap;
 use core::mem;
 
 pub mod rsdp;
@@ -14,29 +11,30 @@ pub mod madt;
 
 /// Retrieve an SDT from a pointer found using the RSDP
 fn get_sdt(address: usize, active_table: &mut ActivePageTable) -> &'static sdt::SdtHeader {
-    let allocator = unsafe {
-        allocator()
-    };
-    
     {
-        let page = Page::containing_address(address as VirtualAddress);
+        let page = Page::containing_address(VirtualAddress::new(address));
         if active_table.translate_page(page).is_none() {
-            let frame = Frame::containing_address(page.start_address());
-            active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator);
+            let frame = Frame::containing_address(PhysicalAddress::new(page.start_address().get()));
+            let result =
+                active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
+            result.flush(active_table);
         }
     }
 
     let sdt = unsafe { &*(address as *const sdt::SdtHeader) };
 
-    {   
+    {
         // Map next page, and all pages within the range occupied by the data table.
-        let start_page = Page::containing_address(address + 4096);
-        let end_page = Page::containing_address(address + sdt.length as usize);
+        let start_page = Page::containing_address(VirtualAddress::new(address + 4096));
+        let end_page = Page::containing_address(VirtualAddress::new(address + sdt.length as usize));
         for page in Page::range_inclusive(start_page, end_page) {
             // Check if this page has already been mapped to a frame.
             if active_table.translate_page(page).is_none() {
-                let frame = Frame::containing_address(page.start_address() as PhysicalAddress);
-                active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE, allocator);
+                let frame =
+                    Frame::containing_address(PhysicalAddress::new(page.start_address().get()));
+                let result =
+                    active_table.map_to(page, frame, EntryFlags::PRESENT | EntryFlags::NO_EXECUTE);
+                result.flush(active_table);
             }
         }
     }
@@ -50,18 +48,18 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
     let rsdt = rsdt::Rsdt::new(sdt);
 
     println!(
-        "[ OK ] ACPI: Found RSDT at address {:#x}",
+        "[ apci ] Found RSDT at address {:#x}",
         rsdt.sdt as *const sdt::SdtHeader as usize
     );
 
     println!(
-        "[ OK ] ACPI: RSDT length {}, data length {}",
+        "[ acpi ] RSDT length {}, data length {}",
         rsdt.sdt.length,
         rsdt.sdt.length as usize - mem::size_of::<sdt::SdtHeader>()
     );
 
     println!(
-        "[ DEBUG ] ACPI: RSDT points to {} tables",
+        "[ acpi ] RSDT points to {} tables",
         rsdt.other_entries.len()
     );
 
@@ -69,7 +67,7 @@ pub unsafe fn init(active_table: &mut ActivePageTable) {
     match rsdt.find_sdt(b"APIC") {
         Some(rsdt::TableType::Madt(mut m)) => {
             println!(
-                "[ OK ] ACPI: Found MADT at address {:#x}",
+                "[ apci ] Found MADT at address {:#x}",
                 m.sdt as *const sdt::SdtHeader as usize
             );
 

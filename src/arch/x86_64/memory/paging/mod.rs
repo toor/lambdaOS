@@ -1,22 +1,49 @@
 pub use self::entry::EntryFlags;
-use arch::memory::{Frame, FrameAllocator, PAGE_SIZE};
-use self::temporary_page::TemporaryPage;
 pub use self::mapper::Mapper;
+use arch::memory::{Frame, PAGE_SIZE};
+use arch::memory::allocate_frames;
+use self::temporary_page::TemporaryPage;
 use core::ops::{Add, Deref, DerefMut};
 use multiboot2::BootInformation;
 
 pub mod entry;
 mod table;
 mod temporary_page;
-mod mapper;
+pub mod mapper;
 
 /// Maximum number of entries a page table can hold.
 const ENTRY_COUNT: usize = 512;
 
-pub type PhysicalAddress = usize;
-pub type VirtualAddress = usize;
+/// A physical memory address.
+pub struct PhysicalAddress(pub usize);
 
-/// Singular 4KiB page on the system.
+impl PhysicalAddress {
+    pub fn new(addr: usize) -> Self {
+        PhysicalAddress(addr)
+    }
+
+    /// Return the inner address this `PhysicalAddress` wraps.
+    pub fn get(&self) -> usize {
+        self.0
+    }
+}
+
+/// A virtual memory address.
+pub struct VirtualAddress(pub usize);
+
+impl VirtualAddress {
+    /// Create a new virtual address.
+    pub fn new(addr: usize) -> Self {
+        VirtualAddress(addr)
+    }
+
+    /// Return the inner address this `VirtualAddress` wraps.
+    pub fn get(&self) -> usize {
+        self.0
+    }
+}
+
+/// A 4KiB page.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Page {
     number: usize,
@@ -26,18 +53,18 @@ impl Page {
     /// Return the number of the page which contains the given `VirtualAddress`.
     pub fn containing_address(address: VirtualAddress) -> Page {
         assert!(
-            address < 0x0000_8000_0000_0000 || address >= 0xffff_8000_0000_0000,
+            address.get() < 0x0000_8000_0000_0000 || address.get() >= 0xffff_8000_0000_0000,
             "invalid address: 0x{:x}",
-            address
+            address.get()
         );
         Page {
-            number: address / PAGE_SIZE,
+            number: address.get() / PAGE_SIZE,
         }
     }
 
     /// Return the starting address of a page.
-    pub fn start_address(&self) -> usize {
-        self.number * PAGE_SIZE
+    pub fn start_address(&self) -> VirtualAddress {
+        VirtualAddress::new(self.number * PAGE_SIZE)
     }
 
     fn p4_index(&self) -> usize {
@@ -73,7 +100,7 @@ impl Add<usize> for Page {
 }
 
 /// An iterator over pages between `start` and `end`.
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct PageIter {
     start: Page,
     end: Page,
@@ -120,7 +147,7 @@ impl ActivePageTable {
     }
 
     /// Get the start address of the current P4 table as stored in `cr3`.
-    pub unsafe fn address(&self) -> usize {
+    pub fn address(&self) -> usize {
         use x86_64::registers::control_regs;
         control_regs::cr3().0 as usize
     }
@@ -138,7 +165,8 @@ impl ActivePageTable {
 
         {
             // Get reference to current P4 table.
-            let backup = Frame::containing_address(control_regs::cr3().0 as usize);
+            let backup =
+                Frame::containing_address(PhysicalAddress::new(control_regs::cr3().0 as usize));
 
             // map temporary_page to current P4 table
             let p4_table = temporary_page.map_table_frame(backup.clone(), self);
@@ -163,16 +191,31 @@ impl ActivePageTable {
 
     /// Switch the active page table, and return the old page table.
     pub fn switch(&mut self, new_table: InactivePageTable) -> InactivePageTable {
-        use x86_64::PhysicalAddress;
+        use x86_64;
         use x86_64::registers::control_regs;
 
         let old_table = InactivePageTable {
-            p4_frame: Frame::containing_address(control_regs::cr3().0 as usize),
+            p4_frame: Frame::containing_address(PhysicalAddress::new(
+                control_regs::cr3().0 as usize,
+            )),
         };
+
         unsafe {
-            control_regs::cr3_write(PhysicalAddress(new_table.p4_frame.start_address() as u64));
+            control_regs::cr3_write(x86_64::PhysicalAddress(
+                new_table.p4_frame.start_address().get() as u64,
+            ));
         }
         old_table
+    }
+
+    pub fn flush(&mut self, page: Page) {
+        unsafe { asm!("invlpg ($0)" :: "r"(page.start_address().get())) };
+    }
+
+    pub unsafe fn flush_all(&mut self) {
+        use x86_64::registers::control_regs::{cr3, cr3_write};
+
+        cr3_write(cr3());
     }
 }
 
@@ -199,28 +242,27 @@ impl InactivePageTable {
 }
 
 /// Identity map important sections and switch the page table, remapping the kernel one page above
-/// and turn the previous kernel stack into a guard page - this prevents silent stack overflows, as
+/// and turning the previous kernel stack into a guard page - this prevents silent stack overflows, as
 /// given that the guard page is unmapped, any stack overflow into this page will instantly cause a
 /// page fault. Returns the currently active kernel page table.
-pub fn paging_init<A>(allocator: &mut A, boot_info: &BootInformation) -> ActivePageTable
-where
-    A: FrameAllocator,
-{
-    let mut temporary_page = TemporaryPage::new(Page { number: 0xcafebabe }, allocator);
-
+pub fn init(boot_info: &BootInformation) -> ActivePageTable {
+    let mut temporary_page = TemporaryPage::new(Page { number: 0xcafebabe });
     let mut active_table = unsafe { ActivePageTable::new() };
     let mut new_table = {
-        // Allocate a frame for the p4 table, and set this table as inactive.
-        let frame = allocator.allocate_frame(1).expect("no more frames");
+        // Allocate a frame for the PML4.
+        let frame = allocate_frames(1).expect("out of memory");
         InactivePageTable::new(frame, &mut active_table, &mut temporary_page)
     };
 
+    // Do important mapping work.
     active_table.with(&mut new_table, &mut temporary_page, |mapper| {
+        println!("[ vmm ] Initialising paging.");
+
         let elf_sections_tag = boot_info
             .elf_sections_tag()
             .expect("Memory map tag required");
 
-        // identity map the allocated kernel sections
+        // identity map the entire kernel.
         for section in elf_sections_tag.sections() {
             if !section.is_allocated() {
                 // section is not loaded to memory
@@ -228,41 +270,68 @@ where
             }
 
             assert!(
-                section.addr as usize % PAGE_SIZE == 0,
+                section.start_address() as usize % PAGE_SIZE == 0,
                 "sections need to be page aligned"
             );
             println!(
-                "[ DEBUG ] Mapping kernel section at addr: {:#x}, size: {:#x}",
-                section.addr, section.size
+                "[ vmm ] Identity mapping kernel section at addr: {:#x}, size: {} KiB",
+                section.start_address(),
+                section.size() / 1024,
             );
 
-            let flags = EntryFlags::from_elf_section_flags(section);
+            // Translate ELF section flags to paging flags, and map the kernel sections
+            // into the virtual address space using these flags.
+            let flags = EntryFlags::from_elf_section_flags(&section);
 
-            let start_frame = Frame::containing_address(section.start_address());
-            let end_frame = Frame::containing_address(section.end_address() - 1);
+            let start_frame =
+                Frame::containing_address(PhysicalAddress::new(section.start_address() as usize));
+            let end_frame = Frame::containing_address(PhysicalAddress::new(
+                (section.end_address() - 1) as usize,
+            ));
             for frame in Frame::range_inclusive(start_frame, end_frame) {
-                mapper.identity_map(frame, flags, allocator);
+                let result = mapper.identity_map(frame, flags);
+                // Ignore this result since this table is not currently active.
+                unsafe { result.ignore() };
             }
         }
 
         // identity map the VGA text buffer
-        let vga_buffer_frame = Frame::containing_address(0xb8000);
-        mapper.identity_map(vga_buffer_frame, EntryFlags::WRITABLE, allocator);
+        println!("[ vmm ] Identity mapping the VGA text buffer.");
+        let vga_buffer_frame = Frame::containing_address(PhysicalAddress::new(0xb8000));
+        let res = mapper.identity_map(vga_buffer_frame, EntryFlags::WRITABLE);
+        unsafe { res.ignore() };
 
-        // identity map the multiboot info structure
-        let multiboot_start = Frame::containing_address(boot_info.start_address());
-        let multiboot_end = Frame::containing_address(boot_info.end_address() - 1);
+        // identity map the multiboot info structure.
+        println!("[ vmm ] Identity mapping multiboot structures.");
+        let multiboot_start =
+            Frame::containing_address(PhysicalAddress::new(boot_info.start_address()));
+        let multiboot_end =
+            Frame::containing_address(PhysicalAddress::new(boot_info.end_address() - 1));
         for frame in Frame::range_inclusive(multiboot_start, multiboot_end) {
-            mapper.identity_map(frame, EntryFlags::PRESENT, allocator);
+            let result = mapper.identity_map(frame, EntryFlags::PRESENT);
+            unsafe { result.ignore() };
         }
     });
 
     let old_table = active_table.switch(new_table);
-    println!("[ OK ] Switched to new page table.");
+    println!(
+        "[ vmm ] Switched to new page table. PML4 at {:#x}",
+        active_table.address()
+    );
 
-    let old_p4_page = Page::containing_address(old_table.p4_frame.start_address());
-    active_table.unmap(old_p4_page, allocator);
-    println!("[ OK ] Guard page at {:#x}.", old_p4_page.start_address());
+    // Create a guard page.
+    let old_p4_page = Page::containing_address(VirtualAddress::new(
+        old_table.p4_frame.start_address().get(),
+    ));
+
+    let result = active_table.unmap(old_p4_page);
+    // Flush old p4 in TLB.
+    result.flush(&mut active_table);
+
+    println!(
+        "[ vmm ] Guard page at {:#x}.",
+        old_p4_page.start_address().get()
+    );
 
     active_table
 }

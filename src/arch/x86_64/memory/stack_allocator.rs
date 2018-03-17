@@ -1,8 +1,9 @@
 use arch::memory::paging::{ActivePageTable, Page, PageIter};
-use arch::memory::{FrameAllocator, PAGE_SIZE};
+use arch::memory::PAGE_SIZE;
 use arch::memory::paging::EntryFlags;
 
 /// A stack allocator.
+#[derive(Copy, Clone)]
 pub struct StackAllocator {
     range: PageIter,
 }
@@ -15,10 +16,9 @@ impl StackAllocator {
 
 impl StackAllocator {
     /// Allocate a range of pages to use as a stack.
-    pub fn alloc_stack<FA: FrameAllocator>(
+    pub fn alloc_stack(
         &mut self,
         active_table: &mut ActivePageTable,
-        frame_allocator: &mut FA,
         size_in_pages: usize,
     ) -> Option<Stack> {
         if size_in_pages == 0 {
@@ -46,12 +46,13 @@ impl StackAllocator {
 
                 // map stack pages to physical frames
                 for page in Page::range_inclusive(start, end) {
-                    active_table.map(page, EntryFlags::WRITABLE, frame_allocator);
+                    let result = active_table.map(page, EntryFlags::PRESENT);
+                    result.flush(active_table);
                 }
 
                 // create a new stack
-                let top_of_stack = end.start_address() + PAGE_SIZE;
-                Some(Stack::new(top_of_stack, start.start_address()))
+                let top_of_stack = end.start_address().get() + PAGE_SIZE;
+                Some(Stack::new(top_of_stack, start.start_address().get()))
             }
             _ => None, /* not enough pages */
         }

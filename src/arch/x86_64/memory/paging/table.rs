@@ -1,7 +1,7 @@
 use arch::memory::paging::entry::EntryFlags;
 use arch::memory::paging::entry::*;
 use arch::memory::paging::ENTRY_COUNT;
-use arch::memory::FrameAllocator;
+use arch::memory::allocate_frames;
 use core::ops::{Index, IndexMut};
 use core::marker::PhantomData;
 
@@ -54,24 +54,13 @@ where
             .map(|address| unsafe { &mut *(address as *mut _) })
     }
 
-    /// Allocate a single 4096-byte physical frame for the next level page table and set the given
-    /// index to point to the new frame. Set important flags on the table so we can modify it and
-    /// return a mutable reference. Note - this code will panic if the given index has flags set on
-    /// it to indicate a huge page.
-    pub fn next_table_create<A>(
-        &mut self,
-        index: usize,
-        allocator: &mut A,
-    ) -> &mut Table<L::NextLevel>
-    where
-        A: FrameAllocator,
-    {
+    pub fn next_table_create(&mut self, index: usize) -> &mut Table<L::NextLevel> {
         if self.next_table(index).is_none() {
             assert!(
                 !self.entries[index].flags().contains(EntryFlags::HUGE_PAGE),
                 "mapping code does not support huge pages"
             );
-            let frame = allocator.allocate_frame(1).expect("no frames available");
+            let frame = allocate_frames(1).expect("no frames available");
             self.entries[index].set(frame, EntryFlags::PRESENT | EntryFlags::WRITABLE);
             self.next_table_mut(index).unwrap().zero();
         }
