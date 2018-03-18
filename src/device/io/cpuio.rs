@@ -78,7 +78,7 @@ impl InOut for u32 {
 #[derive(Debug)]
 pub struct Port<T: InOut> {
     /// Port address.
-    port: u16,
+    pub port: u16,
 
     /// Zero-byte placeholder.  This is only here so that we can have a
     /// type parameter `T` without a compiler error.
