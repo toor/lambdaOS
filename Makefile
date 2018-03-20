@@ -4,7 +4,7 @@ NASM = nasm
 LD = ld
 
 arch ?= x86_64
-kernel := build/kernel-$(arch).bin
+kernel := build/lambda-$(arch).bin
 iso := build/os-$(arch).iso
 target ?= $(arch)-lambda
 rust_os := target/$(target)/debug/liblambda_os.a
@@ -30,7 +30,7 @@ clean:
 	@cargo clean
 
 run: $(iso)
-	@$(QEMU)-system-x86_64 -cdrom $(iso)
+	@$(QEMU)-system-x86_64 -cdrom $(iso) -m 4G
 
 iso: $(iso)
 

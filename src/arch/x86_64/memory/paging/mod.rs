@@ -312,7 +312,7 @@ pub fn init(boot_info: &BootInformation) -> ActivePageTable {
             unsafe { result.ignore() };
         }
     });
-    
+
     let old_table = active_table.switch(new_table);
     println!(
         "[ vmm ] Switched to new page table. PML4 at {:#x}",

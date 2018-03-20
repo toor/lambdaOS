@@ -15,10 +15,12 @@ impl SerialPort {
             is_initialized: false,
         }
     }
-    
+
     pub fn do_init(&mut self) {
         // Check if this function has already been called.
-        if self.is_initialized == true { return; }
+        if self.is_initialized == true {
+            return;
+        }
         self.is_initialized = true;
 
         // Disable interrupts.
@@ -34,26 +36,26 @@ impl SerialPort {
         self.port(ModemControl).write(0x0b);
         // Done!
     }
-    
+
     /// Check if it is safe to read from this port.
     fn can_read(&mut self) -> bool {
-        (self.port(LineStatus).read() & 1) == 0        
+        (self.port(LineStatus).read() & 1) == 0
     }
-    
+
     /// Wait until we can get a hold on the data register, and then read from the serial port.
-    pub fn read_serial(&mut self) -> u8 {
+    pub fn read(&mut self) -> u8 {
         while self.can_read() {}
-        
+
         self.port(DataOrBaudLsb).read()
     }
-    
+
     /// Check if we can safely write the data to the serial port.
     fn is_transmit_empty(&mut self) -> bool {
         (self.port(LineStatus).read() & 0x20) == 0
     }
-    
+
     /// Wait until we can get a hold on the data register, and then write to the serial port.
-    pub fn write_serial(&mut self, data: u8) {
+    pub fn write(&mut self, data: u8) {
         while self.is_transmit_empty() {}
 
         self.port(DataOrBaudLsb).write(data);
@@ -77,6 +79,8 @@ enum Register {
     Scratch = 7,
 }
 
-pub static COM1: Mutex<SerialPort> = Mutex::new(unsafe {
-    SerialPort::new(0x3f8)
-});
+pub static COM1: Mutex<SerialPort> = Mutex::new(unsafe { SerialPort::new(0x3f8) });
+
+pub fn init() {
+    COM1.lock().do_init();
+}

@@ -44,7 +44,7 @@ impl Madt {
                     } else {
                         println!("Found disabled core, id: {}", local_apic.id);
                     }
-                },
+                }
 
                 MadtEntry::IoApic(io_apic) => {
                     println!(
@@ -52,14 +52,15 @@ impl Madt {
                         io_apic.id, io_apic.address
                     );
                     IO_APICS.lock().push(io_apic);
-                },
+                }
 
                 MadtEntry::Iso(iso) => {
-                    println!("[ dev ] Found interrupt source override,\n overrides IRQ {},\n gsi: {}",
-                             iso.irq_source,
-                             iso.gsi);
-                    ISOS.lock().push(iso);  
-                },
+                    println!(
+                        "[ dev ] Found interrupt source override,\n overrides IRQ {},\n gsi: {}",
+                        iso.irq_source, iso.gsi
+                    );
+                    ISOS.lock().push(iso);
+                }
 
                 _ => {
                     println!("[ acpi ] No more MADT entries...");

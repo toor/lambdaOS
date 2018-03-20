@@ -60,8 +60,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
     *ALLOCATOR.lock() = Some(frame_allocator);
 
     let mut active_table = paging::init(&boot_info);
-    unsafe { acpi::init(&mut active_table) };
-   
+
     use self::paging::Page;
     use self::heap_allocator::{HEAP_SIZE, HEAP_START};
 
@@ -85,7 +84,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         let stack_alloc_range = Page::range_inclusive(stack_start_page, stack_end_page);
         stack_allocator::StackAllocator::new(stack_alloc_range)
     };
-
+    // unsafe { acpi::init(&mut active_table) };
     MemoryController {
         active_table: active_table,
         stack_allocator: stack_allocator,
