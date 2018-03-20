@@ -1,6 +1,9 @@
 macro_rules! print {
     ($($arg:tt)*) => ({
-        $crate::device::vga::buffer::print(format_args!($($arg)*));
+        use device::serial;
+        use core::fmt::Write;
+
+        let _ = write!(serial::COM1.lock(), $($arg)*);
     });
 }
 

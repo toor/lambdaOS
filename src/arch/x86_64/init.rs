@@ -4,6 +4,11 @@ use device;
 
 /// Main kernel init function. This sets everything up for us.
 pub unsafe fn init(multiboot_info: usize) {
+    use device::serial;
+    
+    // Enable serial for printing.
+    serial::init();
+
     interrupts::disable_interrupts();
     {
         device::vga::buffer::clear_screen();

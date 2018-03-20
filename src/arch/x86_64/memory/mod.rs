@@ -84,7 +84,7 @@ pub fn init(boot_info: &BootInformation) -> MemoryController {
         let stack_alloc_range = Page::range_inclusive(stack_start_page, stack_end_page);
         stack_allocator::StackAllocator::new(stack_alloc_range)
     };
-    // unsafe { acpi::init(&mut active_table) };
+    unsafe { acpi::init(&mut active_table) };
     MemoryController {
         active_table: active_table,
         stack_allocator: stack_allocator,

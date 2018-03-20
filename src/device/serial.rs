@@ -1,6 +1,21 @@
 use device::io::cpuio::Port;
 use self::Register::*;
 use spin::Mutex;
+use core::fmt::{self, Write};
+
+#[repr(C, u8)]
+#[allow(dead_code)]
+/// Serial port registers.
+enum Register {
+    DataOrBaudLsb = 0,
+    IntEnableOrMsb = 1,
+    InterruptIdentAndFifo = 2,
+    LineControl = 3,
+    ModemControl = 4,
+    LineStatus = 5,
+    ModemStatus = 6,
+    Scratch = 7,
+}
 
 /// An interface to a serial port.
 pub struct SerialPort {
@@ -66,17 +81,14 @@ impl SerialPort {
     }
 }
 
-#[repr(C, u8)]
-/// Serial port registers.
-enum Register {
-    DataOrBaudLsb = 0,
-    IntEnableOrMsb = 1,
-    InterruptIdentAndFifo = 2,
-    LineControl = 3,
-    ModemControl = 4,
-    LineStatus = 5,
-    ModemStatus = 6,
-    Scratch = 7,
+impl Write for SerialPort {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        for byte in s.bytes() {
+            self.write(byte);
+        }
+
+        Ok(())
+    }
 }
 
 pub static COM1: Mutex<SerialPort> = Mutex::new(unsafe { SerialPort::new(0x3f8) });
