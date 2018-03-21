@@ -8,6 +8,7 @@ use alloc::Vec;
 static CPUS: AtomicUsize = ATOMIC_USIZE_INIT;
 
 lazy_static! {
+    pub static ref LOCAL_APICS: Mutex<Vec<&'static LapicEntry>> = Mutex::new(Vec::new());
     pub static ref IO_APICS: Mutex<Vec<&'static IoApic>> = Mutex::new(Vec::new());
     pub static ref ISOS: Mutex<Vec<&'static InterruptSourceOverride>> = Mutex::new(Vec::new());
 }
@@ -40,10 +41,12 @@ impl Madt {
                         } else {
                             CPUS.fetch_add(1, Ordering::SeqCst);
                         }
-                    // TODO: smp::init(CPUS.load(Ordering::SeqCst));
-                    } else {
+                    } 
+                    else {
                         println!("Found disabled core, id: {}", local_apic.id);
                     }
+                    
+                    LOCAL_APICS.lock().push(local_apic);
                 }
 
                 MadtEntry::IoApic(io_apic) => {
@@ -60,6 +63,12 @@ impl Madt {
                         iso.irq_source, iso.gsi
                     );
                     ISOS.lock().push(iso);
+                }
+
+                MadtEntry::Nmi(nmi) => {
+                    println!("[ dev ] APIC NMI with flags: {}, LINT: {}",
+                             nmi.flags,
+                             nmi.lint_no);
                 }
 
                 _ => {
@@ -138,6 +147,7 @@ pub enum MadtEntry {
     Iso(&'static InterruptSourceOverride),
     InvalidIso(usize),
     Nmi(&'static ApicNMI),
+    InvalidNmi(usize),
     Unknown(u8),
 }
 
@@ -178,6 +188,14 @@ impl Iterator for MadtIter {
                     } else {
                         MadtEntry::InvalidIso(len)
                     },
+                    4 => if len == mem::size_of::<ApicNMI>() + 2 {
+                        MadtEntry::Nmi(unsafe {
+                            &*((self.sdt.data_address() + self.i * 2)
+                               as *const ApicNMI)
+                        })
+                    } else {
+                        MadtEntry::InvalidNmi(len)
+                    },                   
                     _ => MadtEntry::Unknown(ty),
                 };
 

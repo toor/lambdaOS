@@ -24,13 +24,13 @@ pub struct LocalApic {
 
 impl LocalApic {
     /// Read from a register of the Local APIC.
-    pub fn lapic_read(&mut self, which_reg: u32) -> u32 {
+    pub fn lapic_read(which_reg: u32) -> u32 {
         let base = BASE.load(Ordering::SeqCst) as u32;
         unsafe { ptr::read_volatile(&(base as u32 + which_reg) as *const u32) }
     }
 
     /// Write to a register of the Local APIC.
-    pub fn lapic_write(&mut self, which_reg: u32, value: u32) {
+    pub fn lapic_write(which_reg: u32, value: u32) {
         let base = BASE.load(Ordering::SeqCst) as u32;
         unsafe { ptr::write_volatile(&mut (base + which_reg) as *mut u32, value) };
     }
@@ -46,6 +46,30 @@ impl LocalApic {
     pub fn apic_flags(&self) -> u32 {
         self.flags
     }
+
+    pub fn lapic_set_nmi(vector: u8, _processor_id: u8, flags: u16, lint: u8) {
+        // Set as NMI.
+        let mut nmi: u32 = (800 | vector) as u32;
+        // Active low.
+        if flags & 2 == 0 {
+            nmi |= 1 << 13;
+        }
+
+        // Level triggered.
+        if flags & 8  == 0 {
+            nmi |= 1 << 15;
+        }
+
+        match lint {
+            1 => {
+                LocalApic::lapic_write(0x360, nmi);
+            },
+            0 => {
+                LocalApic::lapic_write(0x350, nmi);
+            }
+            _ => {},
+        }
+    }
 }
 
 pub struct IoApic {
@@ -56,6 +80,24 @@ pub struct IoApic {
 }
 
 impl IoApic {
+    pub fn install_redirects() {
+        use acpi::madt::{ISOS, LOCAL_APICS};
+        
+        // Install IRQ0, IRQ1.
+        for iso in ISOS.lock().iter() {
+            if iso.irq_source == 0 {
+                IoApic::set_redirect(iso.irq_source, iso.gsi, iso.flags, LOCAL_APICS.lock()[0].id);
+                break;
+            } else if iso.irq_source == 1 {
+                IoApic::set_redirect(iso.irq_source, iso.gsi, iso.flags, LOCAL_APICS.lock()[0].id);
+                break;
+            } else {
+                break;
+            }
+        }
+    }
+
+
     /// Get the I/O APIC that handles this GSI.
     pub fn io_apic_from_gsi(gsi: u32) -> Option<usize> {
         for apic in 0..IO_APICS.lock().len() {

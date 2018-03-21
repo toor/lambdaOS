@@ -30,7 +30,7 @@ clean:
 	@cargo clean
 
 run: $(iso)
-	@$(QEMU)-system-x86_64 -cdrom $(iso) -m 4G
+	@$(QEMU)-system-x86_64 -cdrom $(iso) -m 4G -serial stdio
 
 iso: $(iso)
 
