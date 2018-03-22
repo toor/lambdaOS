@@ -13,10 +13,19 @@ pub mod serial;
 pub use self::io::cpuio::{Port, UnsafePort};
 pub use self::io::mmio;
 
+use raw_cpuid::CpuId;
+
 /// Perform hardware init.
 pub unsafe fn init() {
     vga::init();
-    pic::PICS.lock().init();
+    
+    if CpuId::new().get_feature_info().unwrap().has_apic() {
+        pic::PICS.lock().disable_8259_pic();
+        apic::init();
+    } else {
+        pic::PICS.lock().init();
+    }
+    
     pit::init();
     ps2_8042::PS2.lock().init();
     pci::init();

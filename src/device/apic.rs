@@ -2,7 +2,7 @@
 use x86_64::registers::msr::{rdmsr, wrmsr, IA32_APIC_BASE};
 use core::ptr;
 use core::sync::atomic::{AtomicU32, Ordering};
-use acpi::madt::IO_APICS;
+use acpi::madt::{IO_APICS, ISOS, NMIS, LOCAL_APICS};
 
 lazy_static! {
     static ref BASE: AtomicU32 = {
@@ -13,14 +13,7 @@ lazy_static! {
 }
 
 /// Interface to a local APIC.
-pub struct LocalApic {
-    /// The id of the APIC.
-    pub id: u8,
-    /// The id of the parent core.
-    pub processor_id: u8,
-    /// Flags.
-    pub flags: u32,
-}
+pub struct LocalApic;
 
 impl LocalApic {
     /// Read from a register of the Local APIC.
@@ -33,18 +26,6 @@ impl LocalApic {
     pub fn lapic_write(which_reg: u32, value: u32) {
         let base = BASE.load(Ordering::SeqCst) as u32;
         unsafe { ptr::write_volatile(&mut (base + which_reg) as *mut u32, value) };
-    }
-
-    pub fn id(&self) -> u8 {
-        self.id
-    }
-
-    pub fn ap_id(&self) -> u8 {
-        self.processor_id
-    }
-
-    pub fn apic_flags(&self) -> u32 {
-        self.flags
     }
 
     pub fn lapic_set_nmi(vector: u8, _processor_id: u8, flags: u16, lint: u8) {
@@ -70,6 +51,16 @@ impl LocalApic {
             _ => {},
         }
     }
+
+    pub fn install_nmis() {
+        for (i, nmi) in NMIS.lock().iter().enumerate() {
+            LocalApic::lapic_set_nmi(0x90 + i as u8, nmi.processor_id, nmi.flags, nmi.lint_no);
+        }
+    }
+
+    pub fn enable() {
+        LocalApic::lapic_write(0xf0, LocalApic::lapic_read(0xf0) | 0x1ff);
+    }
 }
 
 pub struct IoApic {
@@ -80,9 +71,7 @@ pub struct IoApic {
 }
 
 impl IoApic {
-    pub fn install_redirects() {
-        use acpi::madt::{ISOS, LOCAL_APICS};
-        
+    pub fn install_redirects() {        
         // Install IRQ0, IRQ1.
         for iso in ISOS.lock().iter() {
             if iso.irq_source == 0 {
@@ -174,4 +163,11 @@ impl IoApic {
     pub fn get_max_redirect(io_apic_num: usize) -> u32 {
         (IoApic::read(1, io_apic_num) & 0xff0000) >> 16
     }
+}
+
+
+pub fn init() {
+    IoApic::install_redirects();
+    LocalApic::install_nmis();
+    LocalApic::enable();
 }

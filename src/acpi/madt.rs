@@ -11,6 +11,7 @@ lazy_static! {
     pub static ref LOCAL_APICS: Mutex<Vec<&'static LapicEntry>> = Mutex::new(Vec::new());
     pub static ref IO_APICS: Mutex<Vec<&'static IoApic>> = Mutex::new(Vec::new());
     pub static ref ISOS: Mutex<Vec<&'static InterruptSourceOverride>> = Mutex::new(Vec::new());
+    pub static ref NMIS: Mutex<Vec<&'static ApicNMI>> = Mutex::new(Vec::new());
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -190,7 +191,7 @@ impl Iterator for MadtIter {
                     },
                     4 => if len == mem::size_of::<ApicNMI>() + 2 {
                         MadtEntry::Nmi(unsafe {
-                            &*((self.sdt.data_address() + self.i * 2)
+                            &*((self.sdt.data_address() + self.i + 2)
                                as *const ApicNMI)
                         })
                     } else {
@@ -198,6 +199,8 @@ impl Iterator for MadtIter {
                     },                   
                     _ => MadtEntry::Unknown(ty),
                 };
+
+                println!("[ acpi ] MADT entry at address: {:#x}", self.sdt.data_address() + self.i + 2);
 
                 self.i += len;
 
