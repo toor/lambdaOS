@@ -3,16 +3,12 @@ use arch::memory::paging::ActivePageTable;
 use core::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
 use core::mem;
 use spin::Mutex;
+use heapless::Vec as StaticVec;
 use alloc::Vec;
+use device::{apic, pic};
+use raw_cpuid::CpuId;
 
 static CPUS: AtomicUsize = ATOMIC_USIZE_INIT;
-
-lazy_static! {
-    pub static ref LOCAL_APICS: Mutex<Vec<&'static LapicEntry>> = Mutex::new(Vec::new());
-    pub static ref IO_APICS: Mutex<Vec<&'static IoApic>> = Mutex::new(Vec::new());
-    pub static ref ISOS: Mutex<Vec<&'static InterruptSourceOverride>> = Mutex::new(Vec::new());
-    pub static ref NMIS: Mutex<Vec<&'static ApicNMI>> = Mutex::new(Vec::new());
-}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Madt {
@@ -25,7 +21,17 @@ pub struct Madt {
 
 impl Madt {
     /// Initialise all the MADT entries.
-    pub unsafe fn init(&mut self, _active_table: &mut ActivePageTable) {
+    pub fn init(&mut self, active_table: &mut ActivePageTable) {
+        let mut local_apics: StaticVec<&'static LapicEntry, [&'static LapicEntry; 20]>
+            = StaticVec::new();
+        let mut nmis: StaticVec<&'static ApicNMI, [&'static ApicNMI; 10]> = StaticVec::new();
+        let mut io_apics: StaticVec<&'static IoApic, [&'static IoApic; 10]> = StaticVec::new();
+        let mut isos: StaticVec<&'static InterruptSourceOverride,
+                    [&'static InterruptSourceOverride; 10]>
+            = StaticVec::new();
+        
+        let mut apic_manager = apic::ApicManager::new();
+
         for entry in self.iter() {
             match entry {
                 MadtEntry::Lapic(local_apic) => {
@@ -47,15 +53,15 @@ impl Madt {
                         println!("Found disabled core, id: {}", local_apic.id);
                     }
                     
-                    LOCAL_APICS.lock().push(local_apic);
+                    local_apics.push(local_apic).expect("Failed to push element to static vector");
                 }
 
                 MadtEntry::IoApic(io_apic) => {
                     println!(
-                        "[ dev ] Found I/O APIC, id: {}, register base: {:#x}",
-                        io_apic.id, io_apic.address
+                        "[ dev ] Found I/O APIC, id: {}, register base: {:#x}, gsib: {}",
+                        io_apic.id, io_apic.address, io_apic.gsib
                     );
-                    IO_APICS.lock().push(io_apic);
+                    io_apics.push(io_apic).expect("Failed to push element to static vector");
                 }
 
                 MadtEntry::Iso(iso) => {
@@ -63,13 +69,14 @@ impl Madt {
                         "[ dev ] Found interrupt source override,\n overrides IRQ {},\n gsi: {}",
                         iso.irq_source, iso.gsi
                     );
-                    ISOS.lock().push(iso);
+                    isos.push(iso).expect("Failed to push element to static vector");
                 }
 
                 MadtEntry::Nmi(nmi) => {
                     println!("[ dev ] APIC NMI with flags: {}, LINT: {}",
                              nmi.flags,
                              nmi.lint_no);
+                    nmis.push(nmi).expect("Failed to push element to static vector.");
                 }
 
                 _ => {
@@ -77,6 +84,22 @@ impl Madt {
                     return;
                 }
             }
+        }
+        
+        apic_manager.lapic_base = self.address;
+        
+        apic_manager.local_apics = local_apics;
+        apic_manager.io_apics = io_apics;
+        apic_manager.nmis = nmis;
+        apic_manager.isos = isos;
+
+
+        *apic::APIC_MANAGER.lock() = Some(apic_manager);
+        
+        unsafe { pic::PICS.lock().init() };
+
+        if CpuId::new().get_feature_info().unwrap().has_apic() {
+           apic::init(active_table);
         }
 
         println!("[ smp ] Found {} APs", CPUS.load(Ordering::SeqCst));
@@ -104,7 +127,7 @@ impl Madt {
 /// The Local APIC.
 #[repr(packed)]
 pub struct LapicEntry {
-    /// The ID of the parent AP.
+   /// The ID of the parent AP.
     pub processor_id: u8,
     /// The ID of this APIC.
     pub id: u8,

@@ -38,8 +38,8 @@ pub fn enable_interrupts() {
 
     {
         // Clear all interrupt masks
-        PICS.lock().pics[0].data.write(0);
-        PICS.lock().pics[1].data.write(0);
+        // PICS.lock().pics[0].data.write(0);
+        // PICS.lock().pics[1].data.write(0);
     }
 
     unsafe {

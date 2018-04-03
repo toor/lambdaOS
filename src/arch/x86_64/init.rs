@@ -5,11 +5,14 @@ use device;
 /// Main kernel init function. This sets everything up for us.
 pub unsafe fn init(multiboot_info: usize) {
     use device::serial;
-    
+    use device::pic;
+
+    pic::PICS.lock().disable_8259_pic();
+
     // Enable serial for printing.
     serial::init();
 
-    interrupts::disable_interrupts();
+    asm!("cli");
     {
         device::vga::buffer::clear_screen();
         println!("[ INFO ] lambdaOS: Begin init.");
@@ -27,9 +30,7 @@ pub unsafe fn init(multiboot_info: usize) {
         // Setup hardware devices.
         device::init();
     }
-
-    // set interrupt flag using sti instruction.
-    interrupts::enable_interrupts();
+    asm!("sti");
 
     println!("[ OK ] Init successful, you may now type.")
 }

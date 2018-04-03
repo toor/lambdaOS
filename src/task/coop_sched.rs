@@ -45,7 +45,6 @@ impl Scheduling for CoopScheduler {
             Box::into_raw(self_ptr) as usize,
         ];
 
-        // Properly reserve these blocks on the stack.
         for (i, val) in stack_vals.iter().enumerate() {
             stack[proc_top + i] = *val;
         }

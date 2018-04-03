@@ -1,6 +1,6 @@
 use arch::memory::MemoryController;
 use x86_64::structures::tss::TaskStateSegment;
-use x86_64::structures::idt::Idt;
+use x86_64::structures::idt::{Idt, ExceptionStackFrame};
 use spin::Once;
 
 pub mod gdt;
@@ -41,7 +41,16 @@ lazy_static! {
 
         println!("[ interrupts ] Installing IRQs.");
         idt.interrupts[0].set_handler_fn(irq::timer_handler);
-        idt.interrupts[1].set_handler_fn(irq::keyboard_handler);
+        // idt.interrupts[1].set_handler_fn(irq::keyboard_handler);
+        
+        idt.interrupts[0x30 - 0x20].set_handler_fn(irq::timer_handler);
+        // idt.interrupts[17].set_handler_fn(irq::keyboard_handler);
+        
+        // APIC NMI.
+        for vec in (0x90-0x20)..(0x97-0x20) {
+            idt.interrupts[vec].set_handler_fn(apic_nmi_handler);
+        }
+        idt.interrupts[0xff - 0x20].set_handler_fn(spurious_interrupt_handler);
 
         idt
     };
@@ -95,4 +104,13 @@ pub fn init(memory_controller: &mut MemoryController) {
     // Load the IDT
     IDT.load();
     println!("[ tables ] Successfully loaded IDT.")
+}
+
+pub extern "x86-interrupt" fn apic_nmi_handler(stack_frame: &mut ExceptionStackFrame) {
+    println!("NON-MASKABLE APIC INTERRUPT!");
+    loop {}
+}
+
+pub extern "x86-interrupt" fn spurious_interrupt_handler(stack_frame: &mut ExceptionStackFrame) {
+    println!("SPURIOUS INTERRUPT!");
 }

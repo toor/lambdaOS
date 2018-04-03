@@ -29,6 +29,7 @@ extern crate rlibc;
 extern crate spin;
 extern crate volatile;
 extern crate x86_64;
+extern crate heapless;
 
 #[macro_use]
 mod macros;
